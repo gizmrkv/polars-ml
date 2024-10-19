@@ -93,6 +93,9 @@ class ComponentList(Generic[ComponentType], BaseComponent):
     def extend(self, components: Iterable[ComponentType]):
         self.components.extend(components)
 
+    def clear(self):
+        self.components.clear()
+
     @override
     def is_fitted(self) -> bool:
         return all(component.is_fitted() for component in self)
@@ -135,6 +138,9 @@ class ComponentDict(Generic[ComponentType], BaseComponent):
 
     def items(self) -> Iterable[Tuple[str, ComponentType]]:
         return self.components.items()
+
+    def clear(self):
+        self.components.clear()
 
     @override
     def is_fitted(self) -> bool:
