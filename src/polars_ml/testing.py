@@ -20,7 +20,7 @@ def assert_fit_and_execute(
     check_execute: bool = True,
     check_execute_twice: bool = True,
     check_fit_execute: bool = True,
-    check_save_dir: bool = True,
+    check_log_dir: bool = True,
 ):
     def assert_fit_and_execute_inner(
         component: Component,
@@ -63,7 +63,7 @@ def assert_fit_and_execute(
         check_fit_execute=check_fit_execute,
     )
 
-    if check_save_dir:
+    if check_log_dir:
         with tempfile.TemporaryDirectory() as tmpdir:
             component.set_log_dir(tmpdir)
             assert_fit_and_execute_inner(
@@ -88,7 +88,7 @@ def assert_lazy_fit_and_execute(
     check_execute: bool = True,
     check_execute_twice: bool = True,
     check_fit_execute: bool = True,
-    check_save_dir: bool = True,
+    check_log_dir: bool = True,
 ):
     assert_fit_and_execute(
         Collect(component),
@@ -99,7 +99,7 @@ def assert_lazy_fit_and_execute(
         check_execute=check_execute,
         check_execute_twice=check_execute_twice,
         check_fit_execute=check_fit_execute,
-        check_save_dir=check_save_dir,
+        check_log_dir=check_log_dir,
     )
 
 

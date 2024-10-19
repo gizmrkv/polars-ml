@@ -52,7 +52,7 @@ class BasePipeline(BaseComponent, ABC):
 
     def save(
         self,
-        save_dir: Path,
+        log_dir: Path,
         filename: str,
         *,
         extension: Literal[".z", ".gz", ".bz2", ".xz", ".lzma"] = ".z",
@@ -61,10 +61,10 @@ class BasePipeline(BaseComponent, ABC):
     ):
         import joblib
 
-        save_dir.mkdir(parents=True, exist_ok=True)
+        log_dir.mkdir(parents=True, exist_ok=True)
         joblib.dump(
             self,
-            save_dir / (filename + extension),
+            log_dir / (filename + extension),
             compress=compress,
             protocol=protocol,
         )
