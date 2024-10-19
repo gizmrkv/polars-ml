@@ -7,6 +7,12 @@ authors = [
 ]
 dependencies = [
     "polars>=1.9.0",
+    "tqdm>=4.66.5",
+    "pytest>=8.3.3",
+    "joblib>=1.4.2",
+    "matplotlib>=3.9.2",
+    "seaborn>=0.13.2",
+    "scikit-learn>=1.5.2",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
@@ -19,6 +25,7 @@ build-backend = "hatchling.build"
 managed = true
 dev-dependencies = [
     "pytest>=8.3.3",
+    "joblib>=1.4.2",
 ]
 
 [tool.hatch.metadata]
@@ -31,4 +38,4 @@ packages = ["src/polars_ml"]
 extend-include = ["*.ipynb"]
 
 [tool.ruff.lint]
-ignore = ["F401"]
+# ignore = ["F401"]
