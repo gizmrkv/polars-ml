@@ -8,6 +8,7 @@ from polars_ml.component import LazyComponent
 
 from .base_pipeline import BasePipeline
 from .horizontal import LazyHorizontalNameSpace
+from .split import LazySplitNameSpace
 from .stat import LazyStatNameSpace
 from .transform import LazyTransformNameSpace
 
@@ -81,12 +82,16 @@ class LazyPipeline(BasePipeline, LazyComponent):
         )
 
     @property
-    def stats(self) -> LazyStatNameSpace:
+    def stat(self) -> LazyStatNameSpace:
         return LazyStatNameSpace(self)
 
     @property
     def horizontal(self) -> LazyHorizontalNameSpace:
         return LazyHorizontalNameSpace(self)
+
+    @property
+    def split(self) -> LazySplitNameSpace:
+        return LazySplitNameSpace(self)
 
     @property
     def transform(self) -> LazyTransformNameSpace:

@@ -15,6 +15,8 @@ from polars_ml.utils import Display, GetAttr, Lazy, Print, Write
 
 from .base_pipeline import BasePipeline
 from .horizontal import HorizontalNameSpace
+from .plot import PlotNameSpace
+from .split import SplitNameSpace
 from .stat import StatNameSpace
 from .transform import TransformNameSpace
 
@@ -199,6 +201,14 @@ class Pipeline(BasePipeline, Component):
     @property
     def horizontal(self) -> HorizontalNameSpace:
         return HorizontalNameSpace(self)
+
+    @property
+    def split(self) -> SplitNameSpace:
+        return SplitNameSpace(self)
+
+    @property
+    def plot(self) -> PlotNameSpace:
+        return PlotNameSpace(self)
 
     @property
     def transform(self) -> TransformNameSpace:

@@ -5,7 +5,7 @@ import polars as pl
 from polars._typing import IntoExpr, RollingInterpolationMethod
 
 from polars_ml.typing import PipelineType
-from polars_ml.utils import LazyGetAttr
+from polars_ml.utils import LazyGetAttrWithName
 
 if TYPE_CHECKING:
     from .lazy_pipeline import LazyPipeline  # noqa: F401
@@ -22,8 +22,13 @@ class BaseStatNameSpace(Generic[PipelineType], ABC):
         *,
         by: IntoExpr | Iterable[IntoExpr],
         reverse: bool | Sequence[bool] = False,
+        include_name: bool = False,
     ) -> PipelineType:
-        return self.pipeline.pipe(LazyGetAttr("bottom_k", k, by=by, reverse=reverse))
+        return self.pipeline.pipe(
+            LazyGetAttrWithName(
+                "bottom_k", k, by=by, reverse=reverse, include_name=include_name
+            )
+        )
 
     def top_k(
         self,
@@ -31,47 +36,74 @@ class BaseStatNameSpace(Generic[PipelineType], ABC):
         *,
         by: IntoExpr | Iterable[IntoExpr],
         reverse: bool | Sequence[bool] = False,
+        include_name: bool = False,
     ) -> PipelineType:
-        return self.pipeline.pipe(LazyGetAttr("top_k", k, by=by, reverse=reverse))
+        return self.pipeline.pipe(
+            LazyGetAttrWithName(
+                "top_k", k, by=by, reverse=reverse, include_name=include_name
+            )
+        )
 
-    def count(self) -> PipelineType:
-        return self.pipeline.pipe(LazyGetAttr("count"))
+    def count(self, include_name: bool = False) -> PipelineType:
+        return self.pipeline.pipe(
+            LazyGetAttrWithName("count", include_name=include_name)
+        )
 
-    def null_count(self) -> PipelineType:
-        return self.pipeline.pipe(LazyGetAttr("null_count"))
+    def null_count(self, include_name: bool = False) -> PipelineType:
+        return self.pipeline.pipe(
+            LazyGetAttrWithName("null_count", include_name=include_name)
+        )
 
-    def n_unique(self) -> PipelineType:
-        return self.pipeline.pipe(LazyGetAttr("select", pl.all().n_unique()))
+    def n_unique(self, include_name: bool = False) -> PipelineType:
+        return self.pipeline.pipe(
+            LazyGetAttrWithName(
+                "select", pl.all().n_unique(), include_name=include_name
+            )
+        )
 
     def quantile(
         self,
         quantile: float,
         interpolation: RollingInterpolationMethod = "nearest",
+        include_name: bool = False,
     ) -> PipelineType:
         return self.pipeline.pipe(
-            LazyGetAttr("quantile", quantile, interpolation=interpolation)
+            LazyGetAttrWithName(
+                "quantile",
+                quantile,
+                interpolation=interpolation,
+                include_name=include_name,
+            )
         )
 
-    def max(self) -> PipelineType:
-        return self.pipeline.pipe(LazyGetAttr("max"))
+    def max(self, include_name: bool = False) -> PipelineType:
+        return self.pipeline.pipe(LazyGetAttrWithName("max", include_name=include_name))
 
-    def min(self) -> PipelineType:
-        return self.pipeline.pipe(LazyGetAttr("min"))
+    def min(self, include_name: bool = False) -> PipelineType:
+        return self.pipeline.pipe(LazyGetAttrWithName("min", include_name=include_name))
 
-    def median(self) -> PipelineType:
-        return self.pipeline.pipe(LazyGetAttr("median"))
+    def median(self, include_name: bool = False) -> PipelineType:
+        return self.pipeline.pipe(
+            LazyGetAttrWithName("median", include_name=include_name)
+        )
 
-    def sum(self) -> PipelineType:
-        return self.pipeline.pipe(LazyGetAttr("sum"))
+    def sum(self, include_name: bool = False) -> PipelineType:
+        return self.pipeline.pipe(LazyGetAttrWithName("sum", include_name=include_name))
 
-    def mean(self) -> PipelineType:
-        return self.pipeline.pipe(LazyGetAttr("mean"))
+    def mean(self, include_name: bool = False) -> PipelineType:
+        return self.pipeline.pipe(
+            LazyGetAttrWithName("mean", include_name=include_name)
+        )
 
-    def std(self, ddof: int = 1) -> PipelineType:
-        return self.pipeline.pipe(LazyGetAttr("std", ddof=ddof))
+    def std(self, ddof: int = 1, include_name: bool = False) -> PipelineType:
+        return self.pipeline.pipe(
+            LazyGetAttrWithName("std", ddof=ddof, include_name=include_name)
+        )
 
-    def var(self, ddof: int = 1) -> PipelineType:
-        return self.pipeline.pipe(LazyGetAttr("var", ddof=ddof))
+    def var(self, ddof: int = 1, include_name: bool = False) -> PipelineType:
+        return self.pipeline.pipe(
+            LazyGetAttrWithName("var", ddof=ddof, include_name=include_name)
+        )
 
 
 class StatNameSpace(BaseStatNameSpace["Pipeline"]):

@@ -1,7 +1,7 @@
 from .act import Act
 from .branch import Branch
 from .collect import Collect
-from .get_attr import GetAttr, LazyGetAttr
+from .get_attr import GetAttr, GetAttrWithName, LazyGetAttr, LazyGetAttrWithName
 from .group_by import GroupByGetAttr, LazyGroupByGetAttr
 from .horizontal import LazyHorizontalAgg
 from .if_ import IfExecute, IfFit
@@ -15,6 +15,8 @@ __all__ = [
     "Collect",
     "GetAttr",
     "LazyGetAttr",
+    "GetAttrWithName",
+    "LazyGetAttrWithName",
     "GroupByGetAttr",
     "LazyGroupByGetAttr",
     "LazyHorizontalAgg",
