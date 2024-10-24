@@ -195,7 +195,7 @@ class Pipeline(BasePipeline, Component):
         return self.pipe(Display())
 
     @property
-    def stats(self) -> StatNameSpace:
+    def stat(self) -> StatNameSpace:
         return StatNameSpace(self)
 
     @property

@@ -44,17 +44,17 @@ class BaseStatNameSpace(Generic[PipelineType], ABC):
             )
         )
 
-    def count(self, include_name: bool = False) -> PipelineType:
+    def count(self, *, include_name: bool = False) -> PipelineType:
         return self.pipeline.pipe(
             LazyGetAttrWithName("count", include_name=include_name)
         )
 
-    def null_count(self, include_name: bool = False) -> PipelineType:
+    def null_count(self, *, include_name: bool = False) -> PipelineType:
         return self.pipeline.pipe(
             LazyGetAttrWithName("null_count", include_name=include_name)
         )
 
-    def n_unique(self, include_name: bool = False) -> PipelineType:
+    def n_unique(self, *, include_name: bool = False) -> PipelineType:
         return self.pipeline.pipe(
             LazyGetAttrWithName(
                 "select", pl.all().n_unique(), include_name=include_name
@@ -65,6 +65,7 @@ class BaseStatNameSpace(Generic[PipelineType], ABC):
         self,
         quantile: float,
         interpolation: RollingInterpolationMethod = "nearest",
+        *,
         include_name: bool = False,
     ) -> PipelineType:
         return self.pipeline.pipe(
@@ -76,31 +77,31 @@ class BaseStatNameSpace(Generic[PipelineType], ABC):
             )
         )
 
-    def max(self, include_name: bool = False) -> PipelineType:
+    def max(self, *, include_name: bool = False) -> PipelineType:
         return self.pipeline.pipe(LazyGetAttrWithName("max", include_name=include_name))
 
-    def min(self, include_name: bool = False) -> PipelineType:
+    def min(self, *, include_name: bool = False) -> PipelineType:
         return self.pipeline.pipe(LazyGetAttrWithName("min", include_name=include_name))
 
-    def median(self, include_name: bool = False) -> PipelineType:
+    def median(self, *, include_name: bool = False) -> PipelineType:
         return self.pipeline.pipe(
             LazyGetAttrWithName("median", include_name=include_name)
         )
 
-    def sum(self, include_name: bool = False) -> PipelineType:
+    def sum(self, *, include_name: bool = False) -> PipelineType:
         return self.pipeline.pipe(LazyGetAttrWithName("sum", include_name=include_name))
 
-    def mean(self, include_name: bool = False) -> PipelineType:
+    def mean(self, *, include_name: bool = False) -> PipelineType:
         return self.pipeline.pipe(
             LazyGetAttrWithName("mean", include_name=include_name)
         )
 
-    def std(self, ddof: int = 1, include_name: bool = False) -> PipelineType:
+    def std(self, ddof: int = 1, *, include_name: bool = False) -> PipelineType:
         return self.pipeline.pipe(
             LazyGetAttrWithName("std", ddof=ddof, include_name=include_name)
         )
 
-    def var(self, ddof: int = 1, include_name: bool = False) -> PipelineType:
+    def var(self, ddof: int = 1, *, include_name: bool = False) -> PipelineType:
         return self.pipeline.pipe(
             LazyGetAttrWithName("var", ddof=ddof, include_name=include_name)
         )

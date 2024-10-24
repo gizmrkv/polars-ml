@@ -7,7 +7,7 @@ from polars import Expr
 from polars._typing import IntoExpr, RollingInterpolationMethod
 
 from polars_ml.typing import PipelineType
-from polars_ml.utils import LazyHorizontalAgg
+from polars_ml.utils import LazyGetAttr, LazyHorizontalAgg
 
 if TYPE_CHECKING:
     from .lazy_pipeline import LazyPipeline  # noqa: F401
@@ -178,32 +178,44 @@ class BaseHorizontalNameSpace(Generic[PipelineType], ABC):
     def arg_max(
         self, *exprs: IntoExpr | Iterable[IntoExpr], value_name: str = "arg_max"
     ) -> PipelineType:
-        value_name = uuid.uuid4().hex
+        variable_name = uuid.uuid4().hex
         return self.pipeline.pipe(
             LazyHorizontalAgg(
                 *exprs,
                 value_name=value_name,
+                variable_name=variable_name,
                 aggs=[
-                    pl.col(value_name).filter(
-                        pl.col(value_name).max() == pl.col(value_name)
+                    pl.struct(value_name, variable_name).filter(
+                        pl.col(value_name) == pl.col(value_name).max()
                     )
                 ],
+            )
+        ).pipe(
+            LazyGetAttr(
+                "with_columns",
+                pl.col(value_name).list.eval(pl.element().struct.field(variable_name)),
             )
         )
 
     def arg_min(
-        self, *exprs: IntoExpr | Iterable[IntoExpr], value_name: str = "arg_max"
+        self, *exprs: IntoExpr | Iterable[IntoExpr], value_name: str = "arg_min"
     ) -> PipelineType:
-        value_name = uuid.uuid4().hex
+        variable_name = uuid.uuid4().hex
         return self.pipeline.pipe(
             LazyHorizontalAgg(
                 *exprs,
                 value_name=value_name,
+                variable_name=variable_name,
                 aggs=[
-                    pl.col(value_name).filter(
-                        pl.col(value_name).min() == pl.col(value_name)
+                    pl.struct(value_name, variable_name).filter(
+                        pl.col(value_name) == pl.col(value_name).min()
                     )
                 ],
+            )
+        ).pipe(
+            LazyGetAttr(
+                "with_columns",
+                pl.col(value_name).list.eval(pl.element().struct.field(variable_name)),
             )
         )
 

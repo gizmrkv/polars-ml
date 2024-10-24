@@ -174,70 +174,6 @@ class BasePipeline(BaseComponent, ABC):
     def interpolate(self) -> Self:
         return self.pipe(LazyGetAttr("interpolate").set_component_name("Interpolate"))
 
-    def join(
-        self,
-        other: DataFrame | LazyFrame,
-        on: str | Expr | Sequence[str | Expr] | None = None,
-        how: JoinStrategy = "inner",
-        *,
-        left_on: str | Expr | Sequence[str | Expr] | None = None,
-        right_on: str | Expr | Sequence[str | Expr] | None = None,
-        suffix: str = "_right",
-        validate: JoinValidation = "m:m",
-        join_nulls: bool = False,
-        coalesce: bool | None = None,
-    ) -> Self:
-        return self.pipe(
-            LazyGetAttr(
-                "join",
-                other.lazy(),
-                on,
-                how,
-                left_on=left_on,
-                right_on=right_on,
-                suffix=suffix,
-                validate=validate,
-                join_nulls=join_nulls,
-                coalesce=coalesce,
-            ).set_component_name("Join")
-        )
-
-    def join_asof(
-        self,
-        other: DataFrame | LazyFrame,
-        *,
-        left_on: str | None | Expr = None,
-        right_on: str | None | Expr = None,
-        on: str | None | Expr = None,
-        by_left: str | Sequence[str] | None = None,
-        by_right: str | Sequence[str] | None = None,
-        by: str | Sequence[str] | None = None,
-        strategy: AsofJoinStrategy = "backward",
-        suffix: str = "_right",
-        tolerance: str | int | float | timedelta | None = None,
-        allow_parallel: bool = True,
-        force_parallel: bool = False,
-        coalesce: bool = True,
-    ) -> Self:
-        return self.pipe(
-            LazyGetAttr(
-                "join_asof",
-                other,
-                left_on=left_on,
-                right_on=right_on,
-                on=on,
-                by_left=by_left,
-                by_right=by_right,
-                by=by,
-                strategy=strategy,
-                suffix=suffix,
-                tolerance=tolerance,
-                allow_parallel=allow_parallel,
-                force_parallel=force_parallel,
-                coalesce=coalesce,
-            ).set_component_name("JoinAsof")
-        )
-
     def sort(
         self,
         by: IntoExpr | Iterable[IntoExpr],
@@ -264,11 +200,6 @@ class BasePipeline(BaseComponent, ABC):
             LazyGetAttr("set_sorted", column, descending=descending).set_component_name(
                 "SetSorted"
             )
-        )
-
-    def merge_sorted(self, other: DataFrame | LazyFrame, key: str) -> Self:
-        return self.pipe(
-            LazyGetAttr("merge_sorted", other, key).set_component_name("MergeSorted")
         )
 
     def rename(self, mapping: dict[str, str] | Callable[[str], str]) -> Self:
@@ -341,28 +272,6 @@ class BasePipeline(BaseComponent, ABC):
                 variable_name=variable_name,
                 value_name=value_name,
             ).set_component_name("Unpivot")
-        )
-
-    def update(
-        self,
-        other: DataFrame | LazyFrame,
-        on: str | Sequence[str] | None = None,
-        how: Literal["left", "inner", "full"] = "left",
-        *,
-        left_on: str | Sequence[str] | None = None,
-        right_on: str | Sequence[str] | None = None,
-        include_nulls: bool = False,
-    ) -> Self:
-        return self.pipe(
-            LazyGetAttr(
-                "update",
-                other,
-                on,
-                how,
-                left_on=left_on,
-                right_on=right_on,
-                include_nulls=include_nulls,
-            ).set_component_name("Update")
         )
 
     def with_columns(
@@ -448,4 +357,95 @@ class BasePipeline(BaseComponent, ABC):
             offset=offset,
             closed=closed,
             group_by=group_by,
+        )
+
+    def join(
+        self,
+        other: DataFrame | LazyFrame,
+        on: str | Expr | Sequence[str | Expr] | None = None,
+        how: JoinStrategy = "inner",
+        *,
+        left_on: str | Expr | Sequence[str | Expr] | None = None,
+        right_on: str | Expr | Sequence[str | Expr] | None = None,
+        suffix: str = "_right",
+        validate: JoinValidation = "m:m",
+        join_nulls: bool = False,
+        coalesce: bool | None = None,
+    ) -> Self:
+        return self.pipe(
+            LazyGetAttr(
+                "join",
+                other.lazy(),
+                on,
+                how,
+                left_on=left_on,
+                right_on=right_on,
+                suffix=suffix,
+                validate=validate,
+                join_nulls=join_nulls,
+                coalesce=coalesce,
+            ).set_component_name("Join")
+        )
+
+    def join_asof(
+        self,
+        other: DataFrame | LazyFrame,
+        *,
+        left_on: str | None | Expr = None,
+        right_on: str | None | Expr = None,
+        on: str | None | Expr = None,
+        by_left: str | Sequence[str] | None = None,
+        by_right: str | Sequence[str] | None = None,
+        by: str | Sequence[str] | None = None,
+        strategy: AsofJoinStrategy = "backward",
+        suffix: str = "_right",
+        tolerance: str | int | float | timedelta | None = None,
+        allow_parallel: bool = True,
+        force_parallel: bool = False,
+        coalesce: bool = True,
+    ) -> Self:
+        return self.pipe(
+            LazyGetAttr(
+                "join_asof",
+                other,
+                left_on=left_on,
+                right_on=right_on,
+                on=on,
+                by_left=by_left,
+                by_right=by_right,
+                by=by,
+                strategy=strategy,
+                suffix=suffix,
+                tolerance=tolerance,
+                allow_parallel=allow_parallel,
+                force_parallel=force_parallel,
+                coalesce=coalesce,
+            ).set_component_name("JoinAsof")
+        )
+
+    def merge_sorted(self, other: DataFrame | LazyFrame, key: str) -> Self:
+        return self.pipe(
+            LazyGetAttr("merge_sorted", other, key).set_component_name("MergeSorted")
+        )
+
+    def update(
+        self,
+        other: DataFrame | LazyFrame,
+        on: str | Sequence[str] | None = None,
+        how: Literal["left", "inner", "full"] = "left",
+        *,
+        left_on: str | Sequence[str] | None = None,
+        right_on: str | Sequence[str] | None = None,
+        include_nulls: bool = False,
+    ) -> Self:
+        return self.pipe(
+            LazyGetAttr(
+                "update",
+                other,
+                on,
+                how,
+                left_on=left_on,
+                right_on=right_on,
+                include_nulls=include_nulls,
+            ).set_component_name("Update")
         )

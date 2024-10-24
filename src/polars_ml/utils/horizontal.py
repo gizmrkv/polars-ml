@@ -1,6 +1,7 @@
 import uuid
 from typing import Dict, Iterable, override
 
+import polars.selectors as cs
 from polars import LazyFrame
 from polars._typing import IntoExpr
 
@@ -31,7 +32,7 @@ class LazyHorizontalAgg(LazyComponent):
         data = data.select(*self.exprs).with_row_index(index_name)
         return data.join(
             data.unpivot(
-                data.collect_schema().names(),
+                ~cs.by_name(index_name),
                 index=index_name,
                 variable_name=self.variable_name,
                 value_name=self.value_name,

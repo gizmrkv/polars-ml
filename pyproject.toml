@@ -16,6 +16,7 @@ dependencies = [
     "lightgbm>=4.5.0",
     "xgboost>=2.1.1",
     "catboost>=1.2.7",
+    "pyarrow>=17.0.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
@@ -29,6 +30,7 @@ managed = true
 dev-dependencies = [
     "pytest>=8.3.3",
     "joblib>=1.4.2",
+    "ipykernel>=6.29.5",
 ]
 
 [tool.hatch.metadata]
@@ -41,4 +43,4 @@ packages = ["src/polars_ml"]
 extend-include = ["*.ipynb"]
 
 [tool.ruff.lint]
-# ignore = ["F401"]
+ignore = ["F401"]

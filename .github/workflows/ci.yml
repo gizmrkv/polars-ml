@@ -30,8 +30,8 @@ jobs:
             - name: Lint
               run: rye lint
 
-            # - name: Test
-            #   run: rye test
+            - name: Test
+              run: rye test
 
             # - name: DocTest
             #   run: rye run pytest --doctest-modules

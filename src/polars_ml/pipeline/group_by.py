@@ -40,16 +40,6 @@ class LazyGroupByNameSpace(Generic[PipelineType]):
             ).set_component_name("GroupByAll")
         )
 
-    def any(self) -> PipelineType:
-        return self.pipeline.pipe(
-            LazyGroupByGetAttr(
-                group_by_method=self.method,
-                group_by_args=self.args,
-                group_by_kwargs=self.kwargs,
-                agg_method="any",
-            ).set_component_name("GroupByAny")
-        )
-
     def first(self) -> PipelineType:
         return self.pipeline.pipe(
             LazyGroupByGetAttr(
@@ -68,16 +58,6 @@ class LazyGroupByNameSpace(Generic[PipelineType]):
                 group_by_kwargs=self.kwargs,
                 agg_method="last",
             ).set_component_name("GroupByLast")
-        )
-
-    def count(self) -> PipelineType:
-        return self.pipeline.pipe(
-            LazyGroupByGetAttr(
-                group_by_method=self.method,
-                group_by_args=self.args,
-                group_by_kwargs=self.kwargs,
-                agg_method="count",
-            ).set_component_name("GroupByCount")
         )
 
     def len(self) -> PipelineType:
@@ -135,6 +115,16 @@ class LazyGroupByNameSpace(Generic[PipelineType]):
             ).set_component_name("GroupByMax")
         )
 
+    def median(self) -> PipelineType:
+        return self.pipeline.pipe(
+            LazyGroupByGetAttr(
+                group_by_method=self.method,
+                group_by_args=self.args,
+                group_by_kwargs=self.kwargs,
+                agg_method="median",
+            ).set_component_name("GroupByMedian")
+        )
+
     def min(self) -> PipelineType:
         return self.pipeline.pipe(
             LazyGroupByGetAttr(
@@ -163,16 +153,6 @@ class LazyGroupByNameSpace(Generic[PipelineType]):
                 group_by_kwargs=self.kwargs,
                 agg_method="mean",
             ).set_component_name("GroupByMean")
-        )
-
-    def median(self) -> PipelineType:
-        return self.pipeline.pipe(
-            LazyGroupByGetAttr(
-                group_by_method=self.method,
-                group_by_args=self.args,
-                group_by_kwargs=self.kwargs,
-                agg_method="median",
-            ).set_component_name("GroupByMedian")
         )
 
     def n_unique(self) -> PipelineType:
