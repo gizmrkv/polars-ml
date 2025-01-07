@@ -37,7 +37,7 @@ class GroupByGetAttr(Component):
 
 
 class GroupBy:
-    def __init__(self, pipeline: Pipeline, method: str, *args: Any, **kwargs: Any):
+    def __init__(self, pipeline: "Pipeline", method: str, *args: Any, **kwargs: Any):
         self.pipeline = pipeline
         self.method = method
         self.args = args
@@ -47,7 +47,7 @@ class GroupBy:
         self,
         *aggs: IntoExpr | Iterable[IntoExpr],
         **named_aggs: IntoExpr,
-    ) -> Pipeline:
+    ) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -59,7 +59,7 @@ class GroupBy:
             ),
         )
 
-    def all(self) -> Pipeline:
+    def all(self) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -69,7 +69,7 @@ class GroupBy:
             )
         )
 
-    def count(self) -> Pipeline:
+    def count(self) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -79,7 +79,7 @@ class GroupBy:
             )
         )
 
-    def first(self) -> Pipeline:
+    def first(self) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -89,7 +89,7 @@ class GroupBy:
             )
         )
 
-    def head(self, n: int = 5) -> Pipeline:
+    def head(self, n: int = 5) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -100,7 +100,7 @@ class GroupBy:
             )
         )
 
-    def last(self) -> Pipeline:
+    def last(self) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -110,7 +110,7 @@ class GroupBy:
             )
         )
 
-    def len(self, name: str | None = None) -> Pipeline:
+    def len(self, name: str | None = None) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -121,7 +121,7 @@ class GroupBy:
             )
         )
 
-    def map_groups(self, function: Callable[[DataFrame], DataFrame]) -> Pipeline:
+    def map_groups(self, function: Callable[[DataFrame], DataFrame]) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -132,7 +132,7 @@ class GroupBy:
             )
         )
 
-    def max(self) -> Pipeline:
+    def max(self) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -142,7 +142,7 @@ class GroupBy:
             )
         )
 
-    def mean(self) -> Pipeline:
+    def mean(self) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -152,7 +152,7 @@ class GroupBy:
             )
         )
 
-    def median(self) -> Pipeline:
+    def median(self) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -162,7 +162,7 @@ class GroupBy:
             )
         )
 
-    def min(self) -> Pipeline:
+    def min(self) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -172,7 +172,7 @@ class GroupBy:
             )
         )
 
-    def n_unique(self) -> Pipeline:
+    def n_unique(self) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -184,7 +184,7 @@ class GroupBy:
 
     def quantile(
         self, quantile: float, interpolation: RollingInterpolationMethod = "nearest"
-    ) -> Pipeline:
+    ) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -195,7 +195,7 @@ class GroupBy:
             )
         )
 
-    def sum(self) -> Pipeline:
+    def sum(self) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -205,7 +205,7 @@ class GroupBy:
             )
         )
 
-    def tail(self, n: int = 5) -> Pipeline:
+    def tail(self, n: int = 5) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -218,7 +218,7 @@ class GroupBy:
 
 
 class DynamicGroupBy:
-    def __init__(self, pipeline: Pipeline, method: str, *args: Any, **kwargs: Any):
+    def __init__(self, pipeline: "Pipeline", method: str, *args: Any, **kwargs: Any):
         self.pipeline = pipeline
         self.method = method
         self.args = args
@@ -228,7 +228,7 @@ class DynamicGroupBy:
         self,
         *aggs: IntoExpr | Iterable[IntoExpr],
         **named_aggs: IntoExpr,
-    ) -> Pipeline:
+    ) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -244,7 +244,7 @@ class DynamicGroupBy:
         self,
         function: Callable[[DataFrame], DataFrame],
         schema: SchemaDict | None,
-    ) -> Pipeline:
+    ) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -257,7 +257,7 @@ class DynamicGroupBy:
 
 
 class RollingGroupBy:
-    def __init__(self, pipeline: Pipeline, method: str, *args: Any, **kwargs: Any):
+    def __init__(self, pipeline: "Pipeline", method: str, *args: Any, **kwargs: Any):
         self.pipeline = pipeline
         self.method = method
         self.args = args
@@ -267,7 +267,7 @@ class RollingGroupBy:
         self,
         *aggs: IntoExpr | Iterable[IntoExpr],
         **named_aggs: IntoExpr,
-    ) -> Pipeline:
+    ) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,
@@ -283,7 +283,7 @@ class RollingGroupBy:
         self,
         function: Callable[[DataFrame], DataFrame],
         schema: SchemaDict | None,
-    ) -> Pipeline:
+    ) -> "Pipeline":
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.method,

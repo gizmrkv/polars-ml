@@ -1,15 +1,5 @@
 from datetime import timedelta
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Collection,
-    Iterable,
-    Literal,
-    Mapping,
-    Self,
-    Sequence,
-)
+from typing import Any, Callable, Collection, Iterable, Literal, Mapping, Self, Sequence
 
 import numpy as np
 from polars import DataFrame, Expr, Series
@@ -17,6 +7,7 @@ from polars._typing import (
     AsofJoinStrategy,
     ClosedInterval,
     ColumnNameOrSelector,
+    ConcatMethod,
     FillNullStrategy,
     IntoExpr,
     IntoExprColumn,
@@ -34,9 +25,21 @@ from polars._typing import (
 )
 
 from .component import Component
-
-if TYPE_CHECKING:
-    from .group_by import DynamicGroupBy, GroupBy, RollingGroupBy
+from .group_by import DynamicGroupBy, GroupBy, RollingGroupBy
+from .horizontal import (
+    HorizontalAgg,
+    HorizontalAll,
+    HorizontalCount,
+    HorizontalMax,
+    HorizontalMean,
+    HorizontalMedian,
+    HorizontalMin,
+    HorizontalNUnique,
+    HorizontalQuantile,
+    HorizontalSum,
+)
+from .transformer import MinMaxScaler, QuantileScaler, StandardScaler
+from .utils import Concat, Display, Print, SortColumns
 
 
 class GetAttr(Component):
@@ -185,7 +188,7 @@ class Pipeline(Component):
         *by: IntoExpr | Iterable[IntoExpr],
         maintain_order: bool = False,
         **named_by: IntoExpr,
-    ) -> "GroupBy":
+    ) -> GroupBy:
         return GroupBy(self, "group_by", *by, maintain_order=maintain_order, **named_by)
 
     def group_by_dynamic(
@@ -200,7 +203,7 @@ class Pipeline(Component):
         label: Label = "left",
         group_by: IntoExpr | Iterable[IntoExpr] | None = None,
         start_by: StartBy = "window",
-    ) -> "DynamicGroupBy":
+    ) -> DynamicGroupBy:
         return DynamicGroupBy(
             self,
             "group_by_dynamic",
@@ -379,7 +382,7 @@ class Pipeline(Component):
         offset: str | timedelta | None = None,
         closed: ClosedInterval = "right",
         group_by: IntoExpr | Iterable[IntoExpr] | None = None,
-    ) -> "RollingGroupBy":
+    ) -> RollingGroupBy:
         return RollingGroupBy(
             self,
             "rolling",
@@ -602,3 +605,157 @@ class Pipeline(Component):
 
     def with_row_index(self, name: str = "index", offset: int = 0) -> Self:
         return self.pipe(GetAttr("with_row_index", name, offset))
+
+    def concat(
+        self,
+        components: Iterable[Component],
+        *,
+        how: ConcatMethod = "vertical",
+        rechunk: bool = False,
+        parallel: bool = True,
+    ) -> Self:
+        return self.pipe(
+            Concat(components, how=how, rechunk=rechunk, parallel=parallel)
+        )
+
+    def print(self) -> Self:
+        return self.pipe(Print())
+
+    def display(self) -> Self:
+        return self.pipe(Display())
+
+    def sort_columns(
+        self, by: Literal["dtype", "name"] = "dtype", *, descending: bool = False
+    ) -> Self:
+        return self.pipe(SortColumns(by, descending=descending))
+
+    def min_max_scale(self, *expr: IntoExpr | Iterable[IntoExpr]) -> Self:
+        return self.pipe(MinMaxScaler(*expr))
+
+    def standard_scale(self, *expr: IntoExpr | Iterable[IntoExpr]) -> Self:
+        return self.pipe(StandardScaler(*expr))
+
+    def quantile_scale(
+        self,
+        *expr: IntoExpr | Iterable[IntoExpr],
+        quantile: tuple[float, float] = (0.25, 0.75),
+    ) -> Self:
+        return self.pipe(QuantileScaler(*expr, quantile=quantile))
+
+    def horizontal_agg(
+        self,
+        *expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_agg",
+        maintain_order: bool = False,
+        aggs: list[Expr] | None = None,
+        named_aggs: dict[str, Expr] | None = None,
+    ) -> Self:
+        return self.pipe(
+            HorizontalAgg(
+                *expr,
+                value_name=value_name,
+                maintain_order=maintain_order,
+                aggs=aggs,
+                named_aggs=named_aggs,
+            )
+        )
+
+    def horizontal_all(
+        self,
+        *expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_all",
+        maintain_order: bool = False,
+    ) -> Self:
+        return self.pipe(
+            HorizontalAll(*expr, value_name=value_name, maintain_order=maintain_order)
+        )
+
+    def horizontal_count(
+        self,
+        *expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_count",
+        maintain_order: bool = False,
+    ) -> Self:
+        return self.pipe(
+            HorizontalCount(*expr, value_name=value_name, maintain_order=maintain_order)
+        )
+
+    def horizontal_max(
+        self,
+        *expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_max",
+        maintain_order: bool = False,
+    ) -> Self:
+        return self.pipe(
+            HorizontalMax(*expr, value_name=value_name, maintain_order=maintain_order)
+        )
+
+    def horizontal_mean(
+        self,
+        *expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_mean",
+        maintain_order: bool = False,
+    ) -> Self:
+        return self.pipe(
+            HorizontalMean(*expr, value_name=value_name, maintain_order=maintain_order)
+        )
+
+    def horizontal_median(
+        self,
+        *expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_median",
+        maintain_order: bool = False,
+    ) -> Self:
+        return self.pipe(
+            HorizontalMedian(
+                *expr, value_name=value_name, maintain_order=maintain_order
+            )
+        )
+
+    def horizontal_min(
+        self,
+        *expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_min",
+        maintain_order: bool = False,
+    ) -> Self:
+        return self.pipe(
+            HorizontalMin(*expr, value_name=value_name, maintain_order=maintain_order)
+        )
+
+    def horizontal_n_unique(
+        self,
+        *expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_n_unique",
+        maintain_order: bool = False,
+    ) -> Self:
+        return self.pipe(
+            HorizontalNUnique(
+                *expr, value_name=value_name, maintain_order=maintain_order
+            )
+        )
+
+    def horizontal_quantile(
+        self,
+        *expr: IntoExpr | Iterable[IntoExpr],
+        quantile: float,
+        value_name: str = "horizontal_quantile",
+        maintain_order: bool = False,
+    ) -> Self:
+        return self.pipe(
+            HorizontalQuantile(
+                *expr,
+                quantile=quantile,
+                value_name=value_name,
+                maintain_order=maintain_order,
+            )
+        )
+
+    def horizontal_sum(
+        self,
+        *expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_sum",
+        maintain_order: bool = False,
+    ) -> Self:
+        return self.pipe(
+            HorizontalSum(*expr, value_name=value_name, maintain_order=maintain_order)
+        )
