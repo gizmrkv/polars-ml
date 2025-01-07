@@ -1,3 +1,4 @@
+import uuid
 from typing import Iterable, Mapping
 
 import polars as pl
@@ -13,27 +14,29 @@ class HorizontalAgg(Component):
         self,
         *expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_agg",
+        variable_name: str | None = None,
         maintain_order: bool = False,
         aggs: Iterable[IntoExpr | Iterable[IntoExpr]] | None = None,
         named_aggs: Mapping[str, IntoExpr] | None = None,
     ):
         self.exprs = expr
         self.value_name = value_name
+        self.variable_name = variable_name
         self.maintain_order = maintain_order
         self.aggs = aggs or []
         self.named_aggs = named_aggs or {}
 
     def transform(self, data: DataFrame) -> DataFrame:
-        import uuid
-
         index_name = uuid.uuid4().hex
         data = data.with_row_index(index_name)
         return data.join(
             data.select(*self.exprs, index_name)
             .unpivot(
-                ~cs.by_name(index_name), index=index_name, value_name=self.value_name
+                ~cs.by_name(index_name),
+                index=index_name,
+                value_name=self.value_name,
+                variable_name=self.variable_name,
             )
-            .drop("variable")
             .group_by(index_name, maintain_order=self.maintain_order)
             .agg(*self.aggs, **self.named_aggs),
             on=index_name,
@@ -173,4 +176,68 @@ class HorizontalSum(HorizontalAgg):
             value_name=value_name,
             maintain_order=maintain_order,
             aggs=[pl.all().sum()],
+        )
+
+
+class HorizontalArgMax(HorizontalAgg):
+    def __init__(
+        self,
+        *expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_argmax",
+        maintain_order: bool = False,
+    ):
+        self.variable_name = uuid.uuid4().hex
+        super().__init__(
+            *expr,
+            value_name=value_name,
+            variable_name=self.variable_name,
+            maintain_order=maintain_order,
+            aggs=[
+                pl.struct(value_name, self.variable_name).filter(
+                    pl.col(value_name) == pl.col(value_name).max()
+                )
+            ],
+        )
+
+    def transform(self, data: DataFrame) -> DataFrame:
+        return (
+            super()
+            .transform(data)
+            .with_columns(
+                pl.col(self.value_name).list.eval(
+                    pl.element().struct.field(self.variable_name)
+                )
+            )
+        )
+
+
+class HorizontalArgMin(HorizontalAgg):
+    def __init__(
+        self,
+        *expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_argmin",
+        maintain_order: bool = False,
+    ):
+        self.variable_name = uuid.uuid4().hex
+        super().__init__(
+            *expr,
+            value_name=value_name,
+            variable_name=self.variable_name,
+            maintain_order=maintain_order,
+            aggs=[
+                pl.struct(value_name, self.variable_name).filter(
+                    pl.col(value_name) == pl.col(value_name).min()
+                )
+            ],
+        )
+
+    def transform(self, data: DataFrame) -> DataFrame:
+        return (
+            super()
+            .transform(data)
+            .with_columns(
+                pl.col(self.value_name).list.eval(
+                    pl.element().struct.field(self.variable_name)
+                )
+            )
         )

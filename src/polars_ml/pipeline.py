@@ -29,6 +29,8 @@ from .group_by import DynamicGroupBy, GroupBy, RollingGroupBy
 from .horizontal import (
     HorizontalAgg,
     HorizontalAll,
+    HorizontalArgMax,
+    HorizontalArgMin,
     HorizontalCount,
     HorizontalMax,
     HorizontalMean,
@@ -758,4 +760,28 @@ class Pipeline(Component):
     ) -> Self:
         return self.pipe(
             HorizontalSum(*expr, value_name=value_name, maintain_order=maintain_order)
+        )
+
+    def horizontal_argmax(
+        self,
+        *expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_argmax",
+        maintain_order: bool = False,
+    ) -> Self:
+        return self.pipe(
+            HorizontalArgMax(
+                *expr, value_name=value_name, maintain_order=maintain_order
+            )
+        )
+
+    def horizontal_argmin(
+        self,
+        *expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_argmin",
+        maintain_order: bool = False,
+    ) -> Self:
+        return self.pipe(
+            HorizontalArgMin(
+                *expr, value_name=value_name, maintain_order=maintain_order
+            )
         )
