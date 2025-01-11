@@ -36,7 +36,7 @@ class GroupByGetAttr(Component):
         )(*self.agg_args, **self.agg_kwargs)
 
 
-class GroupBy:
+class GroupByNamaSpace:
     def __init__(self, pipeline: "Pipeline", method: str, *args: Any, **kwargs: Any):
         self.pipeline = pipeline
         self.method = method

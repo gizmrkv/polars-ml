@@ -26,7 +26,7 @@ def load_config(path: str | Path) -> Dict[str, Any]:
         raise ValueError(f"Unsupported file type: {path.suffix}")
 
 
-def merge_dicts(*dicts: Dict[str, Any]) -> Dict[str, Any]:
+def merge_dicts(*dicts: Mapping[str, Any]) -> Dict[str, Any]:
     merged = {}
     for d in dicts:
         duplicated_keys = set(merged.keys()) & set(d.keys())
@@ -78,7 +78,7 @@ def parse_grid_search_space(
 
 
 def embed_search_space(
-    search_space: Dict[str, Any], base_dir: str | Path = "."
+    search_space: dict[str, Any], base_dir: str | Path = "."
 ) -> Dict[str, Any]:
     base_dir = Path(base_dir)
 
