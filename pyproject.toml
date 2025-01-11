@@ -34,6 +34,11 @@ managed = true
 dev-dependencies = [
     "pytest>=8.3.4",
     "ipykernel>=6.29.5",
+    "kaggle>=1.6.17",
+    "statsmodels>=0.14.4",
+    "prophet>=1.1.6",
+    "optunahub>=0.1.0",
+    "optuna-dashboard>=0.17.0",
 ]
 
 [tool.hatch.metadata]
