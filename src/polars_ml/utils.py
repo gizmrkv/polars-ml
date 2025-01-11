@@ -1,8 +1,8 @@
-from typing import Iterable, Literal, Self
+from typing import Iterable, Literal, Mapping, Self, Sequence
 
 import polars as pl
-from polars import DataFrame
-from polars._typing import ConcatMethod
+from polars import DataFrame, Expr
+from polars._typing import ConcatMethod, IntoExpr
 
 from polars_ml import Component
 
@@ -35,13 +35,30 @@ class Concat(Component):
         self.rechunk = rechunk
         self.parallel = parallel
 
-    def fit(self, data: DataFrame) -> Self:
+    def fit(
+        self,
+        data: DataFrame,
+        validation_data: pl.DataFrame | Mapping[str, DataFrame] | None = None,
+    ) -> Self:
         for component in self.components:
-            component.fit(data)
+            component.fit(data, validation_data)
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
         data_list = [component.transform(data) for component in self.components]
+        return pl.concat(
+            data_list, how=self.how, rechunk=self.rechunk, parallel=self.parallel
+        )
+
+    def fit_transform(
+        self,
+        data: DataFrame,
+        validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
+    ) -> DataFrame:
+        data_list = [
+            component.fit_transform(data, validation_data)
+            for component in self.components
+        ]
         return pl.concat(
             data_list, how=self.how, rechunk=self.rechunk, parallel=self.parallel
         )
@@ -62,3 +79,28 @@ class SortColumns(Component):
             reverse=self.descending,
         )
         return data.select([col["name"] for col in sorted_columns])
+
+
+class GroupByThen(Component):
+    def __init__(
+        self,
+        by: str | Expr | Sequence[str | Expr] | None = None,
+        *aggs: IntoExpr | Iterable[IntoExpr],
+        maintain_order: bool = False,
+    ):
+        self.by = by
+        self.aggs = aggs
+        self.maintain_order = maintain_order
+
+    def fit(
+        self,
+        data: pl.DataFrame,
+        validation_data: pl.DataFrame | Mapping[str, DataFrame] | None = None,
+    ) -> Self:
+        self.grouped = data.group_by(self.by, maintain_order=self.maintain_order).agg(
+            *self.aggs
+        )
+        return self
+
+    def transform(self, data: DataFrame) -> DataFrame:
+        return data.join(self.grouped, on=self.by, how="left")
