@@ -25,7 +25,7 @@ from polars._typing import (
 )
 
 from .component import Component
-from .group_by import DynamicGroupBy, GroupBy, RollingGroupBy
+from .group_by import DynamicGroupBy, GroupByNamaSpace, RollingGroupBy
 from .horizontal import (
     HorizontalAgg,
     HorizontalAll,
@@ -40,8 +40,8 @@ from .horizontal import (
     HorizontalQuantile,
     HorizontalSum,
 )
-from .transformer import MinMaxScaler, QuantileScaler, StandardScaler
-from .utils import Concat, Display, Print, SortColumns
+from .transformer import LabelEncoding, MinMaxScaler, QuantileScaler, StandardScaler
+from .utils import Concat, Display, GroupByThen, Print, SortColumns
 
 
 class GetAttr(Component):
@@ -58,9 +58,24 @@ class Pipeline(Component):
     def __init__(self):
         self.components: list[Component] = []
 
-    def fit(self, data: DataFrame) -> Self:
+    def fit(
+        self,
+        data: DataFrame,
+        validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
+    ) -> Self:
         for component in self.components[:-1]:
-            data = component.fit_transform(data)
+            data = component.fit_transform(data, validation_data)
+            if validation_data is None:
+                continue
+
+            if isinstance(validation_data, DataFrame):
+                validation_data = component.transform(validation_data)
+            else:
+                validation_data = {
+                    name: component.transform(validation_data)
+                    for name, validation_data in validation_data.items()
+                }
+
         self.components[-1].fit(data)
         return self
 
@@ -69,9 +84,24 @@ class Pipeline(Component):
             data = component.transform(data)
         return data
 
-    def fit_transform(self, data: DataFrame) -> DataFrame:
+    def fit_transform(
+        self,
+        data: DataFrame,
+        validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
+    ) -> DataFrame:
         for component in self.components:
             data = component.fit_transform(data)
+            if validation_data is None:
+                continue
+
+            if isinstance(validation_data, DataFrame):
+                validation_data = component.transform(validation_data)
+            else:
+                validation_data = {
+                    name: component.transform(validation_data)
+                    for name, validation_data in validation_data.items()
+                }
+
         return data
 
     def pipe(self, component: Component) -> Self:
@@ -190,8 +220,10 @@ class Pipeline(Component):
         *by: IntoExpr | Iterable[IntoExpr],
         maintain_order: bool = False,
         **named_by: IntoExpr,
-    ) -> GroupBy:
-        return GroupBy(self, "group_by", *by, maintain_order=maintain_order, **named_by)
+    ) -> GroupByNamaSpace:
+        return GroupByNamaSpace(
+            self, "group_by", *by, maintain_order=maintain_order, **named_by
+        )
 
     def group_by_dynamic(
         self,
@@ -631,6 +663,14 @@ class Pipeline(Component):
     ) -> Self:
         return self.pipe(SortColumns(by, descending=descending))
 
+    def group_by_then(
+        self,
+        by: str | Expr | Sequence[str | Expr] | None = None,
+        *aggs: IntoExpr | Iterable[IntoExpr],
+        maintain_order: bool = False,
+    ) -> Self:
+        return self.pipe(GroupByThen(by, *aggs, maintain_order=maintain_order))
+
     def min_max_scale(self, *expr: IntoExpr | Iterable[IntoExpr]) -> Self:
         return self.pipe(MinMaxScaler(*expr))
 
@@ -643,6 +683,16 @@ class Pipeline(Component):
         quantile: tuple[float, float] = (0.25, 0.75),
     ) -> Self:
         return self.pipe(QuantileScaler(*expr, quantile=quantile))
+
+    def label_encode(
+        self,
+        *exprs: IntoExpr | Iterable[IntoExpr],
+        orders: dict[str, Sequence[Any]] | None = None,
+        maintain_order: bool = False,
+    ) -> Self:
+        return self.pipe(
+            LabelEncoding(*exprs, orders=orders, maintain_order=maintain_order)
+        )
 
     def horizontal_agg(
         self,
