@@ -1,5 +1,15 @@
 from datetime import timedelta
-from typing import Any, Callable, Collection, Iterable, Literal, Mapping, Self, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Collection,
+    Iterable,
+    Literal,
+    Mapping,
+    Self,
+    Sequence,
+)
 
 import numpy as np
 from polars import DataFrame, Expr, Series
@@ -42,6 +52,9 @@ from .horizontal import (
 )
 from .transformer import LabelEncoding, MinMaxScaler, QuantileScaler, StandardScaler
 from .utils import Concat, Display, GroupByThen, Print, SortColumns
+
+if TYPE_CHECKING:
+    from .model import ModelNameSpace
 
 
 class GetAttr(Component):
@@ -835,3 +848,7 @@ class Pipeline(Component):
                 *expr, value_name=value_name, maintain_order=maintain_order
             )
         )
+
+    @property
+    def model(self) -> "ModelNameSpace":
+        return ModelNameSpace(self)
