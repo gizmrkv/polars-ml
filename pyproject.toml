@@ -39,6 +39,7 @@ dev-dependencies = [
     "prophet>=1.1.6",
     "optunahub>=0.1.0",
     "optuna-dashboard>=0.17.0",
+    "pycountry>=24.6.1",
 ]
 
 [tool.hatch.metadata]
