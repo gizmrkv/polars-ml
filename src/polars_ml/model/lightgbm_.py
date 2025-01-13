@@ -65,19 +65,21 @@ class LightGBM(Component):
             **train_dataset_kwargs,
         )
 
-        valid_sets = [train_dataset]
-        valid_names = ["train"]
+        valid_sets = []
+        valid_names = []
         if validation_data is not None:
             if isinstance(validation_data, DataFrame):
                 valid_data = validation_data.select(self.features)
+                valid_features = valid_data.drop(self.label)
+                valid_label = valid_data[self.label]
                 valid_dataset_kwargs = (
                     self.validation_dataset_kwargs(validation_data)
                     if callable(self.validation_dataset_kwargs)
                     else self.validation_dataset_kwargs
                 )
                 valid_dataset = train_dataset.create_valid(
-                    valid_data.drop(self.label).to_numpy(),
-                    label=valid_data[self.label].to_numpy(),
+                    valid_features.to_numpy(),
+                    label=valid_label.to_numpy(),
                     **valid_dataset_kwargs,
                 )
                 valid_sets.append(valid_dataset)
@@ -85,24 +87,30 @@ class LightGBM(Component):
             else:
                 for name, valid_data in validation_data.items():
                     valid_data = valid_data.select(self.features)
+                    valid_features = valid_data.drop(self.label)
+                    valid_label = valid_data[self.label]
                     valid_dataset_kwargs = (
                         self.validation_dataset_kwargs(valid_data)
                         if callable(self.validation_dataset_kwargs)
                         else self.validation_dataset_kwargs
                     )
                     valid_dataset = train_dataset.create_valid(
-                        valid_data.drop(self.label).to_numpy(),
-                        label=valid_data[self.label].to_numpy(),
+                        valid_features.to_numpy(),
+                        label=valid_label.to_numpy(),
                         **valid_dataset_kwargs,
                     )
                     valid_sets.append(valid_dataset)
                     valid_names.append(name)
+
+        valid_sets.append(train_dataset)
+        valid_names.append("train")
 
         train_kwargs = (
             self.train_kwargs(data)
             if callable(self.train_kwargs)
             else self.train_kwargs
         )
+
         self.model = lgb.train(
             self.params,
             train_dataset,
