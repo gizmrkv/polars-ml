@@ -51,20 +51,21 @@ from .horizontal import (
     HorizontalSum,
 )
 from .transformer import LabelEncoding, MinMaxScaler, QuantileScaler, StandardScaler
-from .utils import Concat, Display, GroupByThen, Print, SortColumns
+from .utils import (
+    Concat,
+    Display,
+    GetAttr,
+    GroupByThen,
+    Join,
+    JoinAsof,
+    JoinWhere,
+    MergeSorted,
+    Print,
+    SortColumns,
+)
 
 if TYPE_CHECKING:
     from .model import ModelNameSpace
-
-
-class GetAttr(Component):
-    def __init__(self, method: str, *args: Any, **kwargs: Any):
-        self.method = method
-        self.args = args
-        self.kwargs = kwargs
-
-    def transform(self, data: DataFrame) -> DataFrame:
-        return getattr(data, self.method)(*self.args, **self.kwargs)
 
 
 class Pipeline(Component):
@@ -103,7 +104,7 @@ class Pipeline(Component):
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> DataFrame:
         for component in self.components:
-            data = component.fit_transform(data)
+            data = component.fit_transform(data, validation_data)
             if validation_data is None:
                 continue
 
@@ -276,7 +277,7 @@ class Pipeline(Component):
 
     def join(
         self,
-        other: DataFrame,
+        other: DataFrame | Component,
         on: str | Expr | Sequence[str | Expr] | None = None,
         how: JoinStrategy = "inner",
         *,
@@ -289,8 +290,7 @@ class Pipeline(Component):
         maintain_order: MaintainOrderJoin | None = None,
     ) -> Self:
         return self.pipe(
-            GetAttr(
-                "join",
+            Join(
                 other,
                 on,
                 how,
@@ -306,7 +306,7 @@ class Pipeline(Component):
 
     def join_asof(
         self,
-        other: DataFrame,
+        other: DataFrame | Component,
         *,
         left_on: str | None | Expr = None,
         right_on: str | None | Expr = None,
@@ -322,8 +322,7 @@ class Pipeline(Component):
         coalesce: bool = True,
     ) -> Self:
         return self.pipe(
-            GetAttr(
-                "join_asof",
+            JoinAsof(
                 other,
                 left_on=left_on,
                 right_on=right_on,
@@ -342,11 +341,11 @@ class Pipeline(Component):
 
     def join_where(
         self,
-        other: DataFrame,
+        other: DataFrame | Component,
         *predicates: Expr | Iterable[Expr],
         suffix: str = "_right",
     ) -> Self:
-        return self.pipe(GetAttr("join_where", other, *predicates, suffix=suffix))
+        return self.pipe(JoinWhere(other, *predicates, suffix=suffix))
 
     def limit(self, n: int = 5) -> Self:
         return self.pipe(GetAttr("limit", n))
@@ -366,8 +365,8 @@ class Pipeline(Component):
     def median(self) -> Self:
         return self.pipe(GetAttr("median"))
 
-    def merge_sorted(self, other: DataFrame, key: str) -> Self:
-        return self.pipe(GetAttr("merge_sorted", other, key))
+    def merge_sorted(self, other: DataFrame | Component, key: str) -> Self:
+        return self.pipe(MergeSorted(other, key))
 
     def min(self) -> Self:
         return self.pipe(GetAttr("min"))
