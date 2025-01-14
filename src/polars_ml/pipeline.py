@@ -56,6 +56,7 @@ from .utils import (
     Display,
     GetAttr,
     GroupByThen,
+    Impute,
     Join,
     JoinAsof,
     JoinWhere,
@@ -682,6 +683,15 @@ class Pipeline(Component):
         maintain_order: bool = False,
     ) -> Self:
         return self.pipe(GroupByThen(by, *aggs, maintain_order=maintain_order))
+
+    def impute(
+        self,
+        imputer: Component,
+        column: str,
+        *,
+        maintain_order: bool = False,
+    ) -> Self:
+        return self.pipe(Impute(imputer, column, maintain_order=maintain_order))
 
     def min_max_scale(self, *expr: IntoExpr | Iterable[IntoExpr]) -> Self:
         return self.pipe(MinMaxScaler(*expr))
