@@ -53,8 +53,6 @@ class LightGBM(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
-        import lightgbm as lgb
-
         train_data = data.select(self.features)
         train_features = train_data.drop(self.label)
         train_label = train_data[self.label]

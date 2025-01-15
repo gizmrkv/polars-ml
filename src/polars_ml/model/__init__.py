@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 __all__ = ["LightGBM"]
 
 
-class ModelNameSpace:
+class TreeNameSpace:
     def __init__(self, pipeline: "Pipeline"):
         self.pipeline = pipeline
 

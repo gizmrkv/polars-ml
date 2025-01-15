@@ -66,7 +66,7 @@ from .utils import (
 )
 
 if TYPE_CHECKING:
-    from .model import ModelNameSpace
+    from .model import TreeNameSpace
 
 
 class Pipeline(Component):
@@ -859,5 +859,5 @@ class Pipeline(Component):
         )
 
     @property
-    def model(self) -> "ModelNameSpace":
-        return ModelNameSpace(self)
+    def tree(self) -> "TreeNameSpace":
+        return TreeNameSpace(self)

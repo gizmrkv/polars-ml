@@ -9,7 +9,7 @@ from polars._typing import IntoExpr
 from polars_ml import Component
 
 if TYPE_CHECKING:
-    from catboost import CatBoost as CatBoostModel
+    import catboost as cb
 
 
 class CatBoost(Component):
@@ -26,7 +26,7 @@ class CatBoost(Component):
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
         predict_kwargs: dict[str, Any]
-        | Callable[[DataFrame, "CatBoostModel"], dict[str, Any]]
+        | Callable[[DataFrame, "cb.CatBoost"], dict[str, Any]]
         | None = None,
         pool_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
@@ -51,8 +51,6 @@ class CatBoost(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
-        from catboost import CatBoost, Pool
-
         train_data = data.select(self.features)
         train_features = train_data.drop(self.label)
         train_label = train_data[self.label]
@@ -61,7 +59,7 @@ class CatBoost(Component):
             self.pool_kwargs(data) if callable(self.pool_kwargs) else self.pool_kwargs
         )
 
-        train_pool = Pool(
+        train_pool = cb.Pool(
             data=train_features.to_numpy(),
             label=train_label.to_numpy(),
             feature_names=train_features.columns,
@@ -75,7 +73,7 @@ class CatBoost(Component):
                 valid_data = validation_data.select(self.features)
                 valid_features = valid_data.drop(self.label)
                 valid_label = valid_data[self.label]
-                valid_pool = Pool(
+                valid_pool = cb.Pool(
                     data=valid_features.to_numpy(),
                     label=valid_label.to_numpy(),
                     feature_names=valid_features.columns,
@@ -88,7 +86,7 @@ class CatBoost(Component):
                     valid_data = raw_valid_data.select(self.features)
                     valid_features = valid_data.drop(self.label)
                     valid_label = valid_data[self.label]
-                    valid_pool = Pool(
+                    valid_pool = cb.Pool(
                         data=valid_features.to_numpy(),
                         label=valid_label.to_numpy(),
                         feature_names=valid_features.columns,
@@ -103,7 +101,7 @@ class CatBoost(Component):
             else self.train_kwargs
         )
 
-        self.model = CatBoost(self.params)
+        self.model = cb.CatBoost(self.params)
         self.model.fit(
             train_pool,
             eval_set=eval_sets if eval_sets else None,
