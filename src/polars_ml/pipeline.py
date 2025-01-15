@@ -50,7 +50,13 @@ from .horizontal import (
     HorizontalQuantile,
     HorizontalSum,
 )
-from .transformer import LabelEncoding, MinMaxScaler, QuantileScaler, StandardScaler
+from .transformer import (
+    Binning,
+    LabelEncoding,
+    MinMaxScaler,
+    QuantileScaler,
+    StandardScaler,
+)
 from .utils import (
     Concat,
     Display,
@@ -66,7 +72,7 @@ from .utils import (
 )
 
 if TYPE_CHECKING:
-    from .model import TreeNameSpace
+    from .model import LinearNameSpace, TreeNameSpace
 
 
 class Pipeline(Component):
@@ -716,6 +722,26 @@ class Pipeline(Component):
             LabelEncoding(*exprs, orders=orders, maintain_order=maintain_order)
         )
 
+    def binning(
+        self,
+        *exprs: IntoExpr | Iterable[IntoExpr],
+        quantiles: Sequence[float] | int,
+        labels: Sequence[str] | None = None,
+        left_closed: bool = False,
+        allow_duplicates: bool = False,
+        suffix: str = "_bin",
+    ) -> Self:
+        return self.pipe(
+            Binning(
+                *exprs,
+                quantiles=quantiles,
+                labels=labels,
+                left_closed=left_closed,
+                allow_duplicates=allow_duplicates,
+                suffix=suffix,
+            )
+        )
+
     def horizontal_agg(
         self,
         *expr: IntoExpr | Iterable[IntoExpr],
@@ -861,3 +887,7 @@ class Pipeline(Component):
     @property
     def tree(self) -> "TreeNameSpace":
         return TreeNameSpace(self)
+
+    @property
+    def linear(self) -> "LinearNameSpace":
+        return LinearNameSpace(self)
