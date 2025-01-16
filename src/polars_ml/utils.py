@@ -22,7 +22,6 @@ class GetAttr(Component):
         self.kwargs = kwargs
 
     def transform(self, data: DataFrame) -> DataFrame:
-        data.join
         return getattr(data, self.method)(*self.args, **self.kwargs)
 
 
