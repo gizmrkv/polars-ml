@@ -7,6 +7,7 @@ from polars._typing import IntoExpr
 from polars_ml import Pipeline
 
 from .catboost_ import CatBoost
+from .decomposition import NMF, PCA, TruncatedSVD
 from .lightgbm_ import LightGBM
 from .linear import ElasticNet, Lasso, LinearRegression, Ridge
 from .xgboost_ import XGBoost
@@ -238,6 +239,80 @@ class LinearNameSpace:
                 label,
                 prediction_name=prediction_name,
                 append_prediction=append_prediction,
+                model_kwargs=model_kwargs,
+                fit_kwargs=fit_kwargs,
+            )
+        )
+
+
+class DecompositionNameSpace:
+    def __init__(self, pipeline: "Pipeline"):
+        self.pipeline = pipeline
+
+    def pca(
+        self,
+        features: IntoExpr | Iterable[IntoExpr],
+        *,
+        components_name: str = "pca",
+        append_components: bool = True,
+        model_kwargs: dict[str, Any]
+        | Callable[[DataFrame], dict[str, Any]]
+        | None = None,
+        fit_kwargs: dict[str, Any]
+        | Callable[[DataFrame], dict[str, Any]]
+        | None = None,
+    ) -> "Pipeline":
+        return self.pipeline.pipe(
+            PCA(
+                features,
+                components_name=components_name,
+                append_components=append_components,
+                model_kwargs=model_kwargs,
+                fit_kwargs=fit_kwargs,
+            )
+        )
+
+    def nmf(
+        self,
+        features: IntoExpr | Iterable[IntoExpr],
+        *,
+        components_name: str = "nmf",
+        append_components: bool = True,
+        model_kwargs: dict[str, Any]
+        | Callable[[DataFrame], dict[str, Any]]
+        | None = None,
+        fit_kwargs: dict[str, Any]
+        | Callable[[DataFrame], dict[str, Any]]
+        | None = None,
+    ) -> "Pipeline":
+        return self.pipeline.pipe(
+            NMF(
+                features,
+                components_name=components_name,
+                append_components=append_components,
+                model_kwargs=model_kwargs,
+                fit_kwargs=fit_kwargs,
+            )
+        )
+
+    def truncated_svd(
+        self,
+        features: IntoExpr | Iterable[IntoExpr],
+        *,
+        components_name: str = "truncated_svd",
+        append_components: bool = True,
+        model_kwargs: dict[str, Any]
+        | Callable[[DataFrame], dict[str, Any]]
+        | None = None,
+        fit_kwargs: dict[str, Any]
+        | Callable[[DataFrame], dict[str, Any]]
+        | None = None,
+    ) -> "Pipeline":
+        return self.pipeline.pipe(
+            TruncatedSVD(
+                features,
+                components_name=components_name,
+                append_components=append_components,
                 model_kwargs=model_kwargs,
                 fit_kwargs=fit_kwargs,
             )

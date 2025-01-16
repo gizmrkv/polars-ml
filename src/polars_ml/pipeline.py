@@ -72,7 +72,7 @@ from .utils import (
 )
 
 if TYPE_CHECKING:
-    from .model import LinearNameSpace, TreeNameSpace
+    from .model import DecompositionNameSpace, LinearNameSpace, TreeNameSpace
 
 
 class Pipeline(Component):
@@ -891,3 +891,7 @@ class Pipeline(Component):
     @property
     def linear(self) -> "LinearNameSpace":
         return LinearNameSpace(self)
+
+    @property
+    def decomposition(self) -> "DecompositionNameSpace":
+        return DecompositionNameSpace(self)
