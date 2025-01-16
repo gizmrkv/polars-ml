@@ -1,8 +1,9 @@
 import itertools
 from pathlib import Path
-from typing import Iterable, Iterator
+from typing import Any, Iterable, Iterator, Sequence
 
 import matplotlib.pyplot as plt
+import seaborn as sns
 from polars import DataFrame
 from polars._typing import ColumnNameOrSelector
 
@@ -52,3 +53,33 @@ class iter_plots:
             fig.savefig(self.save_dir / f"{filename}.png")
             fig.clear()
             plt.close(fig)
+
+
+def count_heatmap(
+    data: DataFrame,
+    x: str,
+    y: str,
+    *,
+    labels: dict[str, Sequence[Any]] | None = None,
+    heatmap_kwargs: dict[str, Any] | None = None,
+    ax: plt.Axes,
+):
+    data = (
+        data.select(x, y)
+        .group_by(x, y)
+        .len()
+        .pivot(x, index=y, values="len")
+        .fill_null(0)
+    )
+
+    labels = labels or {}
+    xlabels = labels.get(x, data.columns[1:])
+    ylabels = labels.get(y, data[y].to_list())
+
+    m = data.drop(y).to_numpy()
+    sns.heatmap(m, ax=ax, **(heatmap_kwargs or {}))
+    ax.set_xticklabels(xlabels, rotation=90)
+    ax.set_yticklabels(ylabels, rotation=0)
+    ax.set_xlabel(x)
+    ax.set_ylabel(y)
+    ax.set_title(f"{x} vs {y}")
