@@ -16,7 +16,7 @@ class LightGBM(Component):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
-        label: str,
+        label: IntoExpr,
         params: dict[str, Any],
         *,
         prediction_name: str = "lightgbm",
@@ -53,9 +53,8 @@ class LightGBM(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
-        train_data = data.select(self.features)
-        train_features = train_data.drop(self.label)
-        train_label = train_data[self.label]
+        train_features = data.select(self.features)
+        train_label = data.select(self.label)
         train_dataset_kwargs = (
             self.train_dataset_kwargs(data)
             if callable(self.train_dataset_kwargs)
@@ -63,7 +62,7 @@ class LightGBM(Component):
         )
         train_dataset = lgb.Dataset(
             train_features.to_numpy(),
-            label=train_label.to_numpy(),
+            label=train_label.to_numpy().squeeze(),
             feature_name=train_features.columns,
             **train_dataset_kwargs,
         )
@@ -72,9 +71,9 @@ class LightGBM(Component):
         valid_names = []
         if validation_data is not None:
             if isinstance(validation_data, DataFrame):
-                valid_data = validation_data.select(self.features)
-                valid_features = valid_data.drop(self.label)
-                valid_label = valid_data[self.label]
+                valid_features = validation_data.select(self.features)
+                valid_label = validation_data.select(self.label)
+
                 valid_dataset_kwargs = (
                     self.validation_dataset_kwargs(validation_data)
                     if callable(self.validation_dataset_kwargs)
@@ -82,16 +81,15 @@ class LightGBM(Component):
                 )
                 valid_dataset = train_dataset.create_valid(
                     valid_features.to_numpy(),
-                    label=valid_label.to_numpy(),
+                    label=valid_label.to_numpy().squeeze(),
                     **valid_dataset_kwargs,
                 )
                 valid_sets.append(valid_dataset)
                 valid_names.append("valid")
             else:
                 for name, raw_valid_data in validation_data.items():
-                    valid_data = raw_valid_data.select(self.features)
-                    valid_features = valid_data.drop(self.label)
-                    valid_label = valid_data[self.label]
+                    valid_features = raw_valid_data.select(self.features)
+                    valid_label = raw_valid_data.select(self.label)
                     valid_dataset_kwargs = (
                         self.validation_dataset_kwargs(raw_valid_data)
                         if callable(self.validation_dataset_kwargs)
@@ -99,7 +97,7 @@ class LightGBM(Component):
                     )
                     valid_dataset = train_dataset.create_valid(
                         valid_features.to_numpy(),
-                        label=valid_label.to_numpy(),
+                        label=valid_label.to_numpy().squeeze(),
                         **valid_dataset_kwargs,
                     )
                     valid_sets.append(valid_dataset)
@@ -138,7 +136,7 @@ class LightGBM(Component):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        input = data.select(self.features).select(pl.exclude(self.label))
+        input = data.select(self.features)
         predict_kwargs = (
             self.predict_kwargs(data, self.model)
             if callable(self.predict_kwargs)

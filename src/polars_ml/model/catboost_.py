@@ -51,9 +51,8 @@ class CatBoost(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
-        train_data = data.select(self.features)
-        train_features = train_data.drop(self.label)
-        train_label = train_data[self.label]
+        train_features = data.select(self.features)
+        train_label = data.select(self.label)
 
         pool_kwargs = (
             self.pool_kwargs(data) if callable(self.pool_kwargs) else self.pool_kwargs
@@ -61,7 +60,7 @@ class CatBoost(Component):
 
         train_pool = cb.Pool(
             data=train_features.to_numpy(),
-            label=train_label.to_numpy(),
+            label=train_label.to_numpy().squeeze(),
             feature_names=train_features.columns,
             cat_features=self.cat_features,
             **pool_kwargs,
@@ -70,12 +69,12 @@ class CatBoost(Component):
         eval_sets = []
         if validation_data is not None:
             if isinstance(validation_data, DataFrame):
-                valid_data = validation_data.select(self.features)
-                valid_features = valid_data.drop(self.label)
-                valid_label = valid_data[self.label]
+                valid_features = validation_data.select(self.features)
+                valid_label = validation_data.select(self.label)
+
                 valid_pool = cb.Pool(
                     data=valid_features.to_numpy(),
-                    label=valid_label.to_numpy(),
+                    label=valid_label.to_numpy().squeeze(),
                     feature_names=valid_features.columns,
                     cat_features=self.cat_features,
                     **pool_kwargs,
@@ -83,12 +82,12 @@ class CatBoost(Component):
                 eval_sets.append(valid_pool)
             else:
                 for raw_valid_data in validation_data.values():
-                    valid_data = raw_valid_data.select(self.features)
-                    valid_features = valid_data.drop(self.label)
-                    valid_label = valid_data[self.label]
+                    valid_features = raw_valid_data.select(self.features)
+                    valid_label = raw_valid_data.select(self.label)
+
                     valid_pool = cb.Pool(
                         data=valid_features.to_numpy(),
-                        label=valid_label.to_numpy(),
+                        label=valid_label.to_numpy().squeeze(),
                         feature_names=valid_features.columns,
                         cat_features=self.cat_features,
                         **pool_kwargs,
@@ -117,7 +116,7 @@ class CatBoost(Component):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        input = data.select(self.features).select(pl.exclude(self.label))
+        input = data.select(self.features)
         predict_kwargs = (
             self.predict_kwargs(data, self.model)
             if callable(self.predict_kwargs)

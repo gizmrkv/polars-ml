@@ -4,8 +4,6 @@ from typing import TYPE_CHECKING, Any, Callable, Iterable
 from polars import DataFrame
 from polars._typing import IntoExpr
 
-from polars_ml import Pipeline
-
 from .catboost_ import CatBoost
 from .decomposition import NMF, PCA, TruncatedSVD
 from .lightgbm_ import LightGBM
@@ -19,7 +17,18 @@ if TYPE_CHECKING:
 
     from polars_ml import Pipeline
 
-__all__ = ["LightGBM"]
+__all__ = [
+    "LightGBM",
+    "XGBoost",
+    "CatBoost",
+    "LinearRegression",
+    "Ridge",
+    "Lasso",
+    "ElasticNet",
+    "PCA",
+    "NMF",
+    "TruncatedSVD",
+]
 
 
 class TreeNameSpace:

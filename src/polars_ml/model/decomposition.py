@@ -8,9 +8,6 @@ from polars._typing import IntoExpr
 
 from polars_ml import Component
 
-if TYPE_CHECKING:
-    from sklearn import decomposition
-
 
 class DecompositionModel(Component, ABC):
     def __init__(
@@ -83,6 +80,8 @@ class PCA(DecompositionModel):
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
+        from sklearn import decomposition
+
         super().__init__(
             features=features,
             components_name=components_name,
@@ -107,6 +106,8 @@ class NMF(DecompositionModel):
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
+        from sklearn import decomposition
+
         super().__init__(
             features=features,
             components_name=components_name,
@@ -131,6 +132,8 @@ class TruncatedSVD(DecompositionModel):
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
+        from sklearn import decomposition
+
         super().__init__(
             features=features,
             components_name=components_name,

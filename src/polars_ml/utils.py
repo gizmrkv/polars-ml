@@ -320,16 +320,17 @@ class Display(Component):
 class Concat(Component):
     def __init__(
         self,
-        components: Iterable[Component],
-        *,
+        *components: Component,
         how: ConcatMethod = "vertical",
         rechunk: bool = False,
         parallel: bool = True,
+        append_output: bool = True,
     ):
         self.components = components
         self.how: ConcatMethod = how
         self.rechunk = rechunk
         self.parallel = parallel
+        self.append_output = append_output
 
     def fit(
         self,
@@ -342,6 +343,9 @@ class Concat(Component):
 
     def transform(self, data: DataFrame) -> DataFrame:
         data_list = [component.transform(data) for component in self.components]
+        if self.append_output:
+            data_list = [data] + data_list
+
         return pl.concat(
             data_list, how=self.how, rechunk=self.rechunk, parallel=self.parallel
         )
@@ -355,6 +359,9 @@ class Concat(Component):
             component.fit_transform(data, validation_data)
             for component in self.components
         ]
+        if self.append_output:
+            data_list = [data] + data_list
+
         return pl.concat(
             data_list, how=self.how, rechunk=self.rechunk, parallel=self.parallel
         )

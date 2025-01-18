@@ -50,6 +50,7 @@ from .horizontal import (
     HorizontalQuantile,
     HorizontalSum,
 )
+from .model import DecompositionNameSpace, LinearNameSpace, TreeNameSpace
 from .transformer import (
     Binning,
     LabelEncoding,
@@ -70,9 +71,6 @@ from .utils import (
     Print,
     SortColumns,
 )
-
-if TYPE_CHECKING:
-    from .model import DecompositionNameSpace, LinearNameSpace, TreeNameSpace
 
 
 class Pipeline(Component):
@@ -659,16 +657,33 @@ class Pipeline(Component):
     def with_row_index(self, name: str = "index", offset: int = 0) -> Self:
         return self.pipe(GetAttr("with_row_index", name, offset))
 
+    def to_dummies(
+        self,
+        columns: ColumnNameOrSelector | Sequence[ColumnNameOrSelector] | None = None,
+        *,
+        separator: str = "_",
+        drop_first: bool = False,
+    ) -> Self:
+        return self.pipe(
+            GetAttr("to_dummies", columns, separator=separator, drop_first=drop_first)
+        )
+
     def concat(
         self,
-        components: Iterable[Component],
-        *,
+        *components: Component,
         how: ConcatMethod = "vertical",
         rechunk: bool = False,
         parallel: bool = True,
+        append_output: bool = True,
     ) -> Self:
         return self.pipe(
-            Concat(components, how=how, rechunk=rechunk, parallel=parallel)
+            Concat(
+                *components,
+                how=how,
+                rechunk=rechunk,
+                parallel=parallel,
+                append_output=append_output,
+            )
         )
 
     def print(self) -> Self:
@@ -885,13 +900,13 @@ class Pipeline(Component):
         )
 
     @property
-    def tree(self) -> "TreeNameSpace":
+    def tree(self) -> TreeNameSpace:
         return TreeNameSpace(self)
 
     @property
-    def linear(self) -> "LinearNameSpace":
+    def linear(self) -> LinearNameSpace:
         return LinearNameSpace(self)
 
     @property
-    def decomposition(self) -> "DecompositionNameSpace":
+    def decomposition(self) -> DecompositionNameSpace:
         return DecompositionNameSpace(self)

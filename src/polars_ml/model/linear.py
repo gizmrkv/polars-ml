@@ -9,15 +9,12 @@ from polars._typing import IntoExpr
 
 from polars_ml import Component
 
-if TYPE_CHECKING:
-    from sklearn import linear_model
-
 
 class LinearModel(Component, ABC):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
-        label: str,
+        label: IntoExpr,
         *,
         prediction_name: str,
         append_prediction: bool,
@@ -42,9 +39,8 @@ class LinearModel(Component, ABC):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
-        train_data = data.select(self.features)
-        train_features = train_data.drop(self.label)
-        train_label = train_data[self.label]
+        train_features = data.select(self.features)
+        train_label = data.select(self.label)
 
         model_kwargs = (
             self.model_kwargs(data)
@@ -56,14 +52,19 @@ class LinearModel(Component, ABC):
         fit_kwargs = (
             self.fit_kwargs(data) if callable(self.fit_kwargs) else self.fit_kwargs
         )
-        self.model.fit(train_features.to_numpy(), train_label.to_numpy(), **fit_kwargs)
+        self.model.fit(
+            train_features.to_numpy(), train_label.to_numpy().squeeze(), **fit_kwargs
+        )
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        input = data.select(self.features).select(pl.exclude(self.label))
+        input = data.select(self.features)
         pred: NDArray[Any] = self.model.predict(input.to_numpy())
-        data = data.with_columns(Series(self.prediction_name, pred))
-        return data
+
+        if self.append_prediction:
+            return data.with_columns(Series(self.prediction_name, pred))
+        else:
+            return DataFrame(Series(self.prediction_name, pred))
 
 
 class LinearRegression(LinearModel):
@@ -81,6 +82,8 @@ class LinearRegression(LinearModel):
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
+        from sklearn import linear_model
+
         super().__init__(
             features,
             label,
@@ -107,6 +110,8 @@ class Ridge(LinearModel):
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
+        from sklearn import linear_model
+
         super().__init__(
             features,
             label,
@@ -133,6 +138,8 @@ class Lasso(LinearModel):
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
+        from sklearn import linear_model
+
         super().__init__(
             features,
             label,
@@ -159,6 +166,8 @@ class ElasticNet(LinearModel):
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
+        from sklearn import linear_model
+
         super().__init__(
             features,
             label,
