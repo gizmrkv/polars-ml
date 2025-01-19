@@ -1,15 +1,5 @@
 from datetime import timedelta
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Collection,
-    Iterable,
-    Literal,
-    Mapping,
-    Self,
-    Sequence,
-)
+from typing import Any, Callable, Collection, Iterable, Literal, Mapping, Self, Sequence
 
 import numpy as np
 from polars import DataFrame, Expr, Series
@@ -51,11 +41,12 @@ from .horizontal import (
     HorizontalSum,
 )
 from .model import DecompositionNameSpace, LinearNameSpace, TreeNameSpace
-from .transformer import (
+from .preprocess import (
     Binning,
     LabelEncoding,
     MinMaxScaler,
-    QuantileScaler,
+    Polynomial,
+    RobustScaler,
     StandardScaler,
 )
 from .utils import (
@@ -76,6 +67,10 @@ from .utils import (
 class Pipeline(Component):
     def __init__(self):
         self.components: list[Component] = []
+        self.components_dict: dict[str, Component] = {}
+
+    def __getitem__(self, key: str) -> Component:
+        return self.components_dict[key]
 
     def fit(
         self,
@@ -123,8 +118,10 @@ class Pipeline(Component):
 
         return data
 
-    def pipe(self, component: Component) -> Self:
+    def pipe(self, component: Component, *, component_name: str | None = None) -> Self:
         self.components.append(component)
+        if component_name is not None:
+            self.components_dict[component_name] = component
         return self
 
     def approx_n_unique(self) -> Self:
@@ -293,6 +290,7 @@ class Pipeline(Component):
         join_nulls: bool = False,
         coalesce: bool | None = None,
         maintain_order: MaintainOrderJoin | None = None,
+        component_name: str | None = None,
     ) -> Self:
         return self.pipe(
             Join(
@@ -306,7 +304,8 @@ class Pipeline(Component):
                 join_nulls=join_nulls,
                 coalesce=coalesce,
                 maintain_order=maintain_order,
-            )
+            ),
+            component_name=component_name,
         )
 
     def join_asof(
@@ -325,6 +324,7 @@ class Pipeline(Component):
         allow_parallel: bool = True,
         force_parallel: bool = False,
         coalesce: bool = True,
+        component_name: str | None = None,
     ) -> Self:
         return self.pipe(
             JoinAsof(
@@ -341,7 +341,8 @@ class Pipeline(Component):
                 allow_parallel=allow_parallel,
                 force_parallel=force_parallel,
                 coalesce=coalesce,
-            )
+            ),
+            component_name=component_name,
         )
 
     def join_where(
@@ -349,8 +350,11 @@ class Pipeline(Component):
         other: DataFrame | Component,
         *predicates: Expr | Iterable[Expr],
         suffix: str = "_right",
+        component_name: str | None = None,
     ) -> Self:
-        return self.pipe(JoinWhere(other, *predicates, suffix=suffix))
+        return self.pipe(
+            JoinWhere(other, *predicates, suffix=suffix), component_name=component_name
+        )
 
     def limit(self, n: int = 5) -> Self:
         return self.pipe(GetAttr("limit", n))
@@ -675,6 +679,7 @@ class Pipeline(Component):
         rechunk: bool = False,
         parallel: bool = True,
         append_output: bool = True,
+        component_name: str | None = None,
     ) -> Self:
         return self.pipe(
             Concat(
@@ -683,7 +688,8 @@ class Pipeline(Component):
                 rechunk=rechunk,
                 parallel=parallel,
                 append_output=append_output,
-            )
+            ),
+            component_name=component_name,
         )
 
     def print(self) -> Self:
@@ -702,8 +708,12 @@ class Pipeline(Component):
         by: str | Expr | Sequence[str | Expr] | None = None,
         *aggs: IntoExpr | Iterable[IntoExpr],
         maintain_order: bool = False,
+        component_name: str | None = None,
     ) -> Self:
-        return self.pipe(GroupByThen(by, *aggs, maintain_order=maintain_order))
+        return self.pipe(
+            GroupByThen(by, *aggs, maintain_order=maintain_order),
+            component_name=component_name,
+        )
 
     def impute(
         self,
@@ -711,30 +721,51 @@ class Pipeline(Component):
         column: str,
         *,
         maintain_order: bool = False,
+        component_name: str | None = None,
     ) -> Self:
-        return self.pipe(Impute(imputer, column, maintain_order=maintain_order))
+        return self.pipe(
+            Impute(imputer, column, maintain_order=maintain_order),
+            component_name=component_name,
+        )
 
-    def min_max_scale(self, *expr: IntoExpr | Iterable[IntoExpr]) -> Self:
-        return self.pipe(MinMaxScaler(*expr))
-
-    def standard_scale(self, *expr: IntoExpr | Iterable[IntoExpr]) -> Self:
-        return self.pipe(StandardScaler(*expr))
-
-    def quantile_scale(
+    def standard_scale(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
-        quantile: tuple[float, float] = (0.25, 0.75),
+        *column: str,
+        by: str | Sequence[str] | None = None,
+        component_name: str | None = None,
     ) -> Self:
-        return self.pipe(QuantileScaler(*expr, quantile=quantile))
+        return self.pipe(StandardScaler(*column, by=by), component_name=component_name)
+
+    def min_max_scale(
+        self,
+        *column: str,
+        by: str | Sequence[str] | None = None,
+        component_name: str | None = None,
+    ) -> Self:
+        return self.pipe(MinMaxScaler(*column, by=by), component_name=component_name)
+
+    def robust_scale(
+        self,
+        *column: str,
+        by: str | Sequence[str] | None = None,
+        quantile: tuple[float, float] = (0.25, 0.75),
+        component_name: str | None = None,
+    ) -> Self:
+        return self.pipe(
+            RobustScaler(*column, by=by, quantile=quantile),
+            component_name=component_name,
+        )
 
     def label_encode(
         self,
         *exprs: IntoExpr | Iterable[IntoExpr],
         orders: dict[str, Sequence[Any]] | None = None,
         maintain_order: bool = False,
+        component_name: str | None = None,
     ) -> Self:
         return self.pipe(
-            LabelEncoding(*exprs, orders=orders, maintain_order=maintain_order)
+            LabelEncoding(*exprs, orders=orders, maintain_order=maintain_order),
+            component_name=component_name,
         )
 
     def binning(
@@ -745,6 +776,7 @@ class Pipeline(Component):
         left_closed: bool = False,
         allow_duplicates: bool = False,
         suffix: str = "_bin",
+        component_name: str | None = None,
     ) -> Self:
         return self.pipe(
             Binning(
@@ -754,7 +786,18 @@ class Pipeline(Component):
                 left_closed=left_closed,
                 allow_duplicates=allow_duplicates,
                 suffix=suffix,
-            )
+            ),
+            component_name=component_name,
+        )
+
+    def polynomial(
+        self,
+        *features: ColumnNameOrSelector,
+        degree: int = 2,
+        component_name: str | None = None,
+    ) -> Self:
+        return self.pipe(
+            Polynomial(*features, degree=degree), component_name=component_name
         )
 
     def horizontal_agg(

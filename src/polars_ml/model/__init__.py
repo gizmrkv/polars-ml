@@ -57,6 +57,7 @@ class TreeNameSpace:
         | None = None,
         dir: str | Path | None = None,
         plot_importance: bool = False,
+        component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
             LightGBM(
@@ -69,7 +70,10 @@ class TreeNameSpace:
                 predict_kwargs=predict_kwargs,
                 train_dataset_kwargs=train_dataset_kwargs,
                 validation_dataset_kwargs=validation_dataset_kwargs,
-            )
+                dir=dir,
+                plot_importance=plot_importance,
+            ),
+            component_name=component_name,
         )
 
     def xgboost(
@@ -94,6 +98,7 @@ class TreeNameSpace:
         | None = None,
         dir: str | Path | None = None,
         plot_importance: bool = False,
+        component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
             XGBoost(
@@ -108,7 +113,8 @@ class TreeNameSpace:
                 validation_dmatrix_kwargs=validation_dmatrix_kwargs,
                 dir=dir,
                 plot_importance=plot_importance,
-            )
+            ),
+            component_name=component_name,
         )
 
     def catboost(
@@ -131,6 +137,7 @@ class TreeNameSpace:
         | None = None,
         dir: str | Path | None = None,
         plot_importance: bool = False,
+        component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
             CatBoost(
@@ -145,7 +152,8 @@ class TreeNameSpace:
                 pool_kwargs=pool_kwargs,
                 dir=dir,
                 plot_importance=plot_importance,
-            )
+            ),
+            component_name=component_name,
         )
 
 
@@ -166,6 +174,7 @@ class LinearNameSpace:
         fit_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
+        component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
             LinearRegression(
@@ -175,7 +184,8 @@ class LinearNameSpace:
                 append_prediction=append_prediction,
                 model_kwargs=model_kwargs,
                 fit_kwargs=fit_kwargs,
-            )
+            ),
+            component_name=component_name,
         )
 
     def ridge(
@@ -191,6 +201,7 @@ class LinearNameSpace:
         fit_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
+        component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
             Ridge(
@@ -200,7 +211,8 @@ class LinearNameSpace:
                 append_prediction=append_prediction,
                 model_kwargs=model_kwargs,
                 fit_kwargs=fit_kwargs,
-            )
+            ),
+            component_name=component_name,
         )
 
     def lasso(
@@ -216,6 +228,7 @@ class LinearNameSpace:
         fit_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
+        component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
             Lasso(
@@ -225,7 +238,8 @@ class LinearNameSpace:
                 append_prediction=append_prediction,
                 model_kwargs=model_kwargs,
                 fit_kwargs=fit_kwargs,
-            )
+            ),
+            component_name=component_name,
         )
 
     def elastic_net(
@@ -241,6 +255,7 @@ class LinearNameSpace:
         fit_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
+        component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
             ElasticNet(
@@ -250,7 +265,8 @@ class LinearNameSpace:
                 append_prediction=append_prediction,
                 model_kwargs=model_kwargs,
                 fit_kwargs=fit_kwargs,
-            )
+            ),
+            component_name=component_name,
         )
 
 
@@ -270,6 +286,7 @@ class DecompositionNameSpace:
         fit_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
+        component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
             PCA(
@@ -278,7 +295,8 @@ class DecompositionNameSpace:
                 append_components=append_components,
                 model_kwargs=model_kwargs,
                 fit_kwargs=fit_kwargs,
-            )
+            ),
+            component_name=component_name,
         )
 
     def nmf(
@@ -293,6 +311,7 @@ class DecompositionNameSpace:
         fit_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
+        component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
             NMF(
@@ -301,7 +320,8 @@ class DecompositionNameSpace:
                 append_components=append_components,
                 model_kwargs=model_kwargs,
                 fit_kwargs=fit_kwargs,
-            )
+            ),
+            component_name=component_name,
         )
 
     def truncated_svd(
@@ -316,6 +336,7 @@ class DecompositionNameSpace:
         fit_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
+        component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
             TruncatedSVD(
@@ -324,5 +345,6 @@ class DecompositionNameSpace:
                 append_components=append_components,
                 model_kwargs=model_kwargs,
                 fit_kwargs=fit_kwargs,
-            )
+            ),
+            component_name=component_name,
         )
