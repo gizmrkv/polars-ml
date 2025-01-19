@@ -10,7 +10,7 @@ from polars._typing import ColumnNameOrSelector, IntoExpr
 from polars_ml import Component
 
 
-class MoveScaler(Component, ABC):
+class BaseScaler(Component, ABC):
     def __init__(self, *column: str, by: str | Sequence[str] | None = None):
         self.columns = column
         self.by = [by] if isinstance(by, str) else list(by) if by is not None else None
@@ -111,7 +111,56 @@ class MoveScaler(Component, ABC):
             )
 
 
-class StandardScaler(MoveScaler):
+class InverseScaler(Component):
+    def __init__(self, scaler: BaseScaler, mapping: dict[str, str]):
+        self.scaler = scaler
+        self.mapping = mapping
+
+    def transform(self, data: DataFrame) -> DataFrame:
+        columns = (
+            data.lazy()
+            .select(cs.matches(r"|".join(self.mapping.keys())))
+            .collect_schema()
+            .names()
+        )
+        scales = (
+            data.lazy()
+            .select([self.mapping[col] for col in columns])
+            .collect_schema()
+            .names()
+        )
+        if self.scaler.by:
+            return (
+                data.join(
+                    self.scaler.move_scale.select(
+                        *self.scaler.by,
+                        *[f"{col}_move" for col in scales],
+                        *[f"{col}_scale" for col in scales],
+                    ),
+                    on=self.scaler.by,
+                    how="left",
+                )
+                .with_columns(
+                    [
+                        (pl.col(col) * pl.col(f"{self.mapping[col]}_scale"))
+                        + pl.col(f"{self.mapping[col]}_move")
+                        for col in columns
+                    ]
+                )
+                .select(data.columns)
+            )
+        else:
+            move_scale = self.scaler.move_scale.row(0, named=True)
+            return data.with_columns(
+                [
+                    (pl.col(col) * move_scale[f"{self.mapping[col]}_scale"])
+                    + move_scale[f"{self.mapping[col]}_move"]
+                    for col in columns
+                ]
+            )
+
+
+class StandardScaler(BaseScaler):
     def move_expr(self, column: str) -> Expr:
         return pl.col(column).mean()
 
@@ -119,7 +168,7 @@ class StandardScaler(MoveScaler):
         return pl.col(column).std()
 
 
-class MinMaxScaler(MoveScaler):
+class MinMaxScaler(BaseScaler):
     def move_expr(self, column: str) -> Expr:
         return pl.col(column).min()
 
@@ -127,7 +176,7 @@ class MinMaxScaler(MoveScaler):
         return pl.col(column).max() - pl.col(column).min()
 
 
-class RobustScaler(MoveScaler):
+class RobustScaler(BaseScaler):
     def __init__(
         self,
         *column: str,

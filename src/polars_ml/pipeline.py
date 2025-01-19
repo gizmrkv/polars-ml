@@ -42,7 +42,9 @@ from .horizontal import (
 )
 from .model import DecompositionNameSpace, LinearNameSpace, TreeNameSpace
 from .preprocess import (
+    BaseScaler,
     Binning,
+    InverseScaler,
     LabelEncoding,
     MinMaxScaler,
     Polynomial,
@@ -755,6 +757,25 @@ class Pipeline(Component):
             RobustScaler(*column, by=by, quantile=quantile),
             component_name=component_name,
         )
+
+    def inverse_scale(
+        self,
+        scaler: str | BaseScaler,
+        mapping: dict[str, str],
+        *,
+        component_name: str | None = None,
+    ) -> Self:
+        if isinstance(scaler, str):
+            scaler_component = self[scaler]
+            if not isinstance(scaler_component, BaseScaler):
+                raise ValueError(
+                    "scaler must be a BaseScaler instance or the name of a component that is a BaseScaler instance."
+                )
+            inverse = InverseScaler(scaler_component, mapping)
+        else:
+            inverse = InverseScaler(scaler, mapping)
+
+        return self.pipe(inverse, component_name=component_name)
 
     def label_encode(
         self,
