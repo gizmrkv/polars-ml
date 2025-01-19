@@ -50,7 +50,7 @@
             └─────────┴──────────────────────┴────────────────────┴──────────┘
     - num_soldの平均は
         - Kenay << Italy < Finland < Canada = Singapore < Norway
-        - HG <<> Ker < KDM < KT< K
+        - HG << Ker < KDM < KT< K
         - Discount < Less < Premium
     - 2011年で急上昇
     - 2015年で急減少
