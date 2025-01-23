@@ -41,7 +41,7 @@ class BaseScaler(Component, ABC):
     def transform(self, data: DataFrame) -> DataFrame:
         columns = (
             data.lazy()
-            .select(cs.matches(r"|".join(self.columns)))
+            .select(set(data.columns) & set(self.columns))
             .collect_schema()
             .names()
         )
@@ -77,7 +77,7 @@ class BaseScaler(Component, ABC):
     def inverse_transform(self, data: DataFrame) -> DataFrame:
         columns = (
             data.lazy()
-            .select(cs.matches(r"|".join(self.columns)))
+            .select(set(data.columns) & set(self.columns))
             .collect_schema()
             .names()
         )
@@ -119,13 +119,13 @@ class InverseScaler(Component):
     def transform(self, data: DataFrame) -> DataFrame:
         columns = (
             data.lazy()
-            .select(cs.matches(r"|".join(self.mapping.keys())))
+            .select(set(data.columns) & set(self.mapping.keys()))
             .collect_schema()
             .names()
         )
         scales = (
             data.lazy()
-            .select([self.mapping[col] for col in columns])
+            .select(set(data.columns) & set(self.mapping.values()))
             .collect_schema()
             .names()
         )

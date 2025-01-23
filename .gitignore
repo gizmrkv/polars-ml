@@ -12,3 +12,5 @@ wheels/
 data/
 *.png
 *.log
+
+competition/
