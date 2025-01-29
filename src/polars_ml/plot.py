@@ -13,16 +13,16 @@ class iter_plots:
         self,
         data: DataFrame,
         *,
+        dir: str | Path,
         x: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         y: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         hue: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
-        figsize: tuple[float, float] | None = None,
-        save_dir: str | Path,
+        subplots_kwargs: dict[str, Any] | None = None,
     ):
         self.data = data
-        self.figsize = figsize
-        self.save_dir = Path(save_dir)
-        self.save_dir.mkdir(exist_ok=True, parents=True)
+        self.subplots_kwargs = subplots_kwargs or {}
+        self.dir = Path(dir)
+        self.dir.mkdir(exist_ok=True, parents=True)
 
         self.x_columns = (
             [None] if x is None else data.lazy().select(x).collect_schema().names()
@@ -43,14 +43,14 @@ class iter_plots:
         for x_col, y_col, hue_col in itertools.product(
             self.x_columns, self.y_columns, self.hue_columns
         ):
-            fig, ax = plt.subplots(figsize=self.figsize)
+            fig, ax = plt.subplots(**self.subplots_kwargs)
             yield self.data, x_col, y_col, hue_col, ax
             filename = "__".join(
                 f"{k}={v}"
                 for k, v in {"x": x_col, "y": y_col, "hue": hue_col}.items()
                 if v is not None
             )
-            fig.savefig(self.save_dir / f"{filename}.png")
+            fig.savefig(self.dir / f"{filename}.png")
             fig.clear()
             plt.close(fig)
 

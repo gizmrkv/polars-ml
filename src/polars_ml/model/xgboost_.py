@@ -53,6 +53,8 @@ class XGBoost(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
+        import xgboost as xgb
+
         train_features = data.select(self.features)
         train_label = data.select(self.label)
 

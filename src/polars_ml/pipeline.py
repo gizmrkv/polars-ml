@@ -41,13 +41,12 @@ from .horizontal import (
     HorizontalSum,
 )
 from .model import DecompositionNameSpace, LinearNameSpace, TreeNameSpace
-from .preprocess import (
+from .preprocessing import (
     BaseScaler,
     Binning,
     InverseScaler,
     LabelEncoding,
     MinMaxScaler,
-    Polynomial,
     RobustScaler,
     StandardScaler,
 )
@@ -809,16 +808,6 @@ class Pipeline(Component):
                 suffix=suffix,
             ),
             component_name=component_name,
-        )
-
-    def polynomial(
-        self,
-        *features: ColumnNameOrSelector,
-        degree: int = 2,
-        component_name: str | None = None,
-    ) -> Self:
-        return self.pipe(
-            Polynomial(*features, degree=degree), component_name=component_name
         )
 
     def horizontal_agg(

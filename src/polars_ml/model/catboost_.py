@@ -51,6 +51,8 @@ class CatBoost(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
+        import catboost as cb
+
         train_features = data.select(self.features)
         train_label = data.select(self.label)
 
