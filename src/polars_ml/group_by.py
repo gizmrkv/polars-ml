@@ -1,9 +1,11 @@
-from typing import TYPE_CHECKING, Any, Callable, Iterable
+from datetime import timedelta
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, Self, Sequence
 
-from polars import DataFrame
+import polars as pl
+from polars import DataFrame, Expr
 from polars._typing import IntoExpr, RollingInterpolationMethod, SchemaDict
 
-from .component import Component
+from polars_ml import Component
 
 if TYPE_CHECKING:
     from .pipeline import Pipeline
@@ -293,3 +295,28 @@ class RollingGroupBy:
                 agg_args=(function, schema),
             )
         )
+
+
+class GroupByThen(Component):
+    def __init__(
+        self,
+        by: str | Expr | Sequence[str | Expr] | None = None,
+        *aggs: IntoExpr | Iterable[IntoExpr],
+        maintain_order: bool = False,
+    ):
+        self.by = by
+        self.aggs = aggs
+        self.maintain_order = maintain_order
+
+    def fit(
+        self,
+        data: pl.DataFrame,
+        validation_data: pl.DataFrame | Mapping[str, DataFrame] | None = None,
+    ) -> Self:
+        self.grouped = data.group_by(self.by, maintain_order=self.maintain_order).agg(
+            *self.aggs
+        )
+        return self
+
+    def transform(self, data: DataFrame) -> DataFrame:
+        return data.join(self.grouped, on=self.by, how="left")

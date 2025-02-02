@@ -25,7 +25,7 @@ from polars._typing import (
 )
 
 from .component import Component
-from .group_by import DynamicGroupBy, GroupByNamaSpace, RollingGroupBy
+from .group_by import DynamicGroupBy, GroupByNamaSpace, GroupByThen, RollingGroupBy
 from .horizontal import (
     HorizontalAgg,
     HorizontalAll,
@@ -40,6 +40,18 @@ from .horizontal import (
     HorizontalQuantile,
     HorizontalSum,
 )
+from .impute import Impute
+from .misc import (
+    Concat,
+    Display,
+    GetAttr,
+    Join,
+    JoinAsof,
+    JoinWhere,
+    MergeSorted,
+    Print,
+    SortColumns,
+)
 from .model import DecompositionNameSpace, LinearNameSpace, TreeNameSpace
 from .preprocessing import (
     BaseScaler,
@@ -49,19 +61,6 @@ from .preprocessing import (
     MinMaxScaler,
     RobustScaler,
     StandardScaler,
-)
-from .utils import (
-    Concat,
-    Display,
-    GetAttr,
-    GroupByThen,
-    Impute,
-    Join,
-    JoinAsof,
-    JoinWhere,
-    MergeSorted,
-    Print,
-    SortColumns,
 )
 
 
