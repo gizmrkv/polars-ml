@@ -1,13 +1,14 @@
-from typing import TYPE_CHECKING, Any, Callable, Iterable
+from typing import TYPE_CHECKING
 
 from polars._typing import ColumnNameOrSelector
 
+from .openfe_ import OpenFE
 from .polynomial import Polynomial
 
 if TYPE_CHECKING:
     from polars_ml import Pipeline
 
-__all__ = ["Polynomial"]
+__all__ = ["Polynomial", "OpenFE"]
 
 
 class FeatureEngineeringNameSapce:
