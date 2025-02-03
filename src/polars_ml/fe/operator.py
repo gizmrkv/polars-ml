@@ -1,27 +1,31 @@
 import math
 import uuid
 from abc import ABC, abstractmethod
-from typing import Mapping, Self
+from typing import Iterable, Mapping, Self
 
 import polars as pl
 from polars import DataFrame, Expr
+from polars._typing import IntoExpr
 
-from polars_ml import Component, group_by, preprocessing
+from polars_ml import Component, Pipeline, group_by, preprocessing
 
 
 class Operator(Component, ABC):
     args: list["Operator"]
-    name: str
     order: int = 0
 
     def __init__(self, *args: "Operator", name: str | None = None):
         self.args = list(args)
-        self.name = name or uuid.uuid4().hex
+        self._name = name or uuid.uuid4().hex
 
         if len(self.args) == 0:
             self.order = 0
         else:
             self.order = 1 + max(arg.order for arg in self.args)
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     def fit(
         self,
@@ -217,14 +221,56 @@ class Min(BinaryOperator):
         return pl.when(lhs < rhs).then(lhs).otherwise(rhs)
 
 
+class GroupByFreq(Operator):
+    def __init__(
+        self,
+        by: Operator,
+        *,
+        name: str | None = None,
+        probability: bool = False,
+    ):
+        super().__init__(by, name=name)
+        self.probability = probability
+        self.group_by = group_by.GroupByThen(
+            by.name,
+            pl.len().alias(self.name),
+            after_with_columns=(pl.col(self.name) / pl.col(self.name).sum())
+            if probability
+            else None,
+        )
+
+    def fit(
+        self,
+        data: DataFrame,
+        validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
+    ) -> Self:
+        super().fit(data, validation_data)
+        self.group_by.fit(self.args[0].fit_transform(data, validation_data))
+        return self
+
+    def transform(self, data: DataFrame) -> DataFrame:
+        return self.group_by.transform(self.args[0].transform(data))
+
+    def __str__(self) -> str:
+        return ("prob" if self.probability else "freq") + f"({self.args[0]})"
+
+
 class GroupByThen(Operator, ABC):
     symbol: str
 
-    def __init__(self, by: Operator, *aggs: Operator, name: str | None = None):
+    def __init__(
+        self,
+        by: Operator,
+        *aggs: Operator,
+        name: str | None = None,
+        after_with_columns: IntoExpr | Iterable[IntoExpr] | None = None,
+    ):
         super().__init__(by, *aggs, name=name)
+        self.after_with_columns = after_with_columns
         self.group_by = group_by.GroupByThen(
             by.name,
             self.agg(*(pl.col(arg.name) for arg in self.args[1:])).alias(self.name),
+            after_with_columns=after_with_columns,
         )
 
     def fit(
@@ -248,17 +294,6 @@ class GroupByThen(Operator, ABC):
 
     def __str__(self) -> str:
         return f"{self.symbol}({self.args[1]} over {self.args[0]})"
-
-
-class GroupByLen(GroupByThen):
-    def __init__(self, by: Operator, *, name: str | None = None):
-        super().__init__(by, name=name)
-
-    def agg(self, *aggs: Expr) -> Expr:
-        return pl.len()
-
-    def __str__(self) -> str:
-        return f"len({self.args[0]})"
 
 
 class GroupByMean(GroupByThen):

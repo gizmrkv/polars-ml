@@ -303,10 +303,12 @@ class GroupByThen(Component):
         by: str | Expr | Sequence[str | Expr] | None = None,
         *aggs: IntoExpr | Iterable[IntoExpr],
         maintain_order: bool = False,
+        after_with_columns: IntoExpr | Iterable[IntoExpr] | None = None,
     ):
         self.by = by
         self.aggs = aggs
         self.maintain_order = maintain_order
+        self.after_with_columns = after_with_columns
 
     def fit(
         self,
@@ -316,6 +318,9 @@ class GroupByThen(Component):
         self.grouped = data.group_by(self.by, maintain_order=self.maintain_order).agg(
             *self.aggs
         )
+        if self.after_with_columns is not None:
+            self.grouped = self.grouped.with_columns(self.after_with_columns)
+
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
