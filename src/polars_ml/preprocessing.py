@@ -112,9 +112,9 @@ class BaseScaler(Component, ABC):
 
 
 class InverseScaler(Component):
-    def __init__(self, scaler: BaseScaler, mapping: dict[str, str]):
+    def __init__(self, scaler: BaseScaler, mapping: dict[str, str] | None = None):
         self.scaler = scaler
-        self.mapping = mapping
+        self.mapping = mapping or {col: col for col in scaler.columns}
 
     def transform(self, data: DataFrame) -> DataFrame:
         columns = (
@@ -251,6 +251,26 @@ class LabelEncoding(Component):
                 .rename(col)
                 for col, mapping in self.mappings.items()
                 if col in data.columns
+            ]
+        )
+
+
+class InverseLabelEncoding(Component):
+    def __init__(
+        self, label_encoding: LabelEncoding, mapping: dict[str, str] | None = None
+    ):
+        self.label_encoding = label_encoding
+        self.mapping = mapping or {col: col for col in label_encoding.mappings}
+
+    def transform(self, data: DataFrame) -> DataFrame:
+        return data.with_columns(
+            [
+                data.select(pl.col(col_from).alias("label"))
+                .join(self.label_encoding.mappings[col_to], on="label", how="left")[
+                    col_to
+                ]
+                .rename(col_from)
+                for col_from, col_to in self.mapping.items()
             ]
         )
 
