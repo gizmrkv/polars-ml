@@ -7,7 +7,7 @@ from polars._typing import IntoExpr
 from .catboost_ import CatBoost
 from .lightgbm_ import LightGBM
 from .linear import ElasticNet, Lasso, LinearRegression, Ridge
-from .reduction import NMF, PCA, TruncatedSVD
+from .reduction import NMF, PCA, UMAP, TruncatedSVD
 from .xgboost_ import XGBoost
 
 if TYPE_CHECKING:
@@ -27,6 +27,7 @@ __all__ = [
     "ElasticNet",
     "PCA",
     "NMF",
+    "UMAP",
     "TruncatedSVD",
 ]
 
@@ -278,7 +279,7 @@ class ReductionNameSpace:
         self,
         features: IntoExpr | Iterable[IntoExpr],
         *,
-        components_name: str = "pca",
+        output_name: str = "pca",
         append_components: bool = True,
         model_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
@@ -291,7 +292,7 @@ class ReductionNameSpace:
         return self.pipeline.pipe(
             PCA(
                 features,
-                components_name=components_name,
+                output_name=output_name,
                 append_components=append_components,
                 model_kwargs=model_kwargs,
                 fit_kwargs=fit_kwargs,
@@ -303,7 +304,7 @@ class ReductionNameSpace:
         self,
         features: IntoExpr | Iterable[IntoExpr],
         *,
-        components_name: str = "nmf",
+        output_name: str = "nmf",
         append_components: bool = True,
         model_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
@@ -316,7 +317,7 @@ class ReductionNameSpace:
         return self.pipeline.pipe(
             NMF(
                 features,
-                components_name=components_name,
+                output_name=output_name,
                 append_components=append_components,
                 model_kwargs=model_kwargs,
                 fit_kwargs=fit_kwargs,
@@ -328,7 +329,7 @@ class ReductionNameSpace:
         self,
         features: IntoExpr | Iterable[IntoExpr],
         *,
-        components_name: str = "truncated_svd",
+        output_name: str = "truncated_svd",
         append_components: bool = True,
         model_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
@@ -341,10 +342,33 @@ class ReductionNameSpace:
         return self.pipeline.pipe(
             TruncatedSVD(
                 features,
-                components_name=components_name,
+                output_name=output_name,
                 append_components=append_components,
                 model_kwargs=model_kwargs,
                 fit_kwargs=fit_kwargs,
             ),
             component_name=component_name,
+        )
+
+    def umap(
+        self,
+        features: IntoExpr | Iterable[IntoExpr],
+        *,
+        output_name: str = "umap",
+        append_components: bool = True,
+        model_kwargs: dict[str, Any]
+        | Callable[[DataFrame], dict[str, Any]]
+        | None = None,
+        fit_kwargs: dict[str, Any]
+        | Callable[[DataFrame], dict[str, Any]]
+        | None = None,
+    ) -> "Pipeline":
+        return self.pipeline.pipe(
+            UMAP(
+                features,
+                output_name=output_name,
+                append_components=append_components,
+                model_kwargs=model_kwargs,
+                fit_kwargs=fit_kwargs,
+            )
         )

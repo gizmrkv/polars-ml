@@ -13,7 +13,7 @@ class ReductionModel(Component, ABC):
         self,
         features: IntoExpr | Iterable[IntoExpr],
         *,
-        components_name: str,
+        output_name: str,
         append_components: bool,
         model_class: Type[Any],
         model_kwargs: dict[str, Any]
@@ -24,7 +24,7 @@ class ReductionModel(Component, ABC):
         | None = None,
     ):
         self.features = features
-        self.components_name = components_name
+        self.output_name = output_name
         self.append_components = append_components
         self.model_class = model_class
         self.model_kwargs = model_kwargs or {}
@@ -55,7 +55,7 @@ class ReductionModel(Component, ABC):
         components: NDArray[Any] = self.model.transform(input.to_numpy())
 
         new_columns = [
-            (f"{self.components_name}_{i}", Series(components[:, i]))
+            Series(f"{self.output_name}_{i}", components[:, i])
             for i in range(components.shape[1])
         ]
 
@@ -70,7 +70,7 @@ class PCA(ReductionModel):
         self,
         features: IntoExpr | Iterable[IntoExpr],
         *,
-        components_name: str = "pca",
+        output_name: str = "pca",
         append_components: bool = True,
         model_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
@@ -83,7 +83,7 @@ class PCA(ReductionModel):
 
         super().__init__(
             features=features,
-            components_name=components_name,
+            output_name=output_name,
             append_components=append_components,
             model_class=decomposition.PCA,
             model_kwargs=model_kwargs,
@@ -96,7 +96,7 @@ class NMF(ReductionModel):
         self,
         features: IntoExpr | Iterable[IntoExpr],
         *,
-        components_name: str = "nmf",
+        output_name: str = "nmf",
         append_components: bool = True,
         model_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
@@ -109,7 +109,7 @@ class NMF(ReductionModel):
 
         super().__init__(
             features=features,
-            components_name=components_name,
+            output_name=output_name,
             append_components=append_components,
             model_class=decomposition.NMF,
             model_kwargs=model_kwargs,
@@ -122,7 +122,7 @@ class TruncatedSVD(ReductionModel):
         self,
         features: IntoExpr | Iterable[IntoExpr],
         *,
-        components_name: str = "truncated_svd",
+        output_name: str = "truncated_svd",
         append_components: bool = True,
         model_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
@@ -135,9 +135,35 @@ class TruncatedSVD(ReductionModel):
 
         super().__init__(
             features=features,
-            components_name=components_name,
+            output_name=output_name,
             append_components=append_components,
             model_class=decomposition.TruncatedSVD,
+            model_kwargs=model_kwargs,
+            fit_kwargs=fit_kwargs,
+        )
+
+
+class UMAP(ReductionModel):
+    def __init__(
+        self,
+        features: IntoExpr | Iterable[IntoExpr],
+        *,
+        output_name: str = "umap",
+        append_components: bool = True,
+        model_kwargs: dict[str, Any]
+        | Callable[[DataFrame], dict[str, Any]]
+        | None = None,
+        fit_kwargs: dict[str, Any]
+        | Callable[[DataFrame], dict[str, Any]]
+        | None = None,
+    ):
+        import umap
+
+        super().__init__(
+            features=features,
+            output_name=output_name,
+            append_components=append_components,
+            model_class=umap.UMAP,
             model_kwargs=model_kwargs,
             fit_kwargs=fit_kwargs,
         )
