@@ -1,8 +1,6 @@
 from abc import ABC
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, Self, Type
+from typing import Any, Callable, Iterable, Mapping, Self, Type
 
-import polars as pl
 from numpy.typing import NDArray
 from polars import DataFrame, Series
 from polars._typing import IntoExpr

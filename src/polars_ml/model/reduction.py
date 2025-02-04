@@ -1,7 +1,6 @@
 from abc import ABC
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, Self, Type
+from typing import Any, Callable, Iterable, Mapping, Self, Type
 
-import polars as pl
 from numpy.typing import NDArray
 from polars import DataFrame, Series
 from polars._typing import IntoExpr
@@ -9,7 +8,7 @@ from polars._typing import IntoExpr
 from polars_ml import Component
 
 
-class DecompositionModel(Component, ABC):
+class ReductionModel(Component, ABC):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
@@ -66,7 +65,7 @@ class DecompositionModel(Component, ABC):
             return DataFrame(new_columns)
 
 
-class PCA(DecompositionModel):
+class PCA(ReductionModel):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
@@ -92,7 +91,7 @@ class PCA(DecompositionModel):
         )
 
 
-class NMF(DecompositionModel):
+class NMF(ReductionModel):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
@@ -118,7 +117,7 @@ class NMF(DecompositionModel):
         )
 
 
-class TruncatedSVD(DecompositionModel):
+class TruncatedSVD(ReductionModel):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],

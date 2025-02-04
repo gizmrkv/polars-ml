@@ -5,9 +5,9 @@ from polars import DataFrame
 from polars._typing import IntoExpr
 
 from .catboost_ import CatBoost
-from .decomposition import NMF, PCA, TruncatedSVD
 from .lightgbm_ import LightGBM
 from .linear import ElasticNet, Lasso, LinearRegression, Ridge
+from .reduction import NMF, PCA, TruncatedSVD
 from .xgboost_ import XGBoost
 
 if TYPE_CHECKING:
@@ -270,7 +270,7 @@ class LinearNameSpace:
         )
 
 
-class DecompositionNameSpace:
+class ReductionNameSpace:
     def __init__(self, pipeline: "Pipeline"):
         self.pipeline = pipeline
 

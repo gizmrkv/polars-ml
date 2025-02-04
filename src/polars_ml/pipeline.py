@@ -52,10 +52,11 @@ from .misc import (
     Print,
     SortColumns,
 )
-from .model import DecompositionNameSpace, LinearNameSpace, TreeNameSpace
+from .model import LinearNameSpace, ReductionNameSpace, TreeNameSpace
 from .preprocessing import (
     BaseScaler,
     Binning,
+    InverseLabelEncoding,
     InverseScaler,
     LabelEncoding,
     MinMaxScaler,
@@ -787,6 +788,21 @@ class Pipeline(Component):
             component_name=component_name,
         )
 
+    def inverse_label_encode(
+        self, label_encoding: str | LabelEncoding, mapping: dict[str, str] | None = None
+    ) -> Self:
+        if isinstance(label_encoding, str):
+            label_encoding_component = self[label_encoding]
+            if not isinstance(label_encoding_component, LabelEncoding):
+                raise ValueError(
+                    "label_encoding must be a LabelEncoding instance or the name of a component that is a LabelEncoding instance."
+                )
+            inverse = InverseLabelEncoding(label_encoding_component, mapping)
+        else:
+            inverse = InverseLabelEncoding(label_encoding, mapping)
+
+        return self.pipe(inverse)
+
     def binning(
         self,
         *exprs: IntoExpr | Iterable[IntoExpr],
@@ -960,5 +976,5 @@ class Pipeline(Component):
         return LinearNameSpace(self)
 
     @property
-    def decomposition(self) -> DecompositionNameSpace:
-        return DecompositionNameSpace(self)
+    def reduction(self) -> ReductionNameSpace:
+        return ReductionNameSpace(self)
