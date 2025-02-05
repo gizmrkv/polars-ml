@@ -55,11 +55,12 @@ from .misc import (
 from .model import LinearNameSpace, ReductionNameSpace, TreeNameSpace
 from .preprocessing import (
     BaseScaler,
-    Binning,
     InverseLabelEncoding,
     InverseScaler,
     LabelEncoding,
     MinMaxScaler,
+    PowerTransformer,
+    QBinning,
     RobustScaler,
     StandardScaler,
 )
@@ -803,18 +804,18 @@ class Pipeline(Component):
 
         return self.pipe(inverse)
 
-    def binning(
+    def qbin(
         self,
         *exprs: IntoExpr | Iterable[IntoExpr],
         quantiles: Sequence[float] | int,
         labels: Sequence[str] | None = None,
         left_closed: bool = False,
         allow_duplicates: bool = False,
-        suffix: str = "_bin",
+        suffix: str = "_qbin",
         component_name: str | None = None,
     ) -> Self:
         return self.pipe(
-            Binning(
+            QBinning(
                 *exprs,
                 quantiles=quantiles,
                 labels=labels,
@@ -824,6 +825,14 @@ class Pipeline(Component):
             ),
             component_name=component_name,
         )
+
+    def power_transform(
+        self,
+        *column: str,
+        by: str | Sequence[str] | None = None,
+        method: Literal["boxcox", "yeojohnson"] = "boxcox",
+    ) -> Self:
+        return self.pipe(PowerTransformer(*column, by=by, method=method))
 
     def horizontal_agg(
         self,

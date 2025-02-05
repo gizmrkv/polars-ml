@@ -1,11 +1,8 @@
-import itertools
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, Mapping, Self, Sequence
+from typing import Mapping, Self, Sequence
 
 import polars as pl
-import polars.selectors as cs
-from polars import DataFrame, Expr, Series
-from polars._typing import ColumnNameOrSelector, IntoExpr
+from polars import DataFrame, Expr
 
 from polars_ml import Component
 
@@ -28,8 +25,8 @@ class BaseScaler(Component, ABC):
     ) -> Self:
         if self.by:
             self.move_scale = data.group_by(self.by).agg(
-                *[pl.col(col).mean().alias(f"{col}_move") for col in self.columns],
-                *[pl.col(col).std().alias(f"{col}_scale") for col in self.columns],
+                *[self.move_expr(col).alias(f"{col}_move") for col in self.columns],
+                *[self.scale_expr(col).alias(f"{col}_scale") for col in self.columns],
             )
         else:
             self.move_scale = data.select(
@@ -196,140 +193,3 @@ class RobustScaler(BaseScaler):
 
     def scale_expr(self, column: str) -> Expr:
         return pl.col(column).quantile(self.q3) - pl.col(column).quantile(self.q1)
-
-
-class LabelEncoding(Component):
-    def __init__(
-        self,
-        *exprs: IntoExpr | Iterable[IntoExpr],
-        orders: dict[str, Sequence[Any]] | None = None,
-        maintain_order: bool = False,
-    ):
-        self.exprs = exprs
-        self.orders = orders or {}
-        self.maintain_order = maintain_order
-
-    def fit(
-        self,
-        data: DataFrame,
-        validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
-    ) -> Self:
-        data = data.select(*self.exprs)
-        self.mappings = {
-            col: DataFrame(
-                [
-                    Series(col, self.orders[col]),
-                    Series("label", range(len(self.orders[col])), dtype=pl.UInt32),
-                ]
-            )
-            if col in self.orders
-            else (
-                data.select(col)
-                .unique(maintain_order=self.maintain_order)
-                .drop_nulls()
-                .with_row_index("label")
-            )
-            for col in data.columns
-        }
-
-        return self
-
-    def transform(self, data: DataFrame) -> DataFrame:
-        return data.with_columns(
-            [
-                data.select(col).join(mapping, on=col, how="left")["label"].rename(col)
-                for col, mapping in self.mappings.items()
-                if col in data.columns
-            ]
-        )
-
-    def inverse_transform(self, data: DataFrame) -> DataFrame:
-        return data.with_columns(
-            [
-                data.select(pl.col(col).alias("label"))
-                .join(mapping, on="label", how="left")[col]
-                .rename(col)
-                for col, mapping in self.mappings.items()
-                if col in data.columns
-            ]
-        )
-
-
-class InverseLabelEncoding(Component):
-    def __init__(
-        self, label_encoding: LabelEncoding, mapping: dict[str, str] | None = None
-    ):
-        self.label_encoding = label_encoding
-        self.mapping = mapping or {col: col for col in label_encoding.mappings}
-
-    def transform(self, data: DataFrame) -> DataFrame:
-        return data.with_columns(
-            [
-                data.select(pl.col(col_from).alias("label"))
-                .join(self.label_encoding.mappings[col_to], on="label", how="left")[
-                    col_to
-                ]
-                .rename(col_from)
-                for col_from, col_to in self.mapping.items()
-            ]
-        )
-
-
-class Binning(Component):
-    def __init__(
-        self,
-        *exprs: IntoExpr | Iterable[IntoExpr],
-        quantiles: Sequence[float] | int,
-        labels: Sequence[str] | None = None,
-        left_closed: bool = False,
-        allow_duplicates: bool = False,
-        suffix: str = "_bin",
-    ):
-        self.exprs = exprs
-        self.quantiles = quantiles
-        self.labels = labels
-        self.left_closed = left_closed
-        self.allow_duplicates = allow_duplicates
-        self.suffix = suffix
-
-    def fit(
-        self,
-        data: DataFrame,
-        validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
-    ) -> Self:
-        data = data.select(*self.exprs)
-        self.breakpoints = {
-            col: data.select(
-                pl.col(col)
-                .qcut(
-                    self.quantiles,
-                    left_closed=self.left_closed,
-                    allow_duplicates=self.allow_duplicates,
-                    include_breaks=True,
-                )
-                .struct.field("breakpoint")
-                .alias(col)
-            )
-            .unique()
-            .filter(pl.col(col).is_finite())[col]
-            .sort()
-            .to_list()
-            for col in data.columns
-        }
-        return self
-
-    def transform(self, data: DataFrame) -> DataFrame:
-        return data.with_columns(
-            [
-                pl.col(col)
-                .cut(
-                    breaks,
-                    labels=self.labels,
-                    left_closed=self.left_closed,
-                    include_breaks=False,
-                )
-                .alias(f"{col}{self.suffix}")
-                for col, breaks in self.breakpoints.items()
-                if col in data.columns
-            ]
-        )

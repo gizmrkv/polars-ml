@@ -17,30 +17,30 @@ class OpenFE(Component):
         self,
         label: str,
         *,
-        init_score: str | Sequence[str],
+        max_order: int = 1,
+        numerical_features: Sequence[str],
+        categorical_features: Sequence[str],
         params_stage_1: dict[str, Any],
+        init_score: str | Sequence[str],
         metric_fn: Callable[[NDArray[Any], NDArray[Any]], float],
         direction: Literal["maximize", "minimize"] = "maximize",
         halving_ratio: float = 0.5,
         min_candidates: int = 2000,
         params_stage_2: dict[str, Any],
         n_best_features: int = 100,
-        max_order: int = 1,
-        numerical_features: Sequence[str],
-        categorical_features: Sequence[str],
     ):
         self.label = label
-        self.init_score = init_score
+        self.max_order = max_order
+        self.numerical_features = numerical_features
+        self.categorical_features = categorical_features
         self.params_stage_1 = params_stage_1
+        self.init_score = init_score
         self.metric_fn = metric_fn
         self.direction: Literal["maximize", "minimize"] = direction
         self.halving_ratio = halving_ratio
         self.min_candidates = min_candidates
         self.params_stage_2 = params_stage_2
         self.n_best_features = n_best_features
-        self.max_order = max_order
-        self.numerical_features = numerical_features
-        self.categorical_features = categorical_features
 
         self.new_features: list[op.Operator] = []
 
