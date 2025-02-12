@@ -7,7 +7,7 @@ import polars as pl
 from polars import DataFrame, Expr
 from polars._typing import IntoExpr
 
-from polars_ml import Component, Pipeline, group_by, preprocessing
+from polars_ml import Component, group_by, preprocessing
 
 
 class Operator(Component, ABC):
@@ -39,10 +39,10 @@ class Operator(Component, ABC):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Operator):
             return False
-        return str(self) == str(other)
+        return self._name == other._name
 
     def __hash__(self) -> int:
-        return hash(str(self))
+        return hash(self._name)
 
     @abstractmethod
     def __str__(self) -> str: ...
@@ -74,13 +74,6 @@ class UnaryOperator(Operator, ABC):
 
     def __str__(self) -> str:
         return f"{self.symbol}({self.args[0]})"
-
-
-class Minus(UnaryOperator):
-    symbol = "-"
-
-    def op(self, arg: Expr) -> Expr:
-        return -arg
 
 
 class Inv(UnaryOperator):
@@ -234,6 +227,7 @@ class GroupByFreq(Operator):
         self.group_by = group_by.GroupByThen(
             by.name,
             pl.len().alias(self.name),
+            maintain_order=True,
             after_with_columns=(pl.col(self.name) / pl.col(self.name).sum())
             if probability
             else None,
@@ -249,10 +243,10 @@ class GroupByFreq(Operator):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        return self.group_by.transform(self.args[0].transform(data))
+        return self.group_by.transform(self.args[0].transform(data)).select(self.name)
 
     def __str__(self) -> str:
-        return ("prob" if self.probability else "freq") + f"({self.args[0]})"
+        return ("prob" if self.probability else "len") + f"({self.args[0]})"
 
 
 class GroupByThen(Operator, ABC):
@@ -270,6 +264,7 @@ class GroupByThen(Operator, ABC):
         self.group_by = group_by.GroupByThen(
             by.name,
             self.agg(*(pl.col(arg.name) for arg in self.args[1:])).alias(self.name),
+            maintain_order=True,
             after_with_columns=after_with_columns,
         )
 
@@ -345,8 +340,8 @@ class GroupByQuantile(GroupByThen):
         quantile: float = 0.5,
         name: str | None = None,
     ):
-        super().__init__(by, val, name=name)
         self.quantile = quantile
+        super().__init__(by, val, name=name)
         self.symbol = f"q{quantile}"
 
     def agg(self, *aggs: Expr) -> Expr:

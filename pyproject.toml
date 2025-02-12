@@ -50,6 +50,8 @@ dev-dependencies = [
     "tensorboardx>=2.6.2.2",
     "schedulefree>=1.4",
     "umap-learn>=0.5.7",
+    "altair>=5.5.0",
+    "great-tables>=0.16.1",
 ]
 
 [tool.hatch.metadata]

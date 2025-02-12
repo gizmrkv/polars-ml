@@ -31,7 +31,7 @@ class CatBoost(Component):
         pool_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        dir: str | Path | None = None,
+        save_dir: str | Path | None = None,
         plot_importance: bool = False,
     ):
         self.features = features
@@ -43,7 +43,7 @@ class CatBoost(Component):
         self.train_kwargs = train_kwargs or {}
         self.predict_kwargs = predict_kwargs or {}
         self.pool_kwargs = pool_kwargs or {}
-        self.dir = Path(dir) if dir is not None else None
+        self.save_dir = Path(save_dir) if save_dir is not None else None
         self.plot_importance = plot_importance
 
     def fit(
@@ -110,7 +110,7 @@ class CatBoost(Component):
         )
 
         if self.plot_importance:
-            if self.dir is None:
+            if self.save_dir is None:
                 raise ValueError("dir must be set to plot importance")
 
             raise NotImplementedError("plot_importance is not implemented yet")

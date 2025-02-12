@@ -56,8 +56,7 @@ class TreeNameSpace:
         validation_dataset_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        dir: str | Path | None = None,
-        plot_importance: bool = False,
+        save_dir: str | Path | None = None,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
@@ -71,8 +70,7 @@ class TreeNameSpace:
                 predict_kwargs=predict_kwargs,
                 train_dataset_kwargs=train_dataset_kwargs,
                 validation_dataset_kwargs=validation_dataset_kwargs,
-                dir=dir,
-                plot_importance=plot_importance,
+                save_dir=save_dir,
             ),
             component_name=component_name,
         )
@@ -97,8 +95,7 @@ class TreeNameSpace:
         validation_dmatrix_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        dir: str | Path | None = None,
-        plot_importance: bool = False,
+        save_dir: str | Path | None = None,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
@@ -112,8 +109,7 @@ class TreeNameSpace:
                 predict_kwargs=predict_kwargs,
                 train_dmatrix_kwargs=train_dmatrix_kwargs,
                 validation_dmatrix_kwargs=validation_dmatrix_kwargs,
-                dir=dir,
-                plot_importance=plot_importance,
+                save_dir=save_dir,
             ),
             component_name=component_name,
         )
@@ -136,7 +132,7 @@ class TreeNameSpace:
         pool_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        dir: str | Path | None = None,
+        save_dir: str | Path | None = None,
         plot_importance: bool = False,
         component_name: str | None = None,
     ) -> "Pipeline":
@@ -151,7 +147,7 @@ class TreeNameSpace:
                 train_kwargs=train_kwargs,
                 predict_kwargs=predict_kwargs,
                 pool_kwargs=pool_kwargs,
-                dir=dir,
+                save_dir=save_dir,
                 plot_importance=plot_importance,
             ),
             component_name=component_name,

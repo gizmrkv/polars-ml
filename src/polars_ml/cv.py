@@ -14,7 +14,7 @@ class k_fold:
         n_splits: int,
         shuffle: bool = False,
         seed: int | None = None,
-        stratify: IntoExpr | Iterable[IntoExpr],
+        stratify: IntoExpr | Iterable[IntoExpr] | None = None,
     ):
         self.n_splits = n_splits
         self.shuffle = shuffle

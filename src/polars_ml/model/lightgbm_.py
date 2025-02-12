@@ -33,8 +33,7 @@ class LightGBM(Component):
         validation_dataset_kwargs: dict[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        dir: str | Path | None = None,
-        plot_importance: bool = False,
+        save_dir: str | Path | None = None,
     ):
         self.features = features
         self.label = label
@@ -45,8 +44,7 @@ class LightGBM(Component):
         self.predict_kwargs = predict_kwargs or {}
         self.train_dataset_kwargs = train_dataset_kwargs or {}
         self.validation_dataset_kwargs = validation_dataset_kwargs or {}
-        self.dir = Path(dir) if dir is not None else None
-        self.plot_importance = plot_importance
+        self.save_dir = Path(save_dir) if save_dir is not None else None
 
     def fit(
         self,
@@ -122,18 +120,17 @@ class LightGBM(Component):
             **train_kwargs,
         )
 
-        if self.plot_importance:
-            if self.dir is None:
-                raise ValueError("dir must be set to plot importance")
+        if self.save_dir is None:
+            raise ValueError("dir must be set to plot importance")
 
-            import matplotlib.pyplot as plt
+        import matplotlib.pyplot as plt
 
-            self.dir.mkdir(parents=True, exist_ok=True)
-            for importance_type in ["gain", "split"]:
-                lgb.plot_importance(self.model, importance_type=importance_type)
-                plt.tight_layout()
-                plt.savefig(self.dir / f"importance_{importance_type}.png")
-                plt.close()
+        self.save_dir.mkdir(parents=True, exist_ok=True)
+        for importance_type in ["gain", "split"]:
+            lgb.plot_importance(self.model, importance_type=importance_type)
+            plt.tight_layout()
+            plt.savefig(self.save_dir / f"importance_{importance_type}.png")
+            plt.close()
 
         return self
 

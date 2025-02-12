@@ -1,4 +1,3 @@
-from datetime import timedelta
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, Self, Sequence
 
 import polars as pl

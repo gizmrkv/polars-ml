@@ -3,7 +3,7 @@ import uuid
 from typing import Iterable, Iterator, Literal, TypeVar
 
 import polars as pl
-from polars import DataFrame
+from polars import DataFrame, Series
 
 T = TypeVar("T")
 
@@ -15,7 +15,7 @@ def train_test_split(
     stratify: str | None = None,
     shuffle: bool = True,
     seed: int | None = None,
-) -> tuple[list[int], list[int]]:
+) -> tuple[Series, Series]:
     index_name = uuid.uuid4().hex
     if stratify is None:
         data = data.with_row_index(index_name).select(
@@ -34,8 +34,8 @@ def train_test_split(
         pl.col("is_train").shuffle(seed).over(stratify) if shuffle else pl.all()
     )
     return (
-        data.filter(pl.col("is_train"))[index_name].to_list(),
-        data.filter(~pl.col("is_train"))[index_name].to_list(),
+        data.filter(pl.col("is_train"))[index_name],
+        data.filter(~pl.col("is_train"))[index_name],
     )
 
 
@@ -78,18 +78,13 @@ def incremental_sampling(n_rows: int, n_blocks: int) -> Iterator[list[int]]:
 
 
 def deduplicate_scores(
-    scores: dict[T, float],
-    *,
-    tolerance: float = 1e-20,
-    direction: Literal["maximize", "minimize"] = "maximize",
+    scores: dict[T, float], tolerance: float = 1e-14
 ) -> dict[T, float]:
-    name_scores = sorted(
-        scores.items(), key=lambda x: x[1] if direction == "maximize" else -x[1]
-    )
-    deduplicated_scores = {}
+    name_scores = sorted(scores.items(), key=lambda x: x[1])
+    deduplicated_scores = {name_scores[0][0]: name_scores[0][1]}
     prev_score = name_scores[0][1] + 2 * tolerance
     for name, score in name_scores:
-        if score < prev_score - tolerance:
+        if abs(score - prev_score) > tolerance:
             deduplicated_scores[name] = score
             prev_score = score
 

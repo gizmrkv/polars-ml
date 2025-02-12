@@ -13,7 +13,7 @@ class iter_plots:
         self,
         data: DataFrame,
         *,
-        dir: str | Path,
+        save_dir: str | Path,
         x: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         y: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         hue: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
@@ -21,14 +21,14 @@ class iter_plots:
     ):
         self.data = data
         self.subplots_kwargs = subplots_kwargs or {}
-        self.dir = Path(dir)
-        self.dir.mkdir(exist_ok=True, parents=True)
+        self.save_dir = Path(save_dir)
+        self.save_dir.mkdir(exist_ok=True, parents=True)
 
         self.x_columns = (
             [None] if x is None else data.lazy().select(x).collect_schema().names()
         )
         self.y_columns = (
-            [None] if y is None else data.lazy().select(y).collect_schema().names()
+            [] if y is None else data.lazy().select(y).collect_schema().names()
         )
         self.hue_columns = (
             [None] if hue is None else data.lazy().select(hue).collect_schema().names()
@@ -50,7 +50,7 @@ class iter_plots:
                 for k, v in {"x": x_col, "y": y_col, "hue": hue_col}.items()
                 if v is not None
             )
-            fig.savefig(self.dir / f"{filename}.png")
+            fig.savefig(self.save_dir / f"{filename}.png")
             fig.clear()
             plt.close(fig)
 

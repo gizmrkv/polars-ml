@@ -184,7 +184,7 @@ def optimize(
     pruner_type = config.get("pruner", None)
     pruner_kwargs = config.get("pruner_kwargs", {})
     study_name = config.get("study_name", None)
-    direction = config.get("direction", None)
+    is_higher_better = config.get("is_higher_better", None)
     load_if_exists = config.get("load_if_exists", False)
     n_trials = config.get("n_trials", None)
     timeout = config.get("timeout", None)
@@ -240,7 +240,7 @@ def optimize(
         sampler=sampler,
         pruner=pruner,
         study_name=study_name,
-        direction=direction,
+        direction="maximize" if is_higher_better else "minimize",
         load_if_exists=load_if_exists,
     )
 

@@ -25,6 +25,7 @@ from polars._typing import (
 )
 
 from .component import Component
+from .fe import FeatureEngineeringNameSpace
 from .group_by import DynamicGroupBy, GroupByNamaSpace, GroupByThen, RollingGroupBy
 from .horizontal import (
     HorizontalAgg,
@@ -987,3 +988,7 @@ class Pipeline(Component):
     @property
     def reduction(self) -> ReductionNameSpace:
         return ReductionNameSpace(self)
+
+    @property
+    def fe(self) -> FeatureEngineeringNameSpace:
+        return FeatureEngineeringNameSpace(self)

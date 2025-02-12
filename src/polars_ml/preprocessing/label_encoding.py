@@ -69,9 +69,10 @@ class InverseLabelEncoding(Component):
         self, label_encoding: LabelEncoding, mapping: dict[str, str] | None = None
     ):
         self.label_encoding = label_encoding
-        self.mapping = mapping or {col: col for col in label_encoding.mappings}
+        self.mapping = mapping
 
     def transform(self, data: DataFrame) -> DataFrame:
+        mapping = self.mapping or {col: col for col in self.label_encoding.mappings}
         return data.with_columns(
             [
                 data.select(pl.col(col_from).alias("label"))
@@ -79,6 +80,6 @@ class InverseLabelEncoding(Component):
                     col_to
                 ]
                 .rename(col_from)
-                for col_from, col_to in self.mapping.items()
+                for col_from, col_to in mapping.items()
             ]
         )
