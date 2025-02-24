@@ -1,6 +1,6 @@
 import itertools
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Sequence
+from typing import Any, Iterable, Iterator, Mapping, Sequence
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -17,7 +17,7 @@ class iter_plots:
         x: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         y: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         hue: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
-        subplots_kwargs: dict[str, Any] | None = None,
+        subplots_kwargs: Mapping[str, Any] | None = None,
     ):
         self.data = data
         self.subplots_kwargs = subplots_kwargs or {}
@@ -60,8 +60,8 @@ def count_heatmap(
     x: str,
     y: str,
     *,
-    labels: dict[str, Sequence[Any]] | None = None,
-    heatmap_kwargs: dict[str, Any] | None = None,
+    labels: Mapping[str, Sequence[Any]] | None = None,
+    heatmap_kwargs: Mapping[str, Any] | None = None,
     ax: plt.Axes,
 ):
     data = (

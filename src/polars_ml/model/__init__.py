@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Iterable
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping
 
 from polars import DataFrame
 from polars._typing import IntoExpr
@@ -40,20 +40,20 @@ class TreeNameSpace:
         self,
         features: IntoExpr | Iterable[IntoExpr],
         label: str,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         *,
         prediction_name: str = "lightgbm",
         append_prediction: bool = True,
-        train_kwargs: dict[str, Any]
+        train_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        predict_kwargs: dict[str, Any]
+        predict_kwargs: Mapping[str, Any]
         | Callable[[DataFrame, "lgb.Booster"], dict[str, Any]]
         | None = None,
-        train_dataset_kwargs: dict[str, Any]
+        train_dataset_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        validation_dataset_kwargs: dict[str, Any]
+        validation_dataset_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
         save_dir: str | Path | None = None,
@@ -79,20 +79,20 @@ class TreeNameSpace:
         self,
         features: IntoExpr | Iterable[IntoExpr],
         label: str,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         *,
         prediction_name: str = "xgboost",
         append_prediction: bool = True,
-        train_kwargs: dict[str, Any]
+        train_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        predict_kwargs: dict[str, Any]
+        predict_kwargs: Mapping[str, Any]
         | Callable[[DataFrame, "xgb.Booster"], dict[str, Any]]
         | None = None,
-        train_dmatrix_kwargs: dict[str, Any]
+        train_dmatrix_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        validation_dmatrix_kwargs: dict[str, Any]
+        validation_dmatrix_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
         save_dir: str | Path | None = None,
@@ -118,18 +118,18 @@ class TreeNameSpace:
         self,
         features: IntoExpr | Iterable[IntoExpr],
         label: str,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         *,
         cat_features: list[str] | None = None,
         prediction_name: str = "catboost",
         append_prediction: bool = True,
-        train_kwargs: dict[str, Any]
+        train_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        predict_kwargs: dict[str, Any]
+        predict_kwargs: Mapping[str, Any]
         | Callable[[DataFrame, "cb.CatBoost"], dict[str, Any]]
         | None = None,
-        pool_kwargs: dict[str, Any]
+        pool_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
         save_dir: str | Path | None = None,
@@ -165,10 +165,10 @@ class LinearNameSpace:
         *,
         prediction_name: str = "linear_regression",
         append_prediction: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
         component_name: str | None = None,
@@ -192,10 +192,10 @@ class LinearNameSpace:
         *,
         prediction_name: str = "ridge",
         append_prediction: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
         component_name: str | None = None,
@@ -219,10 +219,10 @@ class LinearNameSpace:
         *,
         prediction_name: str = "lasso",
         append_prediction: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
         component_name: str | None = None,
@@ -246,10 +246,10 @@ class LinearNameSpace:
         *,
         prediction_name: str = "elastic_net",
         append_prediction: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
         component_name: str | None = None,
@@ -277,10 +277,10 @@ class ReductionNameSpace:
         *,
         output_name: str = "pca",
         append_components: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
         component_name: str | None = None,
@@ -302,10 +302,10 @@ class ReductionNameSpace:
         *,
         output_name: str = "nmf",
         append_components: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
         component_name: str | None = None,
@@ -327,10 +327,10 @@ class ReductionNameSpace:
         *,
         output_name: str = "truncated_svd",
         append_components: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
         component_name: str | None = None,
@@ -352,10 +352,10 @@ class ReductionNameSpace:
         *,
         output_name: str = "umap",
         append_components: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ) -> "Pipeline":

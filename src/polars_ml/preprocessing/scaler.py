@@ -109,7 +109,7 @@ class BaseScaler(Component, ABC):
 
 
 class InverseScaler(Component):
-    def __init__(self, scaler: BaseScaler, mapping: dict[str, str] | None = None):
+    def __init__(self, scaler: BaseScaler, mapping: Mapping[str, str] | None = None):
         self.scaler = scaler
         self.mapping = mapping or {col: col for col in scaler.columns}
 

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Mapping, Sequence
 
 from numpy.typing import NDArray
 from polars._typing import ColumnNameOrSelector
@@ -36,13 +36,13 @@ class FeatureEngineeringNameSpace:
         numerical_features: Sequence[str],
         categorical_features: Sequence[str],
         n_subsamples: int = 8,
-        params_stage_1: dict[str, Any],
+        params_stage_1: Mapping[str, Any],
         init_score: str | Sequence[str],
         metric_fn: Callable[[NDArray[Any], NDArray[Any]], float],
         is_higher_better: bool = True,
         halving_ratio: float = 0.5,
         min_candidates: int = 2000,
-        params_stage_2: dict[str, Any],
+        params_stage_2: Mapping[str, Any],
         n_best_features: int = 100,
         save_dir: str | Path | None = None,
         component_name: str | None = None,

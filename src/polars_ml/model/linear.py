@@ -17,10 +17,10 @@ class LinearModel(Component, ABC):
         prediction_name: str,
         append_prediction: bool,
         model_class: Type[Any],
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
@@ -73,10 +73,10 @@ class LinearRegression(LinearModel):
         *,
         prediction_name: str = "linear_regression",
         append_prediction: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
@@ -101,10 +101,10 @@ class Ridge(LinearModel):
         *,
         prediction_name: str = "ridge",
         append_prediction: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
@@ -129,10 +129,10 @@ class Lasso(LinearModel):
         *,
         prediction_name: str = "lasso",
         append_prediction: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
@@ -157,10 +157,10 @@ class ElasticNet(LinearModel):
         *,
         prediction_name: str = "elastic_net",
         append_prediction: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):

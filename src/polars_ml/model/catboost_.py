@@ -17,18 +17,18 @@ class CatBoost(Component):
         self,
         features: IntoExpr | Iterable[IntoExpr],
         label: str,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         *,
         cat_features: list[str] | None = None,
         prediction_name: str = "catboost",
         append_prediction: bool = True,
-        train_kwargs: dict[str, Any]
+        train_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        predict_kwargs: dict[str, Any]
+        predict_kwargs: Mapping[str, Any]
         | Callable[[DataFrame, "cb.CatBoost"], dict[str, Any]]
         | None = None,
-        pool_kwargs: dict[str, Any]
+        pool_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
         save_dir: str | Path | None = None,

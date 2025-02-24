@@ -17,9 +17,9 @@ class GroupByGetAttr(Component):
         agg_method: str,
         *,
         group_by_args: tuple[Any, ...] | None = None,
-        group_by_kwargs: dict[str, Any] | None = None,
+        group_by_kwargs: Mapping[str, Any] | None = None,
         agg_args: tuple[Any, ...] | None = None,
-        agg_kwargs: dict[str, Any] | None = None,
+        agg_kwargs: Mapping[str, Any] | None = None,
     ):
         self.group_by_method = group_by_method
         self.group_by_args = group_by_args or ()

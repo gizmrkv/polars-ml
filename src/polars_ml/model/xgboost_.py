@@ -17,20 +17,20 @@ class XGBoost(Component):
         self,
         features: IntoExpr | Iterable[IntoExpr],
         label: IntoExpr,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         *,
         prediction_name: str = "xgboost",
         append_prediction: bool = True,
-        train_kwargs: dict[str, Any]
+        train_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        predict_kwargs: dict[str, Any]
+        predict_kwargs: Mapping[str, Any]
         | Callable[[DataFrame, "xgb.Booster"], dict[str, Any]]
         | None = None,
-        train_dmatrix_kwargs: dict[str, Any]
+        train_dmatrix_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        validation_dmatrix_kwargs: dict[str, Any]
+        validation_dmatrix_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
         save_dir: str | Path | None = None,

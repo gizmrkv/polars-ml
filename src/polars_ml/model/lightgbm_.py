@@ -17,20 +17,20 @@ class LightGBM(Component):
         self,
         features: IntoExpr | Iterable[IntoExpr],
         label: IntoExpr,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         *,
         prediction_name: str = "lightgbm",
         append_prediction: bool = True,
-        train_kwargs: dict[str, Any]
+        train_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        predict_kwargs: dict[str, Any]
+        predict_kwargs: Mapping[str, Any]
         | Callable[[DataFrame, "lgb.Booster"], dict[str, Any]]
         | None = None,
-        train_dataset_kwargs: dict[str, Any]
+        train_dataset_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        validation_dataset_kwargs: dict[str, Any]
+        validation_dataset_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
         save_dir: str | Path | None = None,
@@ -113,7 +113,7 @@ class LightGBM(Component):
         )
 
         self.model = lgb.train(
-            self.params,
+            dict(**self.params),
             train_dataset,
             valid_sets=valid_sets,
             valid_names=valid_names,

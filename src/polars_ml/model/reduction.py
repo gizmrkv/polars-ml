@@ -16,10 +16,10 @@ class ReductionModel(Component, ABC):
         output_name: str,
         append_components: bool,
         model_class: Type[Any],
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
@@ -72,10 +72,10 @@ class PCA(ReductionModel):
         *,
         output_name: str = "pca",
         append_components: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
@@ -98,10 +98,10 @@ class NMF(ReductionModel):
         *,
         output_name: str = "nmf",
         append_components: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
@@ -124,10 +124,10 @@ class TruncatedSVD(ReductionModel):
         *,
         output_name: str = "truncated_svd",
         append_components: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
@@ -150,10 +150,10 @@ class UMAP(ReductionModel):
         *,
         output_name: str = "umap",
         append_components: bool = True,
-        model_kwargs: dict[str, Any]
+        model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        fit_kwargs: dict[str, Any]
+        fit_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):

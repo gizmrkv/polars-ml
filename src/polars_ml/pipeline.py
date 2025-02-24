@@ -422,7 +422,7 @@ class Pipeline(Component):
         return self.pipe(GetAttr("rechunk"))
 
     def rename(
-        self, mapping: dict[str, str] | Callable[[str], str], *, strict: bool = True
+        self, mapping: Mapping[str, str] | Callable[[str], str], *, strict: bool = True
     ) -> Self:
         return self.pipe(GetAttr("rename", mapping, strict=strict))
 
@@ -762,7 +762,7 @@ class Pipeline(Component):
     def inverse_scale(
         self,
         scaler: str | BaseScaler,
-        mapping: dict[str, str],
+        mapping: Mapping[str, str],
         *,
         component_name: str | None = None,
     ) -> Self:
@@ -781,7 +781,7 @@ class Pipeline(Component):
     def label_encode(
         self,
         *exprs: IntoExpr | Iterable[IntoExpr],
-        orders: dict[str, Sequence[Any]] | None = None,
+        orders: Mapping[str, Sequence[Any]] | None = None,
         maintain_order: bool = False,
         component_name: str | None = None,
     ) -> Self:
@@ -791,7 +791,9 @@ class Pipeline(Component):
         )
 
     def inverse_label_encode(
-        self, label_encoding: str | LabelEncoding, mapping: dict[str, str] | None = None
+        self,
+        label_encoding: str | LabelEncoding,
+        mapping: Mapping[str, str] | None = None,
     ) -> Self:
         if isinstance(label_encoding, str):
             label_encoding_component = self[label_encoding]
@@ -841,7 +843,7 @@ class Pipeline(Component):
         value_name: str = "horizontal_agg",
         maintain_order: bool = False,
         aggs: list[Expr] | None = None,
-        named_aggs: dict[str, Expr] | None = None,
+        named_aggs: Mapping[str, Expr] | None = None,
     ) -> Self:
         return self.pipe(
             HorizontalAgg(

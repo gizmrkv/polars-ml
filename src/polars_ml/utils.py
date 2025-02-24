@@ -1,6 +1,6 @@
 import random
 import uuid
-from typing import Iterable, Iterator, Literal, TypeVar
+from typing import Iterable, Iterator, Mapping, TypeVar
 
 import polars as pl
 from polars import DataFrame, Series
@@ -78,7 +78,7 @@ def incremental_sampling(n_rows: int, n_blocks: int) -> Iterator[list[int]]:
 
 
 def deduplicate_scores(
-    scores: dict[T, float], tolerance: float = 1e-14
+    scores: Mapping[T, float], tolerance: float = 1e-14
 ) -> dict[T, float]:
     name_scores = sorted(scores.items(), key=lambda x: x[1])
     deduplicated_scores = {name_scores[0][0]: name_scores[0][1]}

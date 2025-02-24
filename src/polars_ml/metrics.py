@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 
 from polars import DataFrame, Series
 from sklearn import metrics
@@ -9,7 +9,7 @@ def evaluate_metrics(
     y_true: str,
     y_pred: str,
     *,
-    metrics: dict[str, Callable[[Series, Series], Any]],
+    metrics: Mapping[str, Callable[[Series, Series], Any]],
     by: str | None = None,
 ) -> DataFrame:
     return DataFrame(

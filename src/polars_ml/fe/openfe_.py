@@ -1,7 +1,7 @@
 import itertools
 import json
 from pathlib import Path
-from typing import Any, Callable, Literal, Mapping, Self, Sequence
+from typing import Any, Callable, Mapping, Self, Sequence
 
 import lightgbm as lgb
 import polars as pl
@@ -24,13 +24,13 @@ class OpenFE(Component):
         numerical_features: Sequence[str],
         categorical_features: Sequence[str],
         n_subsamples: int = 8,
-        params_stage_1: dict[str, Any],
+        params_stage_1: Mapping[str, Any],
         init_score: str | Sequence[str],
         metric_fn: Callable[[NDArray[Any], NDArray[Any]], float],
         is_higher_better: bool = True,
         halving_ratio: float = 0.5,
         min_candidates: int = 2000,
-        params_stage_2: dict[str, Any],
+        params_stage_2: Mapping[str, Any],
         n_best_features: int = 100,
         save_dir: str | Path | None = None,
     ):
@@ -239,7 +239,7 @@ class OpenFE(Component):
         logger.info("Screening new features with stage 1")
 
         valid_y = valid_data[label].to_numpy()
-        scores: dict[op.Operator, float] = {}
+        scores: Mapping[op.Operator, float] = {}
         for iter, indexes in enumerate(
             incremental_sampling(train_data.height, self.n_subsamples)
         ):
@@ -262,7 +262,7 @@ class OpenFE(Component):
                 )
 
                 gbm = lgb.train(
-                    self.params_stage_1,
+                    dict(**self.params_stage_1),
                     lgb_train,
                     valid_sets=[lgb_valid],
                     num_boost_round=100,
@@ -315,7 +315,7 @@ class OpenFE(Component):
         label: str,
         new_features: Sequence[op.Operator],
         *,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         topk: int = 100,
     ) -> dict[op.Operator, float]:
         logger.info("Screening new features with stage 2")
@@ -351,7 +351,7 @@ class OpenFE(Component):
 
         logger.info("Training with all features")
         gbm = lgb.train(
-            params,
+            dict(**params),
             lgb_train,
             valid_sets=[lgb_valid],
             num_boost_round=100,

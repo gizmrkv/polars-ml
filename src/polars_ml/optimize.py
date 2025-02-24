@@ -53,7 +53,7 @@ def is_valid_clause(
 def parse_grid_search_space(
     search_space: Mapping[str, Mapping[str, Any]],
 ) -> Dict[str, List[Any]]:
-    grid_space: Dict[str, List[Any]] = {}
+    grid_space: dict[str, List[Any]] = {}
     for var_name, var_space in search_space.items():
         if is_valid_clause(var_space, "values"):
             values = var_space["values"]
@@ -118,7 +118,7 @@ def embed_search_space(
 def suggest_sample(
     trial: optuna.Trial, search_space: Mapping[str, Mapping[str, Any]], prefix: str = ""
 ) -> Dict[str, Any]:
-    sample: Dict[str, Any] = {}
+    sample: dict[str, Any] = {}
     for var_name, var_space in search_space.items():
         if is_valid_clause(var_space, "value"):
             sample[var_name] = var_space["value"]

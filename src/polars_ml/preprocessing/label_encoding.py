@@ -11,7 +11,7 @@ class LabelEncoding(Component):
     def __init__(
         self,
         *exprs: IntoExpr | Iterable[IntoExpr],
-        orders: dict[str, Sequence[Any]] | None = None,
+        orders: Mapping[str, Sequence[Any]] | None = None,
         maintain_order: bool = False,
     ):
         self.exprs = exprs
@@ -23,6 +23,7 @@ class LabelEncoding(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
+        print(self.exprs)
         data = data.select(*self.exprs)
         self.mappings = {
             col: DataFrame(
@@ -66,7 +67,7 @@ class LabelEncoding(Component):
 
 class InverseLabelEncoding(Component):
     def __init__(
-        self, label_encoding: LabelEncoding, mapping: dict[str, str] | None = None
+        self, label_encoding: LabelEncoding, mapping: Mapping[str, str] | None = None
     ):
         self.label_encoding = label_encoding
         self.mapping = mapping
