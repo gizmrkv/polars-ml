@@ -133,7 +133,6 @@ class TreeNameSpace:
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
         save_dir: str | Path | None = None,
-        plot_importance: bool = False,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
@@ -148,7 +147,6 @@ class TreeNameSpace:
                 predict_kwargs=predict_kwargs,
                 pool_kwargs=pool_kwargs,
                 save_dir=save_dir,
-                plot_importance=plot_importance,
             ),
             component_name=component_name,
         )

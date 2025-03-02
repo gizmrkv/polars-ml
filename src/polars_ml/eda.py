@@ -1,16 +1,15 @@
 import itertools
 import shutil
 from pathlib import Path
-from typing import Literal
+from typing import Iterable, Literal
 
 import polars as pl
 import polars.selectors as cs
 import seaborn as sns
 from matplotlib import pyplot as plt
 from polars import DataFrame
+from polars._typing import ColumnNameOrSelector
 from tqdm import tqdm
-
-from polars_ml.plot import iter_plots
 
 
 class EDA:
@@ -156,66 +155,112 @@ class EDA:
 
     def plot_histogram(
         self,
+        x: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+        hue: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         *,
-        categorical_threshold: int | float = 100,
         figsize: tuple[int, int] = (12, 8),
         bins: int | Literal["auto"] = "auto",
     ):
         save_dir = self.save_dir / "histogram"
         shutil.rmtree(save_dir, ignore_errors=True)
         save_dir.mkdir(exist_ok=True)
-        xs = self.infer_numerical()
-        hues = [None] + self.infer_categorical(categorical_threshold)
-        for x, hue in tqdm(
-            itertools.product(xs, hues),
-            total=len(xs) * len(hues),
-            disable=not self.show_progress,
+
+        if x is not None:
+            xs = self.data.lazy().select(x).collect_schema().names()
+        else:
+            xs = self.infer_numerical()
+
+        if hue is not None:
+            hues = self.data.lazy().select(hue).collect_schema().names()
+        else:
+            hues = [None]
+
+        for x_col, hue_col in tqdm(
+            list(itertools.product(xs, hues)), disable=not self.show_progress
         ):
+            if len(set([x_col, hue_col])) < 3:
+                continue
+
             fig, ax = plt.subplots(figsize=figsize)
-            sns.histplot(
-                data=self.data.select(set([x, hue]) if hue else x),
-                x=x,
-                hue=hue,
-                bins=bins,
-                kde=True,
+            tmp = self.data.select(set([x_col, hue_col]) if hue_col else x_col)
+            sns.scatterplot(
+                tmp,
+                x=x_col,
+                hue=hue_col,
+                s=10,
+                edgecolor=None,
                 alpha=0.5,
-                element="step",
                 ax=ax,
             )
-            filename = x + (f" by {hue}" if hue else "")
-            fig.savefig(save_dir / f"{filename}.png")
+            ax.set_xlabel(x_col)
+            ax.set_ylabel("Count")
+            title = x_col + (f" by {hue_col}" if hue_col else "")
+            ax.set_title(title)
+            if hue_col:
+                ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
+
+            fig.tight_layout()
+
+            fig.savefig(save_dir / f"{title}.png")
             fig.clear()
             plt.close(fig)
 
     def plot_scatter(
         self,
+        x: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+        y: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+        hue: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         *,
-        categorical_threshold: int | float = 100,
         figsize: tuple[int, int] = (10, 10),
     ):
         save_dir = self.save_dir / "scatter"
         shutil.rmtree(save_dir, ignore_errors=True)
         save_dir.mkdir(exist_ok=True)
-        nums = self.infer_numerical()
-        hues = [None] + self.infer_categorical(categorical_threshold)
-        x_y_hues = list(itertools.product(itertools.combinations(nums, 2), hues))
-        for (x, y), hue in tqdm(
-            x_y_hues, total=len(x_y_hues), disable=not self.show_progress
+
+        if x is not None:
+            xs = self.data.lazy().select(x).collect_schema().names()
+        else:
+            xs = self.infer_numerical()
+
+        if y is not None:
+            ys = self.data.lazy().select(y).collect_schema().names()
+        else:
+            ys = self.infer_numerical()
+
+        if hue is not None:
+            hues = self.data.lazy().select(hue).collect_schema().names()
+        else:
+            hues = [None]
+
+        for x_col, y_col, hue_col in tqdm(
+            list(itertools.product(xs, ys, hues)), disable=not self.show_progress
         ):
+            if len(set([x_col, y_col, hue_col])) < 3:
+                continue
+
             fig, ax = plt.subplots(figsize=figsize)
-            tmp = self.data.select(set([x, y, hue]) if hue else set([x, y]))
-            sns.scatterplot(
-                tmp, x=x, y=y, hue=hue, s=10, edgecolor=None, alpha=0.5, ax=ax
+            tmp = self.data.select(
+                set([x_col, y_col, hue_col]) if hue_col else set([x_col, y_col])
             )
-            ax.set_xlabel(x)
-            ax.set_ylabel(y)
-            ax.set_title(f"{x} vs {y}" + (f" by {hue}" if hue else ""))
-            if hue:
+            sns.scatterplot(
+                tmp,
+                x=x_col,
+                y=y_col,
+                hue=hue_col,
+                s=10,
+                edgecolor=None,
+                alpha=0.5,
+                ax=ax,
+            )
+            ax.set_xlabel(x_col)
+            ax.set_ylabel(y_col)
+            title = f"{x_col} vs {y_col}" + (f" by {hue_col}" if hue_col else "")
+            ax.set_title(title)
+            if hue_col:
                 ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
             fig.tight_layout()
 
-            filename = f"{x} vs {y}" + (f" by {hue}" if hue else "")
-            fig.savefig(save_dir / f"{filename}.png")
+            fig.savefig(save_dir / f"{title}.png")
             fig.clear()
             plt.close(fig)

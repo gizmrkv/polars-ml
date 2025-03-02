@@ -23,7 +23,6 @@ class LabelEncoding(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
-        print(self.exprs)
         data = data.select(*self.exprs)
         self.mappings = {
             col: DataFrame(

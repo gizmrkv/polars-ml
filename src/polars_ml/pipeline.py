@@ -93,7 +93,7 @@ class Pipeline(Component):
                     for name, validation_data in validation_data.items()
                 }
 
-        self.components[-1].fit(data)
+        self.components[-1].fit(data, validation_data)
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
@@ -106,7 +106,7 @@ class Pipeline(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> DataFrame:
-        for component in self.components:
+        for component in self.components[:-1]:
             data = component.fit_transform(data, validation_data)
             if validation_data is None:
                 continue
@@ -119,7 +119,7 @@ class Pipeline(Component):
                     for name, validation_data in validation_data.items()
                 }
 
-        return data
+        return self.components[-1].fit_transform(data, validation_data)
 
     def pipe(self, component: Component, *, component_name: str | None = None) -> Self:
         self.components.append(component)

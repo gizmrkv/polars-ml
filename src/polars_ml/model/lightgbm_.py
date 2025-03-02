@@ -120,17 +120,18 @@ class LightGBM(Component):
             **train_kwargs,
         )
 
-        if self.save_dir is None:
-            raise ValueError("dir must be set to plot importance")
+        if self.save_dir is not None:
+            import matplotlib.pyplot as plt
 
-        import matplotlib.pyplot as plt
+            self.save_dir.mkdir(parents=True, exist_ok=True)
 
-        self.save_dir.mkdir(parents=True, exist_ok=True)
-        for importance_type in ["gain", "split"]:
-            lgb.plot_importance(self.model, importance_type=importance_type)
-            plt.tight_layout()
-            plt.savefig(self.save_dir / f"importance_{importance_type}.png")
-            plt.close()
+            self.model.save_model(self.save_dir / "model.txt")
+
+            for importance_type in ["gain", "split"]:
+                lgb.plot_importance(self.model, importance_type=importance_type)
+                plt.tight_layout()
+                plt.savefig(self.save_dir / f"importance_{importance_type}.png")
+                plt.close()
 
         return self
 
