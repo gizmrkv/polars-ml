@@ -13,5 +13,5 @@ data/
 *.png
 *.log
 
-competition/
+competitions/
 models/

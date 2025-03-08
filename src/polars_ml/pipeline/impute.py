@@ -3,13 +3,13 @@ from typing import Mapping, Self
 import polars as pl
 from polars import DataFrame
 
-from polars_ml import Component
+from polars_ml.pipeline.component import PipelineComponent
 
 
-class Impute(Component):
+class Impute(PipelineComponent):
     def __init__(
         self,
-        imputer: Component,
+        imputer: PipelineComponent,
         column: str,
         *,
         maintain_order: bool = False,

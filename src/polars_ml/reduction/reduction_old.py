@@ -5,17 +5,16 @@ from numpy.typing import NDArray
 from polars import DataFrame, Series
 from polars._typing import IntoExpr
 
-from polars_ml import Component
+from polars_ml.pipeline.component import PipelineComponent
 
 
-class LinearModel(Component, ABC):
+class ReductionModel(PipelineComponent, ABC):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
-        label: IntoExpr,
         *,
-        prediction_name: str,
-        append_prediction: bool,
+        output_name: str,
+        append_components: bool,
         model_class: Type[Any],
         model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
@@ -25,9 +24,8 @@ class LinearModel(Component, ABC):
         | None = None,
     ):
         self.features = features
-        self.label = label
-        self.prediction_name = prediction_name
-        self.append_prediction = append_prediction
+        self.output_name = output_name
+        self.append_components = append_components
         self.model_class = model_class
         self.model_kwargs = model_kwargs or {}
         self.fit_kwargs = fit_kwargs or {}
@@ -37,8 +35,7 @@ class LinearModel(Component, ABC):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
-        train_features = data.select(self.features)
-        train_label = data.select(self.label)
+        train_data = data.select(self.features)
 
         model_kwargs = (
             self.model_kwargs(data)
@@ -50,29 +47,31 @@ class LinearModel(Component, ABC):
         fit_kwargs = (
             self.fit_kwargs(data) if callable(self.fit_kwargs) else self.fit_kwargs
         )
-        self.model.fit(
-            train_features.to_numpy(), train_label.to_numpy().squeeze(), **fit_kwargs
-        )
+        self.model.fit(train_data.to_numpy(), **fit_kwargs)
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
         input = data.select(self.features)
-        pred: NDArray[Any] = self.model.predict(input.to_numpy())
+        components: NDArray[Any] = self.model.transform(input.to_numpy())
 
-        if self.append_prediction:
-            return data.with_columns(Series(self.prediction_name, pred))
+        new_columns = [
+            Series(f"{self.output_name}_{i}", components[:, i])
+            for i in range(components.shape[1])
+        ]
+
+        if self.append_components:
+            return data.with_columns(new_columns)
         else:
-            return DataFrame(Series(self.prediction_name, pred))
+            return DataFrame(new_columns)
 
 
-class LinearRegression(LinearModel):
+class PCA(ReductionModel):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
-        label: str,
         *,
-        prediction_name: str = "linear_regression",
-        append_prediction: bool = True,
+        output_name: str = "pca",
+        append_components: bool = True,
         model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
@@ -80,27 +79,25 @@ class LinearRegression(LinearModel):
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
-        from sklearn import linear_model
+        from sklearn import decomposition
 
         super().__init__(
-            features,
-            label,
-            prediction_name=prediction_name,
-            append_prediction=append_prediction,
-            model_class=linear_model.LinearRegression,
+            features=features,
+            output_name=output_name,
+            append_components=append_components,
+            model_class=decomposition.PCA,
             model_kwargs=model_kwargs,
             fit_kwargs=fit_kwargs,
         )
 
 
-class Ridge(LinearModel):
+class NMF(ReductionModel):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
-        label: str,
         *,
-        prediction_name: str = "ridge",
-        append_prediction: bool = True,
+        output_name: str = "nmf",
+        append_components: bool = True,
         model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
@@ -108,27 +105,25 @@ class Ridge(LinearModel):
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
-        from sklearn import linear_model
+        from sklearn import decomposition
 
         super().__init__(
-            features,
-            label,
-            prediction_name=prediction_name,
-            append_prediction=append_prediction,
-            model_class=linear_model.Ridge,
+            features=features,
+            output_name=output_name,
+            append_components=append_components,
+            model_class=decomposition.NMF,
             model_kwargs=model_kwargs,
             fit_kwargs=fit_kwargs,
         )
 
 
-class Lasso(LinearModel):
+class TruncatedSVD(ReductionModel):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
-        label: str,
         *,
-        prediction_name: str = "lasso",
-        append_prediction: bool = True,
+        output_name: str = "truncated_svd",
+        append_components: bool = True,
         model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
@@ -136,27 +131,25 @@ class Lasso(LinearModel):
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
-        from sklearn import linear_model
+        from sklearn import decomposition
 
         super().__init__(
-            features,
-            label,
-            prediction_name=prediction_name,
-            append_prediction=append_prediction,
-            model_class=linear_model.Lasso,
+            features=features,
+            output_name=output_name,
+            append_components=append_components,
+            model_class=decomposition.TruncatedSVD,
             model_kwargs=model_kwargs,
             fit_kwargs=fit_kwargs,
         )
 
 
-class ElasticNet(LinearModel):
+class UMAP(ReductionModel):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
-        label: str,
         *,
-        prediction_name: str = "elastic_net",
-        append_prediction: bool = True,
+        output_name: str = "umap",
+        append_components: bool = True,
         model_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
@@ -164,14 +157,13 @@ class ElasticNet(LinearModel):
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
     ):
-        from sklearn import linear_model
+        import umap
 
         super().__init__(
-            features,
-            label,
-            prediction_name=prediction_name,
-            append_prediction=append_prediction,
-            model_class=linear_model.ElasticNet,
+            features=features,
+            output_name=output_name,
+            append_components=append_components,
+            model_class=umap.UMAP,
             model_kwargs=model_kwargs,
             fit_kwargs=fit_kwargs,
         )

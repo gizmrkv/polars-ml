@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Any, Callable, Mapping, Sequence
 from numpy.typing import NDArray
 from polars._typing import ColumnNameOrSelector
 
+from ..preprocessing.polynomial import Polynomial
 from .openfe_ import OpenFE
-from .polynomial import Polynomial
 
 if TYPE_CHECKING:
     from polars_ml import Pipeline

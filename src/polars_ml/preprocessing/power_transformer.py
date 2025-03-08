@@ -5,10 +5,10 @@ import polars as pl
 from polars import DataFrame, Expr
 from scipy import stats
 
-from polars_ml import Component
+from polars_ml.pipeline.component import PipelineComponent
 
 
-class PowerTransformer(Component):
+class PowerTransformer(PipelineComponent):
     def __init__(
         self,
         *column: str,

@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Any, Iterable, Literal, Mapping, Self, Sequence
+from typing import Iterable, Literal, Mapping, Self, Sequence
 
 import polars as pl
 from polars import DataFrame, Expr
@@ -11,23 +11,47 @@ from polars._typing import (
     MaintainOrderJoin,
 )
 
-from polars_ml import Component
+from polars_ml.pipeline.component import PipelineComponent
 
 
-class GetAttr(Component):
-    def __init__(self, method: str, *args: Any, **kwargs: Any):
-        self.method = method
-        self.args = args
-        self.kwargs = kwargs
+class Extend(PipelineComponent):
+    def __init__(self, other: DataFrame | PipelineComponent):
+        self.other = other
+
+    def fit(
+        self,
+        data: DataFrame,
+        validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
+    ) -> Self:
+        if isinstance(self.other, PipelineComponent):
+            self.other.fit(data, validation_data)
+        return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        return getattr(data, self.method)(*self.args, **self.kwargs)
+        if isinstance(self.other, PipelineComponent):
+            other = self.other.transform(data)
+        else:
+            other = self.other
+
+        return data.extend(other)
+
+    def fit_transform(
+        self,
+        data: DataFrame,
+        validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
+    ) -> DataFrame:
+        if isinstance(self.other, PipelineComponent):
+            other = self.other.fit_transform(data, validation_data)
+        else:
+            other = self.other
+
+        return data.extend(other)
 
 
-class Join(Component):
+class Join(PipelineComponent):
     def __init__(
         self,
-        other: DataFrame | Component,
+        other: DataFrame | PipelineComponent,
         on: str | Expr | Sequence[str | Expr] | None = None,
         how: JoinStrategy = "inner",
         *,
@@ -55,39 +79,31 @@ class Join(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
-        if isinstance(self.other, Component):
+        if isinstance(self.other, PipelineComponent):
             self.other.fit(data, validation_data)
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        if isinstance(self.other, Component):
+        if isinstance(self.other, PipelineComponent):
             other = self.other.transform(data)
         else:
             other = self.other
 
-        return data.join(
-            other,
-            self.on,
-            self.how,
-            left_on=self.left_on,
-            right_on=self.right_on,
-            suffix=self.suffix,
-            validate=self.validate,
-            join_nulls=self.join_nulls,
-            coalesce=self.coalesce,
-            maintain_order=self.maintain_order,
-        )
+        return self._join(data, other)
 
     def fit_transform(
         self,
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> DataFrame:
-        if isinstance(self.other, Component):
+        if isinstance(self.other, PipelineComponent):
             other = self.other.fit_transform(data, validation_data)
         else:
             other = self.other
 
+        return self._join(data, other)
+
+    def _join(self, data: DataFrame, other: DataFrame) -> DataFrame:
         return data.join(
             other,
             self.on,
@@ -102,10 +118,10 @@ class Join(Component):
         )
 
 
-class JoinAsof(Component):
+class JoinAsof(PipelineComponent):
     def __init__(
         self,
-        other: DataFrame | Component,
+        other: DataFrame | PipelineComponent,
         *,
         left_on: str | None | Expr = None,
         right_on: str | None | Expr = None,
@@ -139,42 +155,31 @@ class JoinAsof(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
-        if isinstance(self.other, Component):
+        if isinstance(self.other, PipelineComponent):
             self.other.fit(data, validation_data)
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        if isinstance(self.other, Component):
+        if isinstance(self.other, PipelineComponent):
             other = self.other.transform(data)
         else:
             other = self.other
 
-        return data.join_asof(
-            other,
-            left_on=self.left_on,
-            right_on=self.right_on,
-            on=self.on,
-            by_left=self.by_left,
-            by_right=self.by_right,
-            by=self.by,
-            strategy=self.strategy,
-            suffix=self.suffix,
-            tolerance=self.tolerance,
-            allow_parallel=self.allow_parallel,
-            force_parallel=self.force_parallel,
-            coalesce=self.coalesce,
-        )
+        return self._join(data, other)
 
     def fit_transform(
         self,
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> DataFrame:
-        if isinstance(self.other, Component):
+        if isinstance(self.other, PipelineComponent):
             other = self.other.fit_transform(data, validation_data)
         else:
             other = self.other
 
+        return self._join(data, other)
+
+    def _join(self, data: DataFrame, other: DataFrame) -> DataFrame:
         return data.join_asof(
             other,
             left_on=self.left_on,
@@ -192,10 +197,10 @@ class JoinAsof(Component):
         )
 
 
-class JoinWhere(Component):
+class JoinWhere(PipelineComponent):
     def __init__(
         self,
-        other: DataFrame | Component,
+        other: DataFrame | PipelineComponent,
         *predicates: Expr | Iterable[Expr],
         suffix: str = "_right",
     ):
@@ -208,12 +213,12 @@ class JoinWhere(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
-        if isinstance(self.other, Component):
+        if isinstance(self.other, PipelineComponent):
             self.other.fit(data, validation_data)
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        if isinstance(self.other, Component):
+        if isinstance(self.other, PipelineComponent):
             other = self.other.transform(data)
         else:
             other = self.other
@@ -225,7 +230,7 @@ class JoinWhere(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> DataFrame:
-        if isinstance(self.other, Component):
+        if isinstance(self.other, PipelineComponent):
             other = self.other.fit_transform(data, validation_data)
         else:
             other = self.other
@@ -233,8 +238,8 @@ class JoinWhere(Component):
         return data.join_where(other, *self.predicates, suffix=self.suffix)
 
 
-class MergeSorted(Component):
-    def __init__(self, other: DataFrame | Component, key: str):
+class MergeSorted(PipelineComponent):
+    def __init__(self, other: DataFrame | PipelineComponent, key: str):
         self.other = other
         self.key = key
 
@@ -243,12 +248,12 @@ class MergeSorted(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
-        if isinstance(self.other, Component):
+        if isinstance(self.other, PipelineComponent):
             self.other.fit(data, validation_data)
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        if isinstance(self.other, Component):
+        if isinstance(self.other, PipelineComponent):
             other = self.other.transform(data)
         else:
             other = self.other
@@ -260,17 +265,74 @@ class MergeSorted(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> DataFrame:
-        if isinstance(self.other, Component):
+        if isinstance(self.other, PipelineComponent):
             other = self.other.fit_transform(data, validation_data)
         else:
             other = self.other
 
-        data.vstack
         return data.merge_sorted(other, self.key)
 
 
-class VStack(Component):
-    def __init__(self, other: DataFrame | Component, *, in_place: bool = False):
+class Update(PipelineComponent):
+    def __init__(
+        self,
+        other: DataFrame | PipelineComponent,
+        on: str | Sequence[str] | None = None,
+        how: Literal["left", "inner", "full"] = "left",
+        *,
+        left_on: str | Sequence[str] | None = None,
+        right_on: str | Sequence[str] | None = None,
+        include_nulls: bool = False,
+    ):
+        self.other = other
+        self.on = on
+        self.how: Literal["left", "inner", "full"] = how
+        self.left_on = left_on
+        self.right_on = right_on
+        self.include_nulls = include_nulls
+
+    def fit(
+        self,
+        data: DataFrame,
+        validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
+    ) -> Self:
+        if isinstance(self.other, PipelineComponent):
+            self.other.fit(data, validation_data)
+        return self
+
+    def transform(self, data: DataFrame) -> DataFrame:
+        if isinstance(self.other, PipelineComponent):
+            other = self.other.transform(data)
+        else:
+            other = self.other
+
+        return self._update(data, other)
+
+    def fit_transform(
+        self,
+        data: DataFrame,
+        validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
+    ) -> DataFrame:
+        if isinstance(self.other, PipelineComponent):
+            other = self.other.fit_transform(data, validation_data)
+        else:
+            other = self.other
+
+        return self._update(data, other)
+
+    def _update(self, data: DataFrame, other: DataFrame) -> DataFrame:
+        return data.update(
+            other,
+            self.on,
+            self.how,
+            left_on=self.left_on,
+            right_on=self.right_on,
+            include_nulls=self.include_nulls,
+        )
+
+
+class VStack(PipelineComponent):
+    def __init__(self, other: DataFrame | PipelineComponent, *, in_place: bool = False):
         self.other = other
         self.in_place = in_place
 
@@ -279,12 +341,12 @@ class VStack(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
-        if isinstance(self.other, Component):
+        if isinstance(self.other, PipelineComponent):
             self.other.fit(data, validation_data)
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        if isinstance(self.other, Component):
+        if isinstance(self.other, PipelineComponent):
             other = self.other.transform(data)
         else:
             other = self.other
@@ -295,37 +357,23 @@ class VStack(Component):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> DataFrame:
-        if isinstance(self.other, Component):
+        if isinstance(self.other, PipelineComponent):
             other = self.other.fit_transform(data, validation_data)
         else:
             other = self.other
         return data.vstack(other, in_place=self.in_place)
 
 
-class Print(Component):
-    def transform(self, data: DataFrame) -> DataFrame:
-        print(data)
-        return data
-
-
-class Display(Component):
-    def transform(self, data: DataFrame) -> DataFrame:
-        from IPython.display import display
-
-        display(data)
-        return data
-
-
-class Concat(Component):
+class Concat(PipelineComponent):
     def __init__(
         self,
-        *components: Component,
+        *others: DataFrame | PipelineComponent,
         how: ConcatMethod = "vertical",
         rechunk: bool = False,
         parallel: bool = True,
         append_output: bool = True,
     ):
-        self.components = components
+        self.others = others
         self.how: ConcatMethod = how
         self.rechunk = rechunk
         self.parallel = parallel
@@ -336,12 +384,16 @@ class Concat(Component):
         data: DataFrame,
         validation_data: pl.DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
-        for component in self.components:
-            component.fit(data, validation_data)
+        for other in self.others:
+            if isinstance(other, PipelineComponent):
+                other.fit(data, validation_data)
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        data_list = [component.transform(data) for component in self.components]
+        data_list = [
+            other.transform(data) if isinstance(other, PipelineComponent) else other
+            for other in self.others
+        ]
         if self.append_output:
             data_list = [data] + data_list
 
@@ -355,8 +407,10 @@ class Concat(Component):
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> DataFrame:
         data_list = [
-            component.fit_transform(data, validation_data)
-            for component in self.components
+            other.fit_transform(data, validation_data)
+            if isinstance(other, PipelineComponent)
+            else other
+            for other in self.others
         ]
         if self.append_output:
             data_list = [data] + data_list
@@ -364,20 +418,3 @@ class Concat(Component):
         return pl.concat(
             data_list, how=self.how, rechunk=self.rechunk, parallel=self.parallel
         )
-
-
-class SortColumns(Component):
-    def __init__(
-        self, by: Literal["dtype", "name"] = "dtype", *, descending: bool = False
-    ):
-        self.by = by
-        self.descending = descending
-
-    def transform(self, data: DataFrame) -> DataFrame:
-        schema = data.collect_schema()
-        sorted_columns = sorted(
-            [{"name": k, "dtype": str(v) + k} for k, v in schema.items()],
-            key=lambda x: x[self.by],
-            reverse=self.descending,
-        )
-        return data.select([col["name"] for col in sorted_columns])

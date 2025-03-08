@@ -4,7 +4,7 @@ from typing import Mapping, Self
 from polars import DataFrame
 
 
-class Component(ABC):
+class PipelineComponent(ABC):
     def fit(
         self,
         data: DataFrame,

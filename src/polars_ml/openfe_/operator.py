@@ -7,10 +7,10 @@ import polars as pl
 from polars import DataFrame, Expr
 from polars._typing import IntoExpr
 
-from polars_ml import Component, group_by, preprocessing
+from polars_ml.pipeline.component import PipelineComponent, group_by, preprocessing
 
 
-class Operator(Component, ABC):
+class Operator(PipelineComponent, ABC):
     args: list["Operator"]
     order: int = 0
 

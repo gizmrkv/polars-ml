@@ -4,10 +4,10 @@ from typing import Mapping, Self, Sequence
 import polars as pl
 from polars import DataFrame, Expr
 
-from polars_ml import Component
+from polars_ml.pipeline.component import PipelineComponent
 
 
-class BaseScaler(Component, ABC):
+class BaseScaler(PipelineComponent, ABC):
     def __init__(self, *column: str, by: str | Sequence[str] | None = None):
         self.columns = column
         self.by = [by] if isinstance(by, str) else list(by) if by is not None else None
@@ -108,7 +108,7 @@ class BaseScaler(Component, ABC):
             )
 
 
-class InverseScaler(Component):
+class InverseScaler(PipelineComponent):
     def __init__(self, scaler: BaseScaler, mapping: Mapping[str, str] | None = None):
         self.scaler = scaler
         self.mapping = mapping or {col: col for col in scaler.columns}

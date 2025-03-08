@@ -4,10 +4,10 @@ import polars as pl
 from polars import DataFrame
 from polars._typing import ColumnNameOrSelector
 
-from polars_ml import Component
+from polars_ml.pipeline.component import PipelineComponent
 
 
-class Polynomial(Component):
+class Polynomial(PipelineComponent):
     def __init__(
         self,
         *features: ColumnNameOrSelector,

@@ -6,13 +6,13 @@ from numpy.typing import NDArray
 from polars import DataFrame
 from polars._typing import IntoExpr
 
-from polars_ml import Component
+from polars_ml.pipeline.component import PipelineComponent
 
 if TYPE_CHECKING:
     import catboost as cb
 
 
-class CatBoost(Component):
+class CatBoost(PipelineComponent):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],

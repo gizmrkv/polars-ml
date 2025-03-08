@@ -4,10 +4,10 @@ import polars as pl
 from polars import DataFrame, Series
 from polars._typing import IntoExpr
 
-from polars_ml import Component
+from polars_ml.pipeline.component import PipelineComponent
 
 
-class LabelEncoding(Component):
+class LabelEncoding(PipelineComponent):
     def __init__(
         self,
         *exprs: IntoExpr | Iterable[IntoExpr],
@@ -64,7 +64,7 @@ class LabelEncoding(Component):
         )
 
 
-class InverseLabelEncoding(Component):
+class InverseLabelEncoding(PipelineComponent):
     def __init__(
         self, label_encoding: LabelEncoding, mapping: Mapping[str, str] | None = None
     ):

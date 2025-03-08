@@ -6,10 +6,10 @@ import polars.selectors as cs
 from polars import DataFrame
 from polars._typing import IntoExpr
 
-from polars_ml import Component
+from polars_ml.pipeline.component import PipelineComponent
 
 
-class HorizontalAgg(Component):
+class HorizontalAgg(PipelineComponent):
     def __init__(
         self,
         *expr: IntoExpr | Iterable[IntoExpr],

@@ -1,5 +1,15 @@
 from datetime import timedelta
-from typing import Any, Callable, Collection, Iterable, Literal, Mapping, Self, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Collection,
+    Iterable,
+    Literal,
+    Mapping,
+    Self,
+    Sequence,
+)
 
 import numpy as np
 from polars import DataFrame, Expr, Series
@@ -24,8 +34,19 @@ from polars._typing import (
     UnstackDirection,
 )
 
-from .component import Component
-from .fe import FeatureEngineeringNameSpace
+from polars_ml.pipeline.component import PipelineComponent
+from polars_ml.preprocessing import (
+    BaseScaler,
+    InverseLabelEncoding,
+    InverseScaler,
+    LabelEncoding,
+    MinMaxScaler,
+    PowerTransformer,
+    QuantileBinning,
+    RobustScaler,
+    StandardScaler,
+)
+
 from .group_by import DynamicGroupBy, GroupByNamaSpace, GroupByThen, RollingGroupBy
 from .horizontal import (
     HorizontalAgg,
@@ -42,37 +63,25 @@ from .horizontal import (
     HorizontalSum,
 )
 from .impute import Impute
-from .misc import (
+from .misc import Display, Echo, GetAttr, Print, SortColumns
+from .other import (
     Concat,
-    Display,
-    GetAttr,
+    Extend,
     Join,
     JoinAsof,
     JoinWhere,
     MergeSorted,
-    Print,
-    SortColumns,
-)
-from .model import LinearNameSpace, ReductionNameSpace, TreeNameSpace
-from .preprocessing import (
-    BaseScaler,
-    InverseLabelEncoding,
-    InverseScaler,
-    LabelEncoding,
-    MinMaxScaler,
-    PowerTransformer,
-    QBinning,
-    RobustScaler,
-    StandardScaler,
+    Update,
+    VStack,
 )
 
 
-class Pipeline(Component):
+class Pipeline(PipelineComponent):
     def __init__(self):
-        self.components: list[Component] = []
-        self.components_dict: dict[str, Component] = {}
+        self.components: list[PipelineComponent] = []
+        self.components_dict: dict[str, PipelineComponent] = {}
 
-    def __getitem__(self, key: str) -> Component:
+    def __getitem__(self, key: str) -> PipelineComponent:
         return self.components_dict[key]
 
     def fit(
@@ -121,14 +130,16 @@ class Pipeline(Component):
 
         return self.components[-1].fit_transform(data, validation_data)
 
-    def pipe(self, component: Component, *, component_name: str | None = None) -> Self:
+    def pipe(
+        self, component: PipelineComponent, *, component_name: str | None = None
+    ) -> Self:
         self.components.append(component)
         if component_name is not None:
             self.components_dict[component_name] = component
         return self
 
-    def approx_n_unique(self) -> Self:
-        return self.pipe(GetAttr("approx_n_unique"))
+    def echo(self) -> Self:
+        return self.pipe(Echo())
 
     def bottom_k(
         self,
@@ -157,9 +168,6 @@ class Pipeline(Component):
 
     def clone(self) -> Self:
         return self.pipe(GetAttr("clone"))
-
-    def corr(self, **kwargs: Any) -> Self:
-        return self.pipe(GetAttr("corr", **kwargs))
 
     def count(self) -> Self:
         return self.pipe(GetAttr("count"))
@@ -197,9 +205,6 @@ class Pipeline(Component):
         *more_columns: str | Expr,
     ) -> Self:
         return self.pipe(GetAttr("explode", columns, *more_columns))
-
-    def extend(self, other: DataFrame) -> Self:
-        return self.pipe(GetAttr("extend", other))
 
     def fill_nan(self, value: Expr | int | float | None) -> Self:
         return self.pipe(GetAttr("fill_nan", value))
@@ -280,85 +285,6 @@ class Pipeline(Component):
     def interpolate(self) -> Self:
         return self.pipe(GetAttr("interpolate"))
 
-    def join(
-        self,
-        other: DataFrame | Component,
-        on: str | Expr | Sequence[str | Expr] | None = None,
-        how: JoinStrategy = "inner",
-        *,
-        left_on: str | Expr | Sequence[str | Expr] | None = None,
-        right_on: str | Expr | Sequence[str | Expr] | None = None,
-        suffix: str = "_right",
-        validate: JoinValidation = "m:m",
-        join_nulls: bool = False,
-        coalesce: bool | None = None,
-        maintain_order: MaintainOrderJoin | None = None,
-        component_name: str | None = None,
-    ) -> Self:
-        return self.pipe(
-            Join(
-                other,
-                on,
-                how,
-                left_on=left_on,
-                right_on=right_on,
-                suffix=suffix,
-                validate=validate,
-                join_nulls=join_nulls,
-                coalesce=coalesce,
-                maintain_order=maintain_order,
-            ),
-            component_name=component_name,
-        )
-
-    def join_asof(
-        self,
-        other: DataFrame | Component,
-        *,
-        left_on: str | None | Expr = None,
-        right_on: str | None | Expr = None,
-        on: str | None | Expr = None,
-        by_left: str | Sequence[str] | None = None,
-        by_right: str | Sequence[str] | None = None,
-        by: str | Sequence[str] | None = None,
-        strategy: AsofJoinStrategy = "backward",
-        suffix: str = "_right",
-        tolerance: str | int | float | timedelta | None = None,
-        allow_parallel: bool = True,
-        force_parallel: bool = False,
-        coalesce: bool = True,
-        component_name: str | None = None,
-    ) -> Self:
-        return self.pipe(
-            JoinAsof(
-                other,
-                left_on=left_on,
-                right_on=right_on,
-                on=on,
-                by_left=by_left,
-                by_right=by_right,
-                by=by,
-                strategy=strategy,
-                suffix=suffix,
-                tolerance=tolerance,
-                allow_parallel=allow_parallel,
-                force_parallel=force_parallel,
-                coalesce=coalesce,
-            ),
-            component_name=component_name,
-        )
-
-    def join_where(
-        self,
-        other: DataFrame | Component,
-        *predicates: Expr | Iterable[Expr],
-        suffix: str = "_right",
-        component_name: str | None = None,
-    ) -> Self:
-        return self.pipe(
-            JoinWhere(other, *predicates, suffix=suffix), component_name=component_name
-        )
-
     def limit(self, n: int = 5) -> Self:
         return self.pipe(GetAttr("limit", n))
 
@@ -376,9 +302,6 @@ class Pipeline(Component):
 
     def median(self) -> Self:
         return self.pipe(GetAttr("median"))
-
-    def merge_sorted(self, other: DataFrame | Component, key: str) -> Self:
-        return self.pipe(MergeSorted(other, key))
 
     def min(self) -> Self:
         return self.pipe(GetAttr("min"))
@@ -601,28 +524,6 @@ class Pipeline(Component):
     ) -> Self:
         return self.pipe(GetAttr("unstack", step, how, columns, fill_values))
 
-    def update(
-        self,
-        other: DataFrame,
-        on: str | Sequence[str] | None = None,
-        how: Literal["left", "inner", "full"] = "left",
-        *,
-        left_on: str | Sequence[str] | None = None,
-        right_on: str | Sequence[str] | None = None,
-        include_nulls: bool = False,
-    ) -> Self:
-        return self.pipe(
-            GetAttr(
-                "update",
-                other,
-                on,
-                how,
-                left_on=left_on,
-                right_on=right_on,
-                include_nulls=include_nulls,
-            )
-        )
-
     def upsample(
         self,
         time_column: str,
@@ -643,9 +544,6 @@ class Pipeline(Component):
 
     def var(self, ddof: int = 1) -> Self:
         return self.pipe(GetAttr("var", ddof))
-
-    def vstack(self, other: DataFrame, *, in_place: bool = False) -> Self:
-        return self.pipe(GetAttr("vstack", other, in_place=in_place))
 
     def with_columns(
         self,
@@ -675,24 +573,126 @@ class Pipeline(Component):
             GetAttr("to_dummies", columns, separator=separator, drop_first=drop_first)
         )
 
+    def extend(self, other: DataFrame | PipelineComponent) -> Self:
+        return self.pipe(Extend(other))
+
+    def join(
+        self,
+        other: DataFrame | PipelineComponent,
+        on: str | Expr | Sequence[str | Expr] | None = None,
+        how: JoinStrategy = "inner",
+        *,
+        left_on: str | Expr | Sequence[str | Expr] | None = None,
+        right_on: str | Expr | Sequence[str | Expr] | None = None,
+        suffix: str = "_right",
+        validate: JoinValidation = "m:m",
+        join_nulls: bool = False,
+        coalesce: bool | None = None,
+        maintain_order: MaintainOrderJoin | None = None,
+    ) -> Self:
+        return self.pipe(
+            Join(
+                other,
+                on=on,
+                how=how,
+                left_on=left_on,
+                right_on=right_on,
+                suffix=suffix,
+                validate=validate,
+                join_nulls=join_nulls,
+                coalesce=coalesce,
+                maintain_order=maintain_order,
+            )
+        )
+
+    def join_asof(
+        self,
+        other: DataFrame | PipelineComponent,
+        *,
+        left_on: str | None | Expr = None,
+        right_on: str | None | Expr = None,
+        on: str | None | Expr = None,
+        by_left: str | Sequence[str] | None = None,
+        by_right: str | Sequence[str] | None = None,
+        by: str | Sequence[str] | None = None,
+        strategy: AsofJoinStrategy = "backward",
+        suffix: str = "_right",
+        tolerance: str | int | float | timedelta | None = None,
+        allow_parallel: bool = True,
+        force_parallel: bool = False,
+        coalesce: bool = True,
+    ) -> Self:
+        return self.pipe(
+            JoinAsof(
+                other,
+                left_on=left_on,
+                right_on=right_on,
+                on=on,
+                by_left=by_left,
+                by_right=by_right,
+                by=by,
+                strategy=strategy,
+                suffix=suffix,
+                tolerance=tolerance,
+                allow_parallel=allow_parallel,
+                force_parallel=force_parallel,
+                coalesce=coalesce,
+            )
+        )
+
+    def join_where(
+        self,
+        other: DataFrame | PipelineComponent,
+        *predicates: Expr | Iterable[Expr],
+        suffix: str = "_right",
+    ) -> Self:
+        return self.pipe(JoinWhere(other, *predicates, suffix=suffix))
+
+    def merge_sorted(self, other: DataFrame | PipelineComponent, key: str) -> Self:
+        return self.pipe(MergeSorted(other, key))
+
+    def update(
+        self,
+        other: DataFrame | PipelineComponent,
+        on: str | Sequence[str] | None = None,
+        how: Literal["left", "inner", "full"] = "left",
+        *,
+        left_on: str | Sequence[str] | None = None,
+        right_on: str | Sequence[str] | None = None,
+        include_nulls: bool = False,
+    ) -> Self:
+        return self.pipe(
+            Update(
+                other,
+                on=on,
+                how=how,
+                left_on=left_on,
+                right_on=right_on,
+                include_nulls=include_nulls,
+            )
+        )
+
+    def vstack(
+        self, other: DataFrame | PipelineComponent, *, in_place: bool = False
+    ) -> Self:
+        return self.pipe(VStack(other, in_place=in_place))
+
     def concat(
         self,
-        *components: Component,
+        *others: DataFrame | PipelineComponent,
         how: ConcatMethod = "vertical",
         rechunk: bool = False,
         parallel: bool = True,
         append_output: bool = True,
-        component_name: str | None = None,
     ) -> Self:
         return self.pipe(
             Concat(
-                *components,
+                *others,
                 how=how,
                 rechunk=rechunk,
                 parallel=parallel,
                 append_output=append_output,
-            ),
-            component_name=component_name,
+            )
         )
 
     def print(self) -> Self:
@@ -720,7 +720,7 @@ class Pipeline(Component):
 
     def impute(
         self,
-        imputer: Component,
+        imputer: PipelineComponent,
         column: str,
         *,
         maintain_order: bool = False,
@@ -818,7 +818,7 @@ class Pipeline(Component):
         component_name: str | None = None,
     ) -> Self:
         return self.pipe(
-            QBinning(
+            QuantileBinning(
                 *exprs,
                 quantiles=quantiles,
                 labels=labels,
@@ -978,19 +978,3 @@ class Pipeline(Component):
                 *expr, value_name=value_name, maintain_order=maintain_order
             )
         )
-
-    @property
-    def tree(self) -> TreeNameSpace:
-        return TreeNameSpace(self)
-
-    @property
-    def linear(self) -> LinearNameSpace:
-        return LinearNameSpace(self)
-
-    @property
-    def reduction(self) -> ReductionNameSpace:
-        return ReductionNameSpace(self)
-
-    @property
-    def fe(self) -> FeatureEngineeringNameSpace:
-        return FeatureEngineeringNameSpace(self)

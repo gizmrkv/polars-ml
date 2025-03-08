@@ -4,13 +4,13 @@ import polars as pl
 from polars import DataFrame, Expr
 from polars._typing import IntoExpr, RollingInterpolationMethod, SchemaDict
 
-from polars_ml import Component
+from polars_ml.pipeline.component import PipelineComponent
 
 if TYPE_CHECKING:
-    from .pipeline import Pipeline
+    from .pipeline_ import Pipeline
 
 
-class GroupByGetAttr(Component):
+class GroupByGetAttr(PipelineComponent):
     def __init__(
         self,
         group_by_method: str,
@@ -296,7 +296,7 @@ class RollingGroupBy:
         )
 
 
-class GroupByThen(Component):
+class GroupByThen(PipelineComponent):
     def __init__(
         self,
         by: str | Expr | Sequence[str | Expr] | None = None,

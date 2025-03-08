@@ -10,12 +10,13 @@ from numpy.typing import NDArray
 from polars import DataFrame
 from tqdm import tqdm
 
-from polars_ml import Component
-from polars_ml.fe import operator as op
-from polars_ml.utils import deduplicate_scores, incremental_sampling
+from polars_ml.openfe_ import operator as op
+from polars_ml.pipeline.component import PipelineComponent
+
+from .utils import deduplicate_scores, incremental_sampling
 
 
-class OpenFE(Component):
+class OpenFE(PipelineComponent):
     def __init__(
         self,
         label: str,
