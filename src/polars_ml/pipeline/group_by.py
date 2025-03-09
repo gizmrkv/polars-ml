@@ -1,7 +1,6 @@
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, Self, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping
 
-import polars as pl
-from polars import DataFrame, Expr
+from polars import DataFrame
 from polars._typing import IntoExpr, RollingInterpolationMethod, SchemaDict
 
 from polars_ml.pipeline.component import PipelineComponent
@@ -65,16 +64,6 @@ class GroupByNamaSpace:
             GroupByGetAttr(
                 self.method,
                 "all",
-                group_by_args=self.args,
-                group_by_kwargs=self.kwargs,
-            )
-        )
-
-    def count(self) -> "Pipeline":
-        return self.pipeline.pipe(
-            GroupByGetAttr(
-                self.method,
-                "count",
                 group_by_args=self.args,
                 group_by_kwargs=self.kwargs,
             )
@@ -218,7 +207,7 @@ class GroupByNamaSpace:
         )
 
 
-class DynamicGroupBy:
+class GroupByDynamicNameSpace:
     def __init__(self, pipeline: "Pipeline", method: str, *args: Any, **kwargs: Any):
         self.pipeline = pipeline
         self.method = method
@@ -257,7 +246,7 @@ class DynamicGroupBy:
         )
 
 
-class RollingGroupBy:
+class GroupByRollingNameSpace:
     def __init__(self, pipeline: "Pipeline", method: str, *args: Any, **kwargs: Any):
         self.pipeline = pipeline
         self.method = method
@@ -294,33 +283,3 @@ class RollingGroupBy:
                 agg_args=(function, schema),
             )
         )
-
-
-class GroupByThen(PipelineComponent):
-    def __init__(
-        self,
-        by: str | Expr | Sequence[str | Expr] | None = None,
-        *aggs: IntoExpr | Iterable[IntoExpr],
-        maintain_order: bool = False,
-        after_with_columns: IntoExpr | Iterable[IntoExpr] | None = None,
-    ):
-        self.by = by
-        self.aggs = aggs
-        self.maintain_order = maintain_order
-        self.after_with_columns = after_with_columns
-
-    def fit(
-        self,
-        data: pl.DataFrame,
-        validation_data: pl.DataFrame | Mapping[str, DataFrame] | None = None,
-    ) -> Self:
-        self.grouped = data.group_by(self.by, maintain_order=self.maintain_order).agg(
-            *self.aggs
-        )
-        if self.after_with_columns is not None:
-            self.grouped = self.grouped.with_columns(self.after_with_columns)
-
-        return self
-
-    def transform(self, data: DataFrame) -> DataFrame:
-        return data.join(self.grouped, on=self.by, how="left")

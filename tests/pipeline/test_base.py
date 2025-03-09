@@ -112,3 +112,41 @@ def test_pipeline_sort_columns():
     pp = Pipeline().sort_columns("name")
     out = pp.transform(data)
     assert_frame_equal(out, data.select("a", "b", "c"))
+
+
+def test_pipeline_group_by_then():
+    train_data = DataFrame({"a": [1, 1, 2, 2], "b": [1, 2, 3, 4]})
+    valid_data = DataFrame({"a": [1, 2, 3]})
+
+    pp = Pipeline().group_by_then("a", pl.sum("b"), maintain_order=True)
+    pp.fit(train_data)
+    out = pp.transform(valid_data)
+    exp = DataFrame({"a": [1, 2, 3], "b": [3, 7, None]})
+    assert_frame_equal(out, exp)
+
+
+@pytest.mark.parametrize(
+    ["data", "expected"],
+    [
+        (
+            DataFrame(
+                {"f0": [1, 1, 2, 2, 2], "f1": [0.1, None, 0.2, None, 0.4]}
+            ).with_row_index(),
+            DataFrame(
+                {"f0": [1, 1, 2, 2, 2], "f1": [0.1, 0.1, 0.2, 0.3, 0.4]}
+            ).with_row_index(),
+        ),
+    ],
+)
+def test_pipeline_impute(data: DataFrame, expected: DataFrame):
+    print("#" * 80)
+    pp = Pipeline().impute(
+        Pipeline()
+        .group_by_then("f0", pl.mean("f1"), maintain_order=True)
+        .print()
+        .select("f1"),
+        "f1",
+        maintain_order=True,
+    )
+    out = pp.fit_transform(data)
+    assert_frame_equal(out, expected)

@@ -371,13 +371,13 @@ class Concat(PipelineComponent):
         how: ConcatMethod = "vertical",
         rechunk: bool = False,
         parallel: bool = True,
-        append_output: bool = True,
+        include_input: bool = False,
     ):
         self.others = others
         self.how: ConcatMethod = how
         self.rechunk = rechunk
         self.parallel = parallel
-        self.append_output = append_output
+        self.include_input = include_input
 
     def fit(
         self,
@@ -394,7 +394,7 @@ class Concat(PipelineComponent):
             other.transform(data) if isinstance(other, PipelineComponent) else other
             for other in self.others
         ]
-        if self.append_output:
+        if self.include_input:
             data_list = [data] + data_list
 
         return pl.concat(
@@ -412,7 +412,7 @@ class Concat(PipelineComponent):
             else other
             for other in self.others
         ]
-        if self.append_output:
+        if self.include_input:
             data_list = [data] + data_list
 
         return pl.concat(

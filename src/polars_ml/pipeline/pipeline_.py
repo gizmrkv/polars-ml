@@ -1,6 +1,5 @@
 from datetime import timedelta
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Collection,
@@ -47,7 +46,11 @@ from polars_ml.preprocessing import (
     StandardScaler,
 )
 
-from .group_by import DynamicGroupBy, GroupByNamaSpace, GroupByThen, RollingGroupBy
+from .group_by import (
+    GroupByDynamicNameSpace,
+    GroupByNamaSpace,
+    GroupByRollingNameSpace,
+)
 from .horizontal import (
     HorizontalAgg,
     HorizontalAll,
@@ -62,8 +65,7 @@ from .horizontal import (
     HorizontalQuantile,
     HorizontalSum,
 )
-from .impute import Impute
-from .misc import Display, Echo, GetAttr, Print, SortColumns
+from .misc import Display, Echo, GetAttr, GroupByThen, Impute, Print, SortColumns
 from .other import (
     Concat,
     Extend,
@@ -261,8 +263,8 @@ class Pipeline(PipelineComponent):
         label: Label = "left",
         group_by: IntoExpr | Iterable[IntoExpr] | None = None,
         start_by: StartBy = "window",
-    ) -> DynamicGroupBy:
-        return DynamicGroupBy(
+    ) -> GroupByDynamicNameSpace:
+        return GroupByDynamicNameSpace(
             self,
             "group_by_dynamic",
             index_column,
@@ -363,8 +365,8 @@ class Pipeline(PipelineComponent):
         offset: str | timedelta | None = None,
         closed: ClosedInterval = "right",
         group_by: IntoExpr | Iterable[IntoExpr] | None = None,
-    ) -> RollingGroupBy:
-        return RollingGroupBy(
+    ) -> GroupByRollingNameSpace:
+        return GroupByRollingNameSpace(
             self,
             "rolling",
             index_column,
@@ -683,7 +685,7 @@ class Pipeline(PipelineComponent):
         how: ConcatMethod = "vertical",
         rechunk: bool = False,
         parallel: bool = True,
-        append_output: bool = True,
+        include_input: bool = False,
     ) -> Self:
         return self.pipe(
             Concat(
@@ -691,7 +693,7 @@ class Pipeline(PipelineComponent):
                 how=how,
                 rechunk=rechunk,
                 parallel=parallel,
-                append_output=append_output,
+                include_input=include_input,
             )
         )
 

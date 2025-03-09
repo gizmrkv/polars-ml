@@ -237,7 +237,7 @@ def test_pipeline_concat(data: DataFrame, other: DataFrame):
     exp = pl.concat([data, other])
     assert_frame_equal(out, exp)
 
-    other_pp = Pipeline().echo()
+    other_pp = Pipeline().clone()
     pp = Pipeline().concat(other_pp, other)
     out = pp.transform(data)
     exp = pl.concat([other_pp.transform(data), other])
