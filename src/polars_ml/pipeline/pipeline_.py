@@ -8,6 +8,7 @@ from typing import (
     Mapping,
     Self,
     Sequence,
+    overload,
 )
 
 import numpy as np
@@ -35,15 +36,12 @@ from polars._typing import (
 
 from polars_ml.pipeline.component import PipelineComponent
 from polars_ml.preprocessing import (
-    BaseScaler,
     InverseLabelEncoding,
-    InverseScaler,
+    InverseScalerContext,
     LabelEncoding,
-    MinMaxScaler,
     PowerTransformer,
     QuantileBinning,
-    RobustScaler,
-    StandardScaler,
+    Scaler,
 )
 
 from .group_by import (
@@ -733,52 +731,47 @@ class Pipeline(PipelineComponent):
             component_name=component_name,
         )
 
-    def standard_scale(
+    @overload
+    def scale(
         self,
         *column: str,
         by: str | Sequence[str] | None = None,
-        component_name: str | None = None,
-    ) -> Self:
-        return self.pipe(StandardScaler(*column, by=by), component_name=component_name)
-
-    def min_max_scale(
-        self,
-        *column: str,
-        by: str | Sequence[str] | None = None,
-        component_name: str | None = None,
-    ) -> Self:
-        return self.pipe(MinMaxScaler(*column, by=by), component_name=component_name)
-
-    def robust_scale(
-        self,
-        *column: str,
-        by: str | Sequence[str] | None = None,
+        method: Literal["standard", "min-max", "robust"] = "standard",
         quantile: tuple[float, float] = (0.25, 0.75),
         component_name: str | None = None,
-    ) -> Self:
-        return self.pipe(
-            RobustScaler(*column, by=by, quantile=quantile),
-            component_name=component_name,
-        )
+    ) -> Self: ...
 
-    def inverse_scale(
+    @overload
+    def scale(
         self,
-        scaler: str | BaseScaler,
+        *column: str,
+        by: str | Sequence[str] | None = None,
+        method: Literal["standard", "min-max", "robust"] = "standard",
+        quantile: tuple[float, float] = (0.25, 0.75),
         mapping: Mapping[str, str],
-        *,
         component_name: str | None = None,
-    ) -> Self:
-        if isinstance(scaler, str):
-            scaler_component = self[scaler]
-            if not isinstance(scaler_component, BaseScaler):
-                raise ValueError(
-                    "scaler must be a BaseScaler instance or the name of a component that is a BaseScaler instance."
-                )
-            inverse = InverseScaler(scaler_component, mapping)
-        else:
-            inverse = InverseScaler(scaler, mapping)
+    ) -> InverseScalerContext: ...
 
-        return self.pipe(inverse, component_name=component_name)
+    def scale(
+        self,
+        *column: str,
+        by: str | Sequence[str] | None = None,
+        method: Literal["standard", "min-max", "robust"] = "standard",
+        quantile: tuple[float, float] = (0.25, 0.75),
+        mapping: Mapping[str, str] | None = None,
+        component_name: str | None = None,
+    ) -> Self | InverseScalerContext:
+        if isinstance(mapping, Mapping):
+            return InverseScalerContext(
+                self,
+                Scaler(*column, by=by, method=method, quantile=quantile),
+                mapping,
+            )
+        else:
+            return self.pipe(
+                Scaler(*column, by=by, method=method, quantile=quantile),
+                component_name=component_name,
+            )
 
     def label_encode(
         self,
