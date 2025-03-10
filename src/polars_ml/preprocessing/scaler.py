@@ -1,3 +1,4 @@
+import uuid
 from typing import TYPE_CHECKING, Any, Literal, Mapping, Self, Sequence, Type
 
 import polars as pl
@@ -18,9 +19,16 @@ class Scaler(PipelineComponent):
         quantile: tuple[float, float] = (0.25, 0.75),
     ):
         self.columns = column
-        self.by = [by] if isinstance(by, str) else list(by) if by is not None else None
         self.method = method
         self.q1, self.q3 = quantile
+        self.suffix = uuid.uuid4().hex
+
+        if isinstance(by, str):
+            self.by = [by]
+        elif isinstance(by, Sequence):
+            self.by = list(by)
+        else:
+            self.by = []
 
         assert 0 <= self.q1 < self.q3 <= 1, (
             f"Quantile values must be in the range [0, 1] and q1 < q3. Got {quantile}"
@@ -51,106 +59,81 @@ class Scaler(PipelineComponent):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
+        exprs = [
+            self.move_expr(col).alias(f"{col}_move_{self.suffix}")
+            for col in self.columns
+        ] + [
+            self.scale_expr(col).alias(f"{col}_scale_{self.suffix}")
+            for col in self.columns
+        ]
         if self.by:
-            self.move_scale = data.group_by(self.by).agg(
-                *[self.move_expr(col).alias(f"{col}_move") for col in self.columns],
-                *[self.scale_expr(col).alias(f"{col}_scale") for col in self.columns],
-            )
+            self.move_scale = data.group_by(self.by).agg(*exprs)
         else:
-            self.move_scale = data.select(
-                *[self.move_expr(col).alias(f"{col}_move") for col in self.columns],
-                *[self.scale_expr(col).alias(f"{col}_scale") for col in self.columns],
-            )
+            self.move_scale = data.select(*exprs)
+
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        columns = (
-            data.lazy()
-            .select(set(data.columns) & set(self.columns))
-            .collect_schema()
-            .names()
+        targets = set(data.columns) & set(self.columns)
+        on_args: dict[str, Any] = (
+            {"on": self.by}
+            if self.by
+            else {"left_on": pl.lit(0), "right_on": pl.lit(0)}
+        )
+        return (
+            data.join(
+                self.move_scale.select(
+                    *self.by,
+                    *[f"{t}_move_{self.suffix}" for t in targets],
+                    *[f"{t}_scale_{self.suffix}" for t in targets],
+                ),
+                how="left",
+                **on_args,
+            )
+            .with_columns(
+                (pl.col(t) - pl.col(f"{t}_move_{self.suffix}"))
+                / pl.col(f"{t}_scale_{self.suffix}")
+                for t in targets
+            )
+            .select(data.columns)
         )
 
-        if self.by:
-            return (
-                data.join(
-                    self.move_scale.select(
-                        *self.by,
-                        *[f"{col}_move" for col in columns],
-                        *[f"{col}_scale" for col in columns],
-                    ),
-                    on=self.by,
-                    how="left",
-                )
-                .with_columns(
-                    [
-                        (pl.col(col) - pl.col(f"{col}_move")) / pl.col(f"{col}_scale")
-                        for col in columns
-                    ]
-                )
-                .select(data.columns)
-            )
-        else:
-            move_scale = self.move_scale.row(0, named=True)
-            return data.with_columns(
-                [
-                    (pl.col(col) - move_scale[f"{col}_move"])
-                    / move_scale[f"{col}_scale"]
-                    for col in columns
-                ]
-            )
 
-
-class InverseScaler(PipelineComponent):
+class ScalerInverse(PipelineComponent):
     def __init__(self, scaler: Scaler, mapping: Mapping[str, str] | None = None):
         self.scaler = scaler
-        self.mapping = mapping or {col: col for col in scaler.columns}
+        self.mapping = mapping
 
     def transform(self, data: DataFrame) -> DataFrame:
-        columns = (
-            data.lazy()
-            .select(set(data.columns) & set(self.mapping.keys()))
-            .collect_schema()
-            .names()
+        mapping = self.mapping or {col: col for col in self.scaler.columns}
+        targets = set(data.columns) & set(mapping.keys())
+        sources = set(data.columns) & set(mapping.values())
+        on_args: dict[str, Any] = (
+            {"on": self.scaler.by}
+            if self.scaler.by
+            else {"left_on": pl.lit(0), "right_on": pl.lit(0)}
         )
-        scales = (
-            data.lazy()
-            .select(set(data.columns) & set(self.mapping.values()))
-            .collect_schema()
-            .names()
+        suffix = self.scaler.suffix
+        return (
+            data.join(
+                self.scaler.move_scale.select(
+                    *self.scaler.by,
+                    *[f"{col}_move_{suffix}" for col in sources],
+                    *[f"{col}_scale_{suffix}" for col in sources],
+                ),
+                how="left",
+                **on_args,
+            )
+            .with_columns(
+                (pl.col(t) * pl.col(f"{s}_scale_{suffix}"))
+                + pl.col(f"{s}_move_{suffix}")
+                for t, s in {t: s for t, s in mapping.items() if t in targets}.items()
+            )
+            .select(data.columns)
         )
-        if self.scaler.by:
-            return (
-                data.join(
-                    self.scaler.move_scale.select(
-                        *self.scaler.by,
-                        *[f"{col}_move" for col in scales],
-                        *[f"{col}_scale" for col in scales],
-                    ),
-                    on=self.scaler.by,
-                    how="left",
-                )
-                .with_columns(
-                    [
-                        (pl.col(col) * pl.col(f"{self.mapping[col]}_scale"))
-                        + pl.col(f"{self.mapping[col]}_move")
-                        for col in columns
-                    ]
-                )
-                .select(data.columns)
-            )
-        else:
-            move_scale = self.scaler.move_scale.row(0, named=True)
-            return data.with_columns(
-                [
-                    (pl.col(col) * move_scale[f"{self.mapping[col]}_scale"])
-                    + move_scale[f"{self.mapping[col]}_move"]
-                    for col in columns
-                ]
-            )
 
 
-class InverseScalerContext:
+class ScalerInverseContext:
     def __init__(
         self,
         pipeline: "Pipeline",
@@ -170,7 +153,7 @@ class InverseScalerContext:
 
     def __exit__(self, *args: Any, **kwargs: Any):
         self.pipeline.pipe(
-            InverseScaler(self.scaler, mapping=self.mapping),
+            ScalerInverse(self.scaler, mapping=self.mapping),
             component_name=self.component_name + "_inverse"
             if self.component_name
             else None,

@@ -1,14 +1,25 @@
-from .label_encoding import InverseLabelEncoding, LabelEncoding
-from .power_transformer import PowerTransformer
+from .label_encoding import (
+    LabelEncoding,
+    LabelEncodingInverse,
+    LabelEncodingInverseContext,
+)
+from .power_transformer import (
+    PowerTransformer,
+    PowerTransformerInverse,
+    PowerTransformerInverseContext,
+)
 from .quantile_binning import QuantileBinning
-from .scaler import InverseScaler, InverseScalerContext, Scaler
+from .scaler import Scaler, ScalerInverse, ScalerInverseContext
 
 __all__ = [
-    "Scaler",
-    "InverseScaler",
-    "InverseScalerContext",
     "LabelEncoding",
-    "InverseLabelEncoding",
+    "LabelEncodingInverse",
+    "LabelEncodingInverseContext",
     "PowerTransformer",
+    "PowerTransformerInverse",
+    "PowerTransformerInverseContext",
     "QuantileBinning",
+    "Scaler",
+    "ScalerInverse",
+    "ScalerInverseContext",
 ]

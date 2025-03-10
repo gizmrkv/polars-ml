@@ -1,4 +1,5 @@
-from typing import Any, Iterable, Mapping, Self, Sequence
+import uuid
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, Self, Sequence
 
 import polars as pl
 from polars import DataFrame, Series
@@ -6,17 +7,21 @@ from polars._typing import IntoExpr
 
 from polars_ml.pipeline.component import PipelineComponent
 
+if TYPE_CHECKING:
+    from polars_ml import Pipeline
+
 
 class LabelEncoding(PipelineComponent):
     def __init__(
         self,
         *exprs: IntoExpr | Iterable[IntoExpr],
         orders: Mapping[str, Sequence[Any]] | None = None,
-        maintain_order: bool = False,
+        maintain_order: bool = True,
     ):
         self.exprs = exprs
         self.orders = orders or {}
         self.maintain_order = maintain_order
+        self.suffix = uuid.uuid4().hex
 
     def fit(
         self,
@@ -45,26 +50,13 @@ class LabelEncoding(PipelineComponent):
 
     def transform(self, data: DataFrame) -> DataFrame:
         return data.with_columns(
-            [
-                data.select(col).join(mapping, on=col, how="left")["label"].rename(col)
-                for col, mapping in self.mappings.items()
-                if col in data.columns
-            ]
-        )
-
-    def inverse_transform(self, data: DataFrame) -> DataFrame:
-        return data.with_columns(
-            [
-                data.select(pl.col(col).alias("label"))
-                .join(mapping, on="label", how="left")[col]
-                .rename(col)
-                for col, mapping in self.mappings.items()
-                if col in data.columns
-            ]
+            data.select(col).join(mapping, on=col, how="left")["label"].rename(col)
+            for col, mapping in self.mappings.items()
+            if col in data.columns
         )
 
 
-class InverseLabelEncoding(PipelineComponent):
+class LabelEncodingInverse(PipelineComponent):
     def __init__(
         self, label_encoding: LabelEncoding, mapping: Mapping[str, str] | None = None
     ):
@@ -82,4 +74,31 @@ class InverseLabelEncoding(PipelineComponent):
                 .rename(col_from)
                 for col_from, col_to in mapping.items()
             ]
+        )
+
+
+class LabelEncodingInverseContext:
+    def __init__(
+        self,
+        pipeline: "Pipeline",
+        label_encoding: LabelEncoding,
+        mapping: Mapping[str, str] | None = None,
+        *,
+        component_name: str | None = None,
+    ):
+        self.pipeline = pipeline
+        self.label_encoding = label_encoding
+        self.mapping = mapping
+        self.component_name = component_name
+
+    def __enter__(self) -> "Pipeline":
+        self.pipeline.pipe(self.label_encoding, component_name=self.component_name)
+        return self.pipeline
+
+    def __exit__(self, *args: Any, **kwargs: Any):
+        self.pipeline.pipe(
+            LabelEncodingInverse(self.label_encoding, mapping=self.mapping),
+            component_name=self.component_name + "_inverse"
+            if self.component_name
+            else None,
         )

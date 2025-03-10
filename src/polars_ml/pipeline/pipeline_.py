@@ -36,12 +36,13 @@ from polars._typing import (
 
 from polars_ml.pipeline.component import PipelineComponent
 from polars_ml.preprocessing import (
-    InverseLabelEncoding,
-    InverseScalerContext,
     LabelEncoding,
+    LabelEncodingInverseContext,
     PowerTransformer,
+    PowerTransformerInverseContext,
     QuantileBinning,
     Scaler,
+    ScalerInverseContext,
 )
 
 from .group_by import (
@@ -750,7 +751,7 @@ class Pipeline(PipelineComponent):
         quantile: tuple[float, float] = (0.25, 0.75),
         mapping: Mapping[str, str],
         component_name: str | None = None,
-    ) -> InverseScalerContext: ...
+    ) -> ScalerInverseContext: ...
 
     def scale(
         self,
@@ -760,9 +761,9 @@ class Pipeline(PipelineComponent):
         quantile: tuple[float, float] = (0.25, 0.75),
         mapping: Mapping[str, str] | None = None,
         component_name: str | None = None,
-    ) -> Self | InverseScalerContext:
+    ) -> Self | ScalerInverseContext:
         if isinstance(mapping, Mapping):
-            return InverseScalerContext(
+            return ScalerInverseContext(
                 self,
                 Scaler(*column, by=by, method=method, quantile=quantile),
                 mapping,
@@ -773,34 +774,83 @@ class Pipeline(PipelineComponent):
                 component_name=component_name,
             )
 
+    @overload
     def label_encode(
         self,
         *exprs: IntoExpr | Iterable[IntoExpr],
         orders: Mapping[str, Sequence[Any]] | None = None,
         maintain_order: bool = False,
         component_name: str | None = None,
-    ) -> Self:
-        return self.pipe(
-            LabelEncoding(*exprs, orders=orders, maintain_order=maintain_order),
-            component_name=component_name,
-        )
+    ) -> Self: ...
 
-    def inverse_label_encode(
+    @overload
+    def label_encode(
         self,
-        label_encoding: str | LabelEncoding,
-        mapping: Mapping[str, str] | None = None,
-    ) -> Self:
-        if isinstance(label_encoding, str):
-            label_encoding_component = self[label_encoding]
-            if not isinstance(label_encoding_component, LabelEncoding):
-                raise ValueError(
-                    "label_encoding must be a LabelEncoding instance or the name of a component that is a LabelEncoding instance."
-                )
-            inverse = InverseLabelEncoding(label_encoding_component, mapping)
-        else:
-            inverse = InverseLabelEncoding(label_encoding, mapping)
+        *exprs: IntoExpr | Iterable[IntoExpr],
+        orders: Mapping[str, Sequence[Any]] | None = None,
+        maintain_order: bool = False,
+        mapping: Mapping[str, str],
+        component_name: str | None = None,
+    ) -> LabelEncodingInverseContext: ...
 
-        return self.pipe(inverse)
+    def label_encode(
+        self,
+        *exprs: IntoExpr | Iterable[IntoExpr],
+        orders: Mapping[str, Sequence[Any]] | None = None,
+        maintain_order: bool = False,
+        mapping: Mapping[str, str] | None = None,
+        component_name: str | None = None,
+    ) -> Self | LabelEncodingInverseContext:
+        if isinstance(mapping, Mapping):
+            return LabelEncodingInverseContext(
+                self,
+                LabelEncoding(*exprs, orders=orders, maintain_order=maintain_order),
+                mapping,
+            )
+        else:
+            return self.pipe(
+                LabelEncoding(*exprs, orders=orders, maintain_order=maintain_order),
+                component_name=component_name,
+            )
+
+    @overload
+    def power_transform(
+        self,
+        *column: str,
+        by: str | Sequence[str] | None = None,
+        method: Literal["boxcox", "yeojohnson"] = "boxcox",
+        component_name: str | None = None,
+    ) -> Self: ...
+
+    @overload
+    def power_transform(
+        self,
+        *column: str,
+        by: str | Sequence[str] | None = None,
+        method: Literal["boxcox", "yeojohnson"] = "boxcox",
+        mapping: Mapping[str, str],
+        component_name: str | None = None,
+    ) -> PowerTransformerInverseContext: ...
+
+    def power_transform(
+        self,
+        *column: str,
+        by: str | Sequence[str] | None = None,
+        method: Literal["boxcox", "yeojohnson"] = "boxcox",
+        mapping: Mapping[str, str] | None = None,
+        component_name: str | None = None,
+    ) -> Self | PowerTransformerInverseContext:
+        if isinstance(mapping, Mapping):
+            return PowerTransformerInverseContext(
+                self,
+                PowerTransformer(*column, by=by, method=method),
+                mapping,
+            )
+        else:
+            return self.pipe(
+                PowerTransformer(*column, by=by, method=method),
+                component_name=component_name,
+            )
 
     def qbin(
         self,
@@ -823,14 +873,6 @@ class Pipeline(PipelineComponent):
             ),
             component_name=component_name,
         )
-
-    def power_transform(
-        self,
-        *column: str,
-        by: str | Sequence[str] | None = None,
-        method: Literal["boxcox", "yeojohnson"] = "boxcox",
-    ) -> Self:
-        return self.pipe(PowerTransformer(*column, by=by, method=method))
 
     def horizontal_agg(
         self,
