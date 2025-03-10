@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from polars_ml import Pipeline
 
 
-class LabelEncoding(PipelineComponent):
+class LabelEncoder(PipelineComponent):
     def __init__(
         self,
         *exprs: IntoExpr | Iterable[IntoExpr],
@@ -56,19 +56,19 @@ class LabelEncoding(PipelineComponent):
         )
 
 
-class LabelEncodingInverse(PipelineComponent):
+class LabelEncoderInverse(PipelineComponent):
     def __init__(
-        self, label_encoding: LabelEncoding, mapping: Mapping[str, str] | None = None
+        self, label_encoder: LabelEncoder, mapping: Mapping[str, str] | None = None
     ):
-        self.label_encoding = label_encoding
+        self.label_encoder = label_encoder
         self.mapping = mapping
 
     def transform(self, data: DataFrame) -> DataFrame:
-        mapping = self.mapping or {col: col for col in self.label_encoding.mappings}
+        mapping = self.mapping or {col: col for col in self.label_encoder.mappings}
         return data.with_columns(
             [
                 data.select(pl.col(col_from).alias("label"))
-                .join(self.label_encoding.mappings[col_to], on="label", how="left")[
+                .join(self.label_encoder.mappings[col_to], on="label", how="left")[
                     col_to
                 ]
                 .rename(col_from)
@@ -77,27 +77,27 @@ class LabelEncodingInverse(PipelineComponent):
         )
 
 
-class LabelEncodingInverseContext:
+class LabelEncoderInverseContext:
     def __init__(
         self,
         pipeline: "Pipeline",
-        label_encoding: LabelEncoding,
+        label_encoder: LabelEncoder,
         mapping: Mapping[str, str] | None = None,
         *,
         component_name: str | None = None,
     ):
         self.pipeline = pipeline
-        self.label_encoding = label_encoding
+        self.label_encoder = label_encoder
         self.mapping = mapping
         self.component_name = component_name
 
     def __enter__(self) -> "Pipeline":
-        self.pipeline.pipe(self.label_encoding, component_name=self.component_name)
+        self.pipeline.pipe(self.label_encoder, component_name=self.component_name)
         return self.pipeline
 
     def __exit__(self, *args: Any, **kwargs: Any):
         self.pipeline.pipe(
-            LabelEncodingInverse(self.label_encoding, mapping=self.mapping),
+            LabelEncoderInverse(self.label_encoder, mapping=self.mapping),
             component_name=self.component_name + "_inverse"
             if self.component_name
             else None,

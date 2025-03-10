@@ -1,7 +1,7 @@
-from .label_encoding import (
-    LabelEncoding,
-    LabelEncodingInverse,
-    LabelEncodingInverseContext,
+from .label_encoder import (
+    LabelEncoder,
+    LabelEncoderInverse,
+    LabelEncoderInverseContext,
 )
 from .power_transformer import (
     PowerTransformer,
@@ -12,9 +12,9 @@ from .quantile_binning import QuantileBinning
 from .scaler import Scaler, ScalerInverse, ScalerInverseContext
 
 __all__ = [
-    "LabelEncoding",
-    "LabelEncodingInverse",
-    "LabelEncodingInverseContext",
+    "LabelEncoder",
+    "LabelEncoderInverse",
+    "LabelEncoderInverseContext",
     "PowerTransformer",
     "PowerTransformerInverse",
     "PowerTransformerInverseContext",

@@ -36,8 +36,8 @@ from polars._typing import (
 
 from polars_ml.pipeline.component import PipelineComponent
 from polars_ml.preprocessing import (
-    LabelEncoding,
-    LabelEncodingInverseContext,
+    LabelEncoder,
+    LabelEncoderInverseContext,
     PowerTransformer,
     PowerTransformerInverseContext,
     QuantileBinning,
@@ -791,7 +791,7 @@ class Pipeline(PipelineComponent):
         maintain_order: bool = False,
         mapping: Mapping[str, str],
         component_name: str | None = None,
-    ) -> LabelEncodingInverseContext: ...
+    ) -> LabelEncoderInverseContext: ...
 
     def label_encode(
         self,
@@ -800,16 +800,16 @@ class Pipeline(PipelineComponent):
         maintain_order: bool = False,
         mapping: Mapping[str, str] | None = None,
         component_name: str | None = None,
-    ) -> Self | LabelEncodingInverseContext:
+    ) -> Self | LabelEncoderInverseContext:
         if isinstance(mapping, Mapping):
-            return LabelEncodingInverseContext(
+            return LabelEncoderInverseContext(
                 self,
-                LabelEncoding(*exprs, orders=orders, maintain_order=maintain_order),
+                LabelEncoder(*exprs, orders=orders, maintain_order=maintain_order),
                 mapping,
             )
         else:
             return self.pipe(
-                LabelEncoding(*exprs, orders=orders, maintain_order=maintain_order),
+                LabelEncoder(*exprs, orders=orders, maintain_order=maintain_order),
                 component_name=component_name,
             )
 
