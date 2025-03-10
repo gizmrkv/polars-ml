@@ -1,3 +1,4 @@
+from .discretizer import Discretizer
 from .label_encoder import (
     LabelEncoder,
     LabelEncoderInverse,
@@ -8,17 +9,16 @@ from .power_transformer import (
     PowerTransformerInverse,
     PowerTransformerInverseContext,
 )
-from .quantile_binning import QuantileBinning
 from .scaler import Scaler, ScalerInverse, ScalerInverseContext
 
 __all__ = [
+    "Discretizer",
     "LabelEncoder",
     "LabelEncoderInverse",
     "LabelEncoderInverseContext",
     "PowerTransformer",
     "PowerTransformerInverse",
     "PowerTransformerInverseContext",
-    "QuantileBinning",
     "Scaler",
     "ScalerInverse",
     "ScalerInverseContext",

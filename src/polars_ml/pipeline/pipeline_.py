@@ -36,11 +36,11 @@ from polars._typing import (
 
 from polars_ml.pipeline.component import PipelineComponent
 from polars_ml.preprocessing import (
+    Discretizer,
     LabelEncoder,
     LabelEncoderInverseContext,
     PowerTransformer,
     PowerTransformerInverseContext,
-    QuantileBinning,
     Scaler,
     ScalerInverseContext,
 )
@@ -852,20 +852,22 @@ class Pipeline(PipelineComponent):
                 component_name=component_name,
             )
 
-    def qbin(
+    def discretize(
         self,
         *exprs: IntoExpr | Iterable[IntoExpr],
-        quantiles: Sequence[float] | int,
+        quantiles: Sequence[float] | int | None = None,
+        breaks: Sequence[float] | None = None,
         labels: Sequence[str] | None = None,
         left_closed: bool = False,
         allow_duplicates: bool = False,
-        suffix: str = "_qbin",
+        suffix: str = "",
         component_name: str | None = None,
     ) -> Self:
         return self.pipe(
-            QuantileBinning(
+            Discretizer(
                 *exprs,
                 quantiles=quantiles,
+                breaks=breaks,
                 labels=labels,
                 left_closed=left_closed,
                 allow_duplicates=allow_duplicates,
