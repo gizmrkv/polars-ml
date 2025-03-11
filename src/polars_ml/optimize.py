@@ -1,11 +1,11 @@
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Mapping
+from typing import Any, Callable, Iterable, Mapping
 
 import optuna
 import optuna.storages.journal
 
 
-def load_config(path: str | Path) -> Dict[str, Any]:
+def load_config(path: str | Path) -> dict[str, Any]:
     if isinstance(path, str):
         path = Path(path)
     if path.suffix == ".json":
@@ -26,7 +26,7 @@ def load_config(path: str | Path) -> Dict[str, Any]:
         raise ValueError(f"Unsupported file type: {path.suffix}")
 
 
-def merge_dicts(*dicts: Mapping[str, Any]) -> Dict[str, Any]:
+def merge_dicts(*dicts: Mapping[str, Any]) -> dict[str, Any]:
     merged = {}
     for d in dicts:
         duplicated_keys = set(merged.keys()) & set(d.keys())
@@ -52,8 +52,8 @@ def is_valid_clause(
 
 def parse_grid_search_space(
     search_space: Mapping[str, Mapping[str, Any]],
-) -> Dict[str, List[Any]]:
-    grid_space: dict[str, List[Any]] = {}
+) -> dict[str, list[Any]]:
+    grid_space: dict[str, list[Any]] = {}
     for var_name, var_space in search_space.items():
         if is_valid_clause(var_space, "values"):
             values = var_space["values"]
@@ -79,7 +79,7 @@ def parse_grid_search_space(
 
 def embed_search_space(
     search_space: dict[str, Any], base_dir: str | Path = "."
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     base_dir = Path(base_dir)
 
     if "$path" in search_space:
@@ -117,7 +117,7 @@ def embed_search_space(
 
 def suggest_sample(
     trial: optuna.Trial, search_space: Mapping[str, Mapping[str, Any]], prefix: str = ""
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     sample: dict[str, Any] = {}
     for var_name, var_space in search_space.items():
         if is_valid_clause(var_space, "value"):
@@ -171,15 +171,18 @@ def suggest_sample(
 
 def optimize(
     objective: Callable[..., Any],
-    config_path: Path | str,
+    config: Mapping[str, Any] | str | Path,
     *,
     journal_file: str = "./journal.log",
     storage: optuna.storages.BaseStorage | None = None,
 ):
-    config_path = Path(config_path)
-    config = load_config(config_path)
+    if isinstance(config, (str, Path)):
+        config_path = Path(config)
+        config = load_config(config_path)
+    else:
+        config_path = None
 
-    sampler_type = config.get("sampler", None)
+    sampler_type = config.get("sampler", "random")
     sampler_kwargs = config.get("sampler_kwargs", {})
     pruner_type = config.get("pruner", None)
     pruner_kwargs = config.get("pruner_kwargs", {})
@@ -193,7 +196,8 @@ def optimize(
     show_progress_bar = config.get("show_progress_bar", False)
 
     search_space = config.get("search_space", {})
-    search_space = embed_search_space(search_space, base_dir=config_path.parent)
+    if config_path is not None:
+        search_space = embed_search_space(search_space, base_dir=config_path.parent)
 
     sampler_types = {
         "grid": optuna.samplers.GridSampler,
@@ -208,7 +212,7 @@ def optimize(
         "bruteforce": optuna.samplers.BruteForceSampler,
     }
     if sampler_type == "auto":
-        import optunahub  # type: ignore
+        import optunahub
 
         sampler_types["auto"] = optunahub.load_module(
             "samplers/auto_sampler"
@@ -229,7 +233,7 @@ def optimize(
         "threshold": optuna.pruners.ThresholdPruner,
         "wilcoxon": optuna.pruners.WilcoxonPruner,
     }
-    pruner_type = pruner_types.get(pruner_type, None)
+    pruner_type = pruner_types.get(pruner_type, None) if pruner_type else None
     pruner = pruner_type(**pruner_kwargs) if pruner_type else None
 
     storage = storage or optuna.storages.journal.JournalStorage(
@@ -257,7 +261,7 @@ def optimize(
         wrap_objective(objective, search_space),
         n_trials=n_trials,
         timeout=timeout,
-        n_jobs=n_jobs,
+        n_jobs=n_jobs or 1,
         gc_after_trial=gc_after_trial,
         show_progress_bar=show_progress_bar,
     )
