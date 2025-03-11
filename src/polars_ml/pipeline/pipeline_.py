@@ -34,6 +34,7 @@ from polars._typing import (
     UnstackDirection,
 )
 
+from polars_ml.gbdt import GBDTNameSpace
 from polars_ml.pipeline.component import PipelineComponent
 from polars_ml.preprocessing import (
     Discretizer,
@@ -50,20 +51,7 @@ from .group_by import (
     GroupByNamaSpace,
     GroupByRollingNameSpace,
 )
-from .horizontal import (
-    HorizontalAgg,
-    HorizontalAll,
-    HorizontalArgMax,
-    HorizontalArgMin,
-    HorizontalCount,
-    HorizontalMax,
-    HorizontalMean,
-    HorizontalMedian,
-    HorizontalMin,
-    HorizontalNUnique,
-    HorizontalQuantile,
-    HorizontalSum,
-)
+from .horizontal import HorizontalNameSpace
 from .misc import Display, Echo, GetAttr, GroupByThen, Impute, Print, SortColumns
 from .other import (
     Concat,
@@ -876,144 +864,10 @@ class Pipeline(PipelineComponent):
             component_name=component_name,
         )
 
-    def horizontal_agg(
-        self,
-        *expr: IntoExpr | Iterable[IntoExpr],
-        value_name: str = "horizontal_agg",
-        maintain_order: bool = False,
-        aggs: list[Expr] | None = None,
-        named_aggs: Mapping[str, Expr] | None = None,
-    ) -> Self:
-        return self.pipe(
-            HorizontalAgg(
-                *expr,
-                value_name=value_name,
-                maintain_order=maintain_order,
-                aggs=aggs,
-                named_aggs=named_aggs,
-            )
-        )
+    @property
+    def horizontal(self) -> HorizontalNameSpace:
+        return HorizontalNameSpace(self)
 
-    def horizontal_all(
-        self,
-        *expr: IntoExpr | Iterable[IntoExpr],
-        value_name: str = "horizontal_all",
-        maintain_order: bool = False,
-    ) -> Self:
-        return self.pipe(
-            HorizontalAll(*expr, value_name=value_name, maintain_order=maintain_order)
-        )
-
-    def horizontal_count(
-        self,
-        *expr: IntoExpr | Iterable[IntoExpr],
-        value_name: str = "horizontal_count",
-        maintain_order: bool = False,
-    ) -> Self:
-        return self.pipe(
-            HorizontalCount(*expr, value_name=value_name, maintain_order=maintain_order)
-        )
-
-    def horizontal_max(
-        self,
-        *expr: IntoExpr | Iterable[IntoExpr],
-        value_name: str = "horizontal_max",
-        maintain_order: bool = False,
-    ) -> Self:
-        return self.pipe(
-            HorizontalMax(*expr, value_name=value_name, maintain_order=maintain_order)
-        )
-
-    def horizontal_mean(
-        self,
-        *expr: IntoExpr | Iterable[IntoExpr],
-        value_name: str = "horizontal_mean",
-        maintain_order: bool = False,
-    ) -> Self:
-        return self.pipe(
-            HorizontalMean(*expr, value_name=value_name, maintain_order=maintain_order)
-        )
-
-    def horizontal_median(
-        self,
-        *expr: IntoExpr | Iterable[IntoExpr],
-        value_name: str = "horizontal_median",
-        maintain_order: bool = False,
-    ) -> Self:
-        return self.pipe(
-            HorizontalMedian(
-                *expr, value_name=value_name, maintain_order=maintain_order
-            )
-        )
-
-    def horizontal_min(
-        self,
-        *expr: IntoExpr | Iterable[IntoExpr],
-        value_name: str = "horizontal_min",
-        maintain_order: bool = False,
-    ) -> Self:
-        return self.pipe(
-            HorizontalMin(*expr, value_name=value_name, maintain_order=maintain_order)
-        )
-
-    def horizontal_n_unique(
-        self,
-        *expr: IntoExpr | Iterable[IntoExpr],
-        value_name: str = "horizontal_n_unique",
-        maintain_order: bool = False,
-    ) -> Self:
-        return self.pipe(
-            HorizontalNUnique(
-                *expr, value_name=value_name, maintain_order=maintain_order
-            )
-        )
-
-    def horizontal_quantile(
-        self,
-        *expr: IntoExpr | Iterable[IntoExpr],
-        quantile: float,
-        value_name: str = "horizontal_quantile",
-        maintain_order: bool = False,
-    ) -> Self:
-        return self.pipe(
-            HorizontalQuantile(
-                *expr,
-                quantile=quantile,
-                value_name=value_name,
-                maintain_order=maintain_order,
-            )
-        )
-
-    def horizontal_sum(
-        self,
-        *expr: IntoExpr | Iterable[IntoExpr],
-        value_name: str = "horizontal_sum",
-        maintain_order: bool = False,
-    ) -> Self:
-        return self.pipe(
-            HorizontalSum(*expr, value_name=value_name, maintain_order=maintain_order)
-        )
-
-    def horizontal_argmax(
-        self,
-        *expr: IntoExpr | Iterable[IntoExpr],
-        value_name: str = "horizontal_argmax",
-        maintain_order: bool = False,
-    ) -> Self:
-        return self.pipe(
-            HorizontalArgMax(
-                *expr, value_name=value_name, maintain_order=maintain_order
-            )
-        )
-
-    def horizontal_argmin(
-        self,
-        *expr: IntoExpr | Iterable[IntoExpr],
-        value_name: str = "horizontal_argmin",
-        maintain_order: bool = False,
-    ) -> Self:
-        return self.pipe(
-            HorizontalArgMin(
-                *expr, value_name=value_name, maintain_order=maintain_order
-            )
-        )
+    @property
+    def gbdt(self) -> GBDTNameSpace:
+        return GBDTNameSpace(self)
