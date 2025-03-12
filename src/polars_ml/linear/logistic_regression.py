@@ -81,7 +81,6 @@ class LogisticRegression(PipelineComponent, ABC):
         )
         self.model.fit(X, y, **fit_kwargs)
 
-        # グラフの生成と保存
         if self.out_dir is not None:
             y_pred_proba = self.model.predict_proba(X)
             feature_names = (
@@ -95,13 +94,11 @@ class LogisticRegression(PipelineComponent, ABC):
     def transform(self, data: DataFrame) -> DataFrame:
         input = data.select(self.features)
         pred_proba: NDArray[Any] = self.model.predict_proba(input.to_numpy())
-        # 確率値の列名を生成（クラスごと）
         prob_columns = {
             f"{self.prediction_name}_prob_{i}": Series(name, pred_proba[:, i])
             for i, name in enumerate(self.model.classes_)
         }
 
-        # 予測クラスも追加
         pred_class = self.model.predict(input.to_numpy())
         pred_columns = {
             self.prediction_name: Series(self.prediction_name, pred_class),
@@ -127,7 +124,6 @@ class LogisticRegression(PipelineComponent, ABC):
 
         self.out_dir.mkdir(parents=True, exist_ok=True)
 
-        # ROC曲線
         plt.figure(figsize=(10, 6))
         if y_pred_proba.shape[1] == 2:  # 二値分類の場合
             fpr, tpr, _ = roc_curve(y_true, y_pred_proba[:, 1])
@@ -142,7 +138,6 @@ class LogisticRegression(PipelineComponent, ABC):
         plt.savefig(self.out_dir / "roc_curve.png")
         plt.close()
 
-        # 混同行列のヒートマップ
         y_pred = self.model.predict(y_pred_proba)
         cm = confusion_matrix(y_true, y_pred)
         plt.figure(figsize=(10, 8))
@@ -154,7 +149,6 @@ class LogisticRegression(PipelineComponent, ABC):
         plt.savefig(self.out_dir / "confusion_matrix.png")
         plt.close()
 
-        # 特徴量の重要度（係数）のバープロット
         plt.figure(figsize=(12, 6))
         coefficients = (
             self.model.coef_[0]
