@@ -44,7 +44,7 @@ class FeatureEngineeringNameSpace:
         min_candidates: int = 2000,
         params_stage_2: Mapping[str, Any],
         n_best_features: int = 100,
-        save_dir: str | Path | None = None,
+        out_dir: str | Path | None = None,
         component_name: str | None = None,
     ) -> "Pipeline":
         self.pipeline.pipe(
@@ -62,7 +62,7 @@ class FeatureEngineeringNameSpace:
                 min_candidates=min_candidates,
                 params_stage_2=params_stage_2,
                 n_best_features=n_best_features,
-                save_dir=save_dir,
+                out_dir=out_dir,
             ),
             component_name=component_name,
         )

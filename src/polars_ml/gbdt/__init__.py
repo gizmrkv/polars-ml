@@ -49,7 +49,7 @@ class GBDTNameSpace:
         validation_dataset_kwargs: LightGBMValidateDatasetArguments
         | Callable[[DataFrame], LightGBMValidateDatasetArguments]
         | None = None,
-        save_dir: str | Path | None = None,
+        out_dir: str | Path | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
             LightGBM(
@@ -62,6 +62,6 @@ class GBDTNameSpace:
                 predict_kwargs=predict_kwargs,
                 train_dataset_kwargs=train_dataset_kwargs,
                 validation_dataset_kwargs=validation_dataset_kwargs,
-                save_dir=save_dir,
+                out_dir=out_dir,
             )
         )

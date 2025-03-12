@@ -33,7 +33,7 @@ class OpenFE(PipelineComponent):
         min_candidates: int = 2000,
         params_stage_2: Mapping[str, Any],
         n_best_features: int = 100,
-        save_dir: str | Path | None = None,
+        out_dir: str | Path | None = None,
     ):
         assert 0 < max_order, "max_order must be positive"
         assert 0 < n_subsamples, "n_subsamples must be positive"
@@ -54,12 +54,13 @@ class OpenFE(PipelineComponent):
         self.min_candidates = min_candidates
         self.params_stage_2 = params_stage_2
         self.n_best_features = n_best_features
-        self.save_dir = Path(save_dir) if save_dir is not None else None
+        if out_dir is not None:
+            self.out_dir = out_dir
 
         self.new_features: list[op.Operator] = []
 
-        if self.save_dir is not None:
-            self.save_dir.mkdir(parents=True, exist_ok=True)
+        if self.out_dir is not None:
+            self.out_dir.mkdir(parents=True, exist_ok=True)
 
     def fit(
         self,
@@ -74,8 +75,8 @@ class OpenFE(PipelineComponent):
         new_features = self.enumerate_new_features()
         logger.info(f"Enumerated {len(new_features)} new features")
 
-        if self.save_dir is not None:
-            with open(self.save_dir / "candidates.json", "w") as f:
+        if self.out_dir is not None:
+            with open(self.out_dir / "candidates.json", "w") as f:
                 json.dump(
                     {
                         str(f): f.order
@@ -293,8 +294,8 @@ class OpenFE(PipelineComponent):
             new_features = next_features
             logger.info(f"Selected {len(new_features)} features")
 
-            if self.save_dir is not None:
-                with open(self.save_dir / f"stage_1_score_{iter}.json", "w") as f:
+            if self.out_dir is not None:
+                with open(self.out_dir / f"stage_1_score_{iter}.json", "w") as f:
                     json.dump(
                         {
                             str(f): s
@@ -372,8 +373,8 @@ class OpenFE(PipelineComponent):
         ]
         sorted_feature_importance = sorted(feature_importance, key=lambda x: -x[1])
 
-        if self.save_dir is not None:
-            with open(self.save_dir / "stage_2_score.json", "w") as f:
+        if self.out_dir is not None:
+            with open(self.out_dir / "stage_2_score.json", "w") as f:
                 json.dump(
                     {
                         str(name2op[name]): imp

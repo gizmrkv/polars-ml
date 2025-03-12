@@ -31,7 +31,7 @@ class CatBoost(PipelineComponent):
         pool_kwargs: Mapping[str, Any]
         | Callable[[DataFrame], dict[str, Any]]
         | None = None,
-        save_dir: str | Path | None = None,
+        out_dir: str | Path | None = None,
     ):
         self.features = features
         self.label = label
@@ -42,7 +42,8 @@ class CatBoost(PipelineComponent):
         self.train_kwargs = train_kwargs or {}
         self.predict_kwargs = predict_kwargs or {}
         self.pool_kwargs = pool_kwargs or {}
-        self.save_dir = Path(save_dir) if save_dir is not None else None
+        if out_dir is not None:
+            self.out_dir = out_dir
 
     def fit(
         self,
@@ -107,9 +108,9 @@ class CatBoost(PipelineComponent):
             **train_kwargs,
         )
 
-        if self.save_dir is not None:
-            self.save_dir.mkdir(parents=True, exist_ok=True)
-            self.model.save_model(self.save_dir / "model.cbm")
+        if self.out_dir is not None:
+            self.out_dir.mkdir(parents=True, exist_ok=True)
+            self.model.save_model(self.out_dir / "model.cbm")
 
         return self
 

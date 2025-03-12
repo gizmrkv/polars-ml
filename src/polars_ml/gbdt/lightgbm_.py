@@ -237,7 +237,7 @@ class LightGBM(PipelineComponent):
         validation_dataset_kwargs: LightGBMValidateDatasetArguments
         | Callable[[DataFrame], LightGBMValidateDatasetArguments]
         | None = None,
-        save_dir: str | Path | None = None,
+        out_dir: str | Path | None = None,
     ):
         self.features = features
         self.label = label
@@ -248,7 +248,8 @@ class LightGBM(PipelineComponent):
         self.predict_kwargs = predict_kwargs or {}
         self.train_dataset_kwargs = train_dataset_kwargs or {}
         self.validation_dataset_kwargs = validation_dataset_kwargs or {}
-        self.save_dir = Path(save_dir) if save_dir is not None else None
+        if out_dir is not None:
+            self.out_dir = out_dir
 
     def fit(
         self,
@@ -325,17 +326,17 @@ class LightGBM(PipelineComponent):
             **train_kwargs,
         )
 
-        if self.save_dir is not None:
+        if self.out_dir is not None:
             import matplotlib.pyplot as plt
 
-            self.save_dir.mkdir(parents=True, exist_ok=True)
+            self.out_dir.mkdir(parents=True, exist_ok=True)
 
-            self.model.save_model(self.save_dir / "model.txt")
+            self.model.save_model(self.out_dir / "model.txt")
 
             for importance_type in ["gain", "split"]:
                 lgb.plot_importance(self.model, importance_type=importance_type)
                 plt.tight_layout()
-                plt.savefig(self.save_dir / f"importance_{importance_type}.png")
+                plt.savefig(self.out_dir / f"importance_{importance_type}.png")
                 plt.close()
 
         return self
