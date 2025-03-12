@@ -36,6 +36,7 @@ from polars._typing import (
 
 from polars_ml.ensemble import EnsembleNameSpace
 from polars_ml.gbdt import GBDTNameSpace
+from polars_ml.linear import LinearNameSpace
 from polars_ml.pipeline.component import PipelineComponent
 from polars_ml.preprocessing import (
     Discretizer,
@@ -876,3 +877,7 @@ class Pipeline(PipelineComponent):
     @property
     def ensemble(self) -> EnsembleNameSpace:
         return EnsembleNameSpace(self)
+
+    @property
+    def linear(self) -> LinearNameSpace:
+        return LinearNameSpace(self)
