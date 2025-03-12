@@ -1,3 +1,4 @@
+import uuid
 from typing import Iterable, Iterator
 
 import polars as pl
@@ -5,10 +6,9 @@ from polars import DataFrame, Series
 from polars._typing import IntoExpr
 
 
-class k_fold:
+class KFold:
     def __init__(
         self,
-        data: DataFrame,
         *,
         n_splits: int,
         shuffle: bool = False,
@@ -20,22 +20,22 @@ class k_fold:
         self.seed = seed
         self.stratify = stratify
 
-        data = data.with_columns(pl.lit(1).alias("fold"))
+        self.fold_name = uuid.uuid4().hex
+        self.index_name = uuid.uuid4().hex
 
-        fold_expr = pl.cum_count("fold") - 1
+        self.fold_expr = pl.cum_count(self.fold_name) - 1
         if shuffle:
-            fold_expr = fold_expr.shuffle(seed=seed)
+            self.fold_expr = self.fold_expr.shuffle(seed=seed)
         if stratify is not None:
-            fold_expr = fold_expr.over(stratify)
+            self.fold_expr = self.fold_expr.over(stratify)
 
-        self.fold = data.select(fold_expr % n_splits).with_row_index("index")
-
-    def __len__(self):
-        return self.n_splits
-
-    def __iter__(self) -> Iterator[tuple[Series, Series]]:
+    def split(self, data: DataFrame) -> Iterator[tuple[Series, Series]]:
+        data = data.with_columns(pl.lit(1).alias(self.fold_name))
+        fold = data.select(self.fold_expr % self.n_splits).with_row_index(
+            self.index_name
+        )
         for i in range(self.n_splits):
             yield (
-                self.fold.filter(pl.col("fold") != i)["index"],
-                self.fold.filter(pl.col("fold") == i)["index"],
+                fold.filter(pl.col(self.fold_name) != i)[self.index_name],
+                fold.filter(pl.col(self.fold_name) == i)[self.index_name],
             )

@@ -34,6 +34,7 @@ from polars._typing import (
     UnstackDirection,
 )
 
+from polars_ml.ensemble import EnsembleNameSpace
 from polars_ml.gbdt import GBDTNameSpace
 from polars_ml.pipeline.component import PipelineComponent
 from polars_ml.preprocessing import (
@@ -871,3 +872,7 @@ class Pipeline(PipelineComponent):
     @property
     def gbdt(self) -> GBDTNameSpace:
         return GBDTNameSpace(self)
+
+    @property
+    def ensemble(self) -> EnsembleNameSpace:
+        return EnsembleNameSpace(self)
