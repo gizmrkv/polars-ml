@@ -1,10 +1,15 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping
+from typing import TYPE_CHECKING, Callable, Iterable
 
 from polars import DataFrame
 from polars._typing import IntoExpr
 
-from .linear_regression import (
+from .logistic_regression import (
+    LogisticRegression,
+    LogisticRegressionFitArguments,
+    LogisticRegressionParameters,
+)
+from .regression import (
     LinearRegression,
     LinearRegressionFitArguments,
     LinearRegressionParameters,
@@ -38,6 +43,35 @@ class LinearNameSpace:
     ) -> "Pipeline":
         return self.pipeline.pipe(
             LinearRegression(
+                features,
+                label,
+                prediction_name=prediction_name,
+                include_input=include_input,
+                model_kwargs=model_kwargs,
+                fit_kwargs=fit_kwargs,
+                out_dir=out_dir,
+            ),
+            component_name=component_name,
+        )
+
+    def logistic_regression(
+        self,
+        features: IntoExpr | Iterable[IntoExpr],
+        label: IntoExpr,
+        *,
+        prediction_name: str,
+        include_input: bool,
+        model_kwargs: LogisticRegressionParameters
+        | Callable[[DataFrame], LogisticRegressionParameters]
+        | None = None,
+        fit_kwargs: LogisticRegressionFitArguments
+        | Callable[[DataFrame], LogisticRegressionFitArguments]
+        | None = None,
+        out_dir: str | Path | None = None,
+        component_name: str | None = None,
+    ) -> "Pipeline":
+        return self.pipeline.pipe(
+            LogisticRegression(
                 features,
                 label,
                 prediction_name=prediction_name,
