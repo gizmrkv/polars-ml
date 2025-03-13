@@ -21,8 +21,6 @@ from .ridge import Ridge, RidgeFitArguments, RidgeParameters
 if TYPE_CHECKING:
     from polars_ml import Pipeline
 
-__all__ = ["LinearRegression"]
-
 
 class LinearNameSpace:
     def __init__(self, pipeline: "Pipeline"):

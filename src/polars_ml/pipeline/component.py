@@ -22,15 +22,3 @@ class PipelineComponent(ABC):
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> DataFrame:
         return self.fit(data, validation_data).transform(data)
-
-    @property
-    def out_dir(self) -> Path | None:
-        if hasattr(self, "_out_dir"):
-            return self._out_dir
-        else:
-            return None
-
-    @out_dir.setter
-    def out_dir(self, value: str | Path):
-        self._out_dir = Path(value)
-        return self
