@@ -42,8 +42,7 @@ class CatBoost(PipelineComponent):
         self.train_kwargs = train_kwargs or {}
         self.predict_kwargs = predict_kwargs or {}
         self.pool_kwargs = pool_kwargs or {}
-        if out_dir is not None:
-            self.out_dir = out_dir
+        self.out_dir = Path(out_dir) if out_dir is not None else None
 
     def fit(
         self,

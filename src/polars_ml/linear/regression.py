@@ -42,8 +42,7 @@ class LinearRegression(PipelineComponent, ABC):
         self.include_input = include_input
         self.model_kwargs = model_kwargs or {}
         self.fit_kwargs = fit_kwargs or {}
-        if out_dir is not None:
-            self.out_dir = out_dir
+        self.out_dir = Path(out_dir) if out_dir is not None else None
 
     def fit(
         self,

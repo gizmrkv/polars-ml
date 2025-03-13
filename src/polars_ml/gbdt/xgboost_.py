@@ -44,8 +44,7 @@ class XGBoost(PipelineComponent):
         self.predict_kwargs = predict_kwargs or {}
         self.train_dmatrix_kwargs = train_dmatrix_kwargs or {}
         self.validation_dmatrix_kwargs = validation_dmatrix_kwargs or {}
-        if out_dir is not None:
-            self.out_dir = out_dir
+        self.out_dir = Path(out_dir) if out_dir is not None else None
 
     def fit(
         self,

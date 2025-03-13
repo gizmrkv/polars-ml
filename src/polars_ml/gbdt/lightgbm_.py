@@ -248,8 +248,7 @@ class LightGBM(PipelineComponent):
         self.predict_kwargs = predict_kwargs or {}
         self.train_dataset_kwargs = train_dataset_kwargs or {}
         self.validation_dataset_kwargs = validation_dataset_kwargs or {}
-        if out_dir is not None:
-            self.out_dir = out_dir
+        self.out_dir = Path(out_dir) if out_dir is not None else None
 
     def fit(
         self,
