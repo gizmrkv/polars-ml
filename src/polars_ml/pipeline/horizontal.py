@@ -15,7 +15,8 @@ if TYPE_CHECKING:
 class HorizontalAgg(PipelineComponent):
     def __init__(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_agg",
         variable_name: str | None = None,
         maintain_order: bool = False,
@@ -23,6 +24,7 @@ class HorizontalAgg(PipelineComponent):
         named_aggs: Mapping[str, IntoExpr] | None = None,
     ):
         self.exprs = expr
+        self.more_exprs = more_expr
         self.value_name = value_name
         self.variable_name = variable_name or uuid.uuid4().hex
         self.is_variable_none = variable_name is None
@@ -35,7 +37,7 @@ class HorizontalAgg(PipelineComponent):
         return (
             data.with_row_index(self.index_name)
             .join(
-                data.select(*self.exprs)
+                data.select(self.exprs, *self.more_exprs)
                 .with_row_index(self.index_name)
                 .unpivot(
                     ~cs.by_name(self.index_name),
@@ -59,13 +61,15 @@ class HorizontalAgg(PipelineComponent):
 class HorizontalArgMax(HorizontalAgg):
     def __init__(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_argmax",
         maintain_order: bool = False,
     ):
         self.variable_name = uuid.uuid4().hex
         super().__init__(
-            *expr,
+            expr,
+            *more_expr,
             value_name=value_name,
             variable_name=self.variable_name,
             maintain_order=maintain_order,
@@ -91,13 +95,15 @@ class HorizontalArgMax(HorizontalAgg):
 class HorizontalArgMin(HorizontalAgg):
     def __init__(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_argmin",
         maintain_order: bool = False,
     ):
         self.variable_name = uuid.uuid4().hex
         super().__init__(
-            *expr,
+            expr,
+            *more_expr,
             value_name=value_name,
             variable_name=self.variable_name,
             maintain_order=maintain_order,
@@ -126,7 +132,8 @@ class HorizontalNameSpace:
 
     def agg(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_agg",
         variable_name: str | None = None,
         maintain_order: bool = False,
@@ -136,7 +143,8 @@ class HorizontalNameSpace:
     ) -> "Pipeline":
         return self.pipeline.pipe(
             HorizontalAgg(
-                *expr,
+                expr,
+                *more_expr,
                 value_name=value_name,
                 variable_name=variable_name,
                 maintain_order=maintain_order,
@@ -148,13 +156,15 @@ class HorizontalNameSpace:
 
     def all(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_all",
         maintain_order: bool = False,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.agg(
-            *expr,
+            expr,
+            *more_expr,
             value_name=value_name,
             maintain_order=maintain_order,
             aggs=[pl.all().all()],
@@ -163,13 +173,15 @@ class HorizontalNameSpace:
 
     def count(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_count",
         maintain_order: bool = False,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.agg(
-            *expr,
+            expr,
+            *more_expr,
             value_name=value_name,
             maintain_order=maintain_order,
             aggs=[pl.all().count()],
@@ -178,13 +190,15 @@ class HorizontalNameSpace:
 
     def max(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_max",
         maintain_order: bool = False,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.agg(
-            *expr,
+            expr,
+            *more_expr,
             value_name=value_name,
             maintain_order=maintain_order,
             aggs=[pl.all().max()],
@@ -193,13 +207,15 @@ class HorizontalNameSpace:
 
     def mean(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_mean",
         maintain_order: bool = False,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.agg(
-            *expr,
+            expr,
+            *more_expr,
             value_name=value_name,
             maintain_order=maintain_order,
             aggs=[pl.all().mean()],
@@ -208,13 +224,15 @@ class HorizontalNameSpace:
 
     def median(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_median",
         maintain_order: bool = False,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.agg(
-            *expr,
+            expr,
+            *more_expr,
             value_name=value_name,
             maintain_order=maintain_order,
             aggs=[pl.all().median()],
@@ -223,13 +241,15 @@ class HorizontalNameSpace:
 
     def min(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_min",
         maintain_order: bool = False,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.agg(
-            *expr,
+            expr,
+            *more_expr,
             value_name=value_name,
             maintain_order=maintain_order,
             aggs=[pl.all().min()],
@@ -238,13 +258,15 @@ class HorizontalNameSpace:
 
     def n_unique(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_n_unique",
         maintain_order: bool = False,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.agg(
-            *expr,
+            expr,
+            *more_expr,
             value_name=value_name,
             maintain_order=maintain_order,
             aggs=[pl.all().n_unique()],
@@ -253,14 +275,16 @@ class HorizontalNameSpace:
 
     def quantile(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         quantile: float,
         value_name: str = "horizontal_quantile",
         maintain_order: bool = False,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.agg(
-            *expr,
+            expr,
+            *more_expr,
             value_name=value_name,
             maintain_order=maintain_order,
             aggs=[pl.all().quantile(quantile)],
@@ -269,13 +293,15 @@ class HorizontalNameSpace:
 
     def std(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_std",
         maintain_order: bool = False,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.agg(
-            *expr,
+            expr,
+            *more_expr,
             value_name=value_name,
             maintain_order=maintain_order,
             aggs=[pl.all().std()],
@@ -284,13 +310,15 @@ class HorizontalNameSpace:
 
     def sum(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_sum",
         maintain_order: bool = False,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.agg(
-            *expr,
+            expr,
+            *more_expr,
             value_name=value_name,
             maintain_order=maintain_order,
             aggs=[pl.all().sum()],
@@ -299,14 +327,16 @@ class HorizontalNameSpace:
 
     def argmax(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_argmax",
         maintain_order: bool = False,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
             HorizontalArgMax(
-                *expr,
+                expr,
+                *more_expr,
                 value_name=value_name,
                 maintain_order=maintain_order,
             ),
@@ -315,14 +345,16 @@ class HorizontalNameSpace:
 
     def argmin(
         self,
-        *expr: IntoExpr | Iterable[IntoExpr],
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_argmin",
         maintain_order: bool = False,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
             HorizontalArgMin(
-                *expr,
+                expr,
+                *more_expr,
                 value_name=value_name,
                 maintain_order=maintain_order,
             ),
