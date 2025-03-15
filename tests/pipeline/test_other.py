@@ -1,33 +1,26 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import polars as pl
 import pytest
-from polars import DataFrame
+from polars import DataFrame, Series
 from polars.testing import assert_frame_equal
 
 from polars_ml import Pipeline
+from polars_ml.pipeline.testing import assert_component_valid
 
 
-@pytest.mark.parametrize(
-    ["data", "other"],
-    [
-        (
-            DataFrame({"f0": [1, 2, 3, 4, 5], "f1": ["a", "a", "b", "b", "c"]}),
-            DataFrame({"f1": ["a", "b", "c"], "j0": [1, 2, 3]}),
-        )
-    ],
-)
-def test_pipeline_join(data: DataFrame, other: DataFrame):
-    pp = Pipeline().join(other, on="f1")
-    out = pp.transform(data)
-    exp = data.join(other, on="f1")
-    assert_frame_equal(out, exp)
-
-    other_pp = Pipeline().select("f1").unique(maintain_order=True).with_row_index()
-    pp = Pipeline().join(other_pp, on="f1")
-    out = pp.transform(data)
-    exp = data.join(other_pp.transform(data), on="f1")
-    assert_frame_equal(out, exp)
+def test_pipeline_join_small(test_data_small: DataFrame):
+    other = DataFrame({"s0": ["a", "b"], "other": [1, 2]})
+    assert_component_valid(
+        Pipeline().join(other, on="s0"),
+        test_data_small,
+        test_data_small.join(other, on="s0"),
+    )
+    assert_component_valid(
+        Pipeline().join(Pipeline().select("s0").with_row_index(), on="s0"),
+        test_data_small,
+        test_data_small.join(test_data_small.select("s0").with_row_index(), on="s0"),
+    )
 
 
 @pytest.mark.parametrize(

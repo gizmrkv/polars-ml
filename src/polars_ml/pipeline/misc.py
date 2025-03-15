@@ -119,9 +119,7 @@ class Impute(PipelineComponent):
             index_name = uuid.uuid4().hex
             data = data.with_row_index(index_name)
             missing_data = data.filter(pl.col(self.column).is_null())
-            imputed_data = self.imputer.transform(
-                missing_data.drop(self.column, index_name)
-            )
+            imputed_data = self.imputer.transform(missing_data.drop(index_name))
             filled_data = missing_data.with_columns(imputed_data[self.column])
             data = pl.concat(
                 [data.filter(pl.col(self.column).is_not_null()), filled_data]
@@ -129,7 +127,7 @@ class Impute(PipelineComponent):
             return data.sort(index_name).drop(index_name)
         else:
             missing_data = data.filter(pl.col(self.column).is_null())
-            imputed_data = self.imputer.transform(missing_data.drop(self.column))
+            imputed_data = self.imputer.transform(missing_data)
             filled_data = missing_data.with_columns(imputed_data[self.column])
             data = pl.concat(
                 [data.filter(pl.col(self.column).is_not_null()), filled_data]
