@@ -6,7 +6,7 @@ from .component import PipelineComponent
 def assert_component_valid(
     component: PipelineComponent,
     data: DataFrame,
-    expected: DataFrame,
+    expected: DataFrame | None = None,
     valid_data: DataFrame | None = None,
     valid_expected: DataFrame | None = None,
     *,
@@ -22,7 +22,9 @@ def assert_component_valid(
 
     data_copy = data.clone()
     out = component.transform(data_copy)
-    assert_frame_equal(out, expected)
+
+    if expected is not None:
+        assert_frame_equal(out, expected)
 
     if valid_data is not None:
         valid_out = component.transform(valid_data.clone())

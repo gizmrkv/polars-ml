@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Iterable, Mapping, Self, Sequence
 
 import polars as pl
 from polars import DataFrame, Series
-from polars._typing import IntoExpr
+from polars._typing import ColumnNameOrSelector
 
 from polars_ml.pipeline.component import PipelineComponent
 
@@ -14,11 +14,13 @@ if TYPE_CHECKING:
 class LabelEncoder(PipelineComponent):
     def __init__(
         self,
-        *exprs: IntoExpr | Iterable[IntoExpr],
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         orders: Mapping[str, Sequence[Any]] | None = None,
         maintain_order: bool = True,
     ):
-        self.exprs = exprs
+        self.columns = columns
+        self.more_columns = more_columns
         self.orders = orders or {}
         self.maintain_order = maintain_order
         self.suffix = uuid.uuid4().hex
@@ -28,7 +30,7 @@ class LabelEncoder(PipelineComponent):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
-        data = data.select(*self.exprs)
+        data = data.select(self.columns, *self.more_columns)
         self.mappings = {
             col: DataFrame(
                 [
@@ -82,13 +84,13 @@ class LabelEncoderInverseContext:
         self,
         pipeline: "Pipeline",
         label_encoder: LabelEncoder,
-        mapping: Mapping[str, str] | None = None,
+        inverse_mapping: Mapping[str, str] | None = None,
         *,
         component_name: str | None = None,
     ):
         self.pipeline = pipeline
         self.label_encoder = label_encoder
-        self.mapping = mapping
+        self.inverse_mapping = inverse_mapping
         self.component_name = component_name
 
     def __enter__(self) -> "Pipeline":
@@ -97,7 +99,7 @@ class LabelEncoderInverseContext:
 
     def __exit__(self, *args: Any, **kwargs: Any):
         self.pipeline.pipe(
-            LabelEncoderInverse(self.label_encoder, mapping=self.mapping),
+            LabelEncoderInverse(self.label_encoder, mapping=self.inverse_mapping),
             component_name=self.component_name + "_inverse"
             if self.component_name
             else None,

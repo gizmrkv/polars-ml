@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import Mapping, Self
 
 from polars import DataFrame
-from polars.testing import assert_frame_equal
 
 
 class PipelineComponent(ABC):

@@ -1,8 +1,9 @@
 import uuid
-from typing import TYPE_CHECKING, Any, Literal, Mapping, Self, Sequence
+from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping, Self, Sequence
 
 import polars as pl
-from polars import DataFrame, Expr
+from polars import DataFrame, Expr, Series
+from polars._typing import ColumnNameOrSelector
 from scipy import stats
 
 from polars_ml.pipeline.component import PipelineComponent
@@ -14,12 +15,14 @@ if TYPE_CHECKING:
 class PowerTransformer(PipelineComponent):
     def __init__(
         self,
-        *column: str,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         method: Literal["boxcox", "yeojohnson"] = "boxcox",
     ):
-        self.columns = column
-        self.by = [by] if isinstance(by, str) else list(by) if by is not None else None
+        self.columns = columns
+        self.more_columns = more_columns
+        self.by = [by] if isinstance(by, str) else list(by) if by is not None else []
         self.method = method
         self.suffix = uuid.uuid4().hex
 
@@ -28,15 +31,15 @@ class PowerTransformer(PipelineComponent):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
+        data = data.select(self.columns, *self.more_columns, *self.by)
+        self.maxlog_columns = data.columns
         exprs = [
-            pl.map_groups(
-                column,
-                lambda x: (
-                    boxcox_maxlog if self.method == "boxcox" else yeojohnson_maxlog
-                )(x[0]),
+            pl.col(column).map_batches(
+                boxcox_maxlog if self.method == "boxcox" else yeojohnson_maxlog,
                 return_dtype=pl.Float64,
+                returns_scalar=True,
             )
-            for column in self.columns
+            for column in self.maxlog_columns
         ]
         if self.by:
             self.maxlog = data.group_by(self.by).agg(*exprs)
@@ -46,7 +49,7 @@ class PowerTransformer(PipelineComponent):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        targets = set(data.columns) & set(self.columns)
+        targets = set(data.columns) & set(self.maxlog_columns)
         on_args: dict[str, Any] = (
             {"on": self.by}
             if self.by
@@ -73,13 +76,15 @@ class PowerTransformerInverse(PipelineComponent):
     def __init__(
         self,
         power_transformer: PowerTransformer,
-        mapping: Mapping[str, str] | None = None,
+        inverse_mapping: Mapping[str, str] | None = None,
     ):
         self.power_transformer = power_transformer
-        self.mapping = mapping
+        self.inverse_mapping = inverse_mapping
 
     def transform(self, data: DataFrame) -> DataFrame:
-        mapping = self.mapping or {col: col for col in self.power_transformer.columns}
+        mapping = self.inverse_mapping or {
+            col: col for col in self.power_transformer.maxlog_columns
+        }
         targets = set(data.columns) & set(mapping.keys())
         sources = set(data.columns) & set(mapping.values())
         on_args: dict[str, Any] = (
@@ -128,14 +133,16 @@ class PowerTransformerInverseContext:
 
     def __exit__(self, *args: Any, **kwargs: Any):
         self.pipeline.pipe(
-            PowerTransformerInverse(self.power_transformer, mapping=self.mapping),
+            PowerTransformerInverse(
+                self.power_transformer, inverse_mapping=self.mapping
+            ),
             component_name=self.component_name + "_inverse"
             if self.component_name
             else None,
         )
 
 
-def boxcox_maxlog(x: pl.Series) -> float:
+def boxcox_maxlog(x: Series) -> float:
     return float(stats.boxcox(x.drop_nulls().to_numpy())[1])
 
 
@@ -147,7 +154,7 @@ def boxcox_inv(x: Expr, lmbda: Expr) -> Expr:
     return pl.when(lmbda != 0).then((x * lmbda + 1) ** (1 / lmbda)).otherwise(x.exp())
 
 
-def yeojohnson_maxlog(x: pl.Series) -> float:
+def yeojohnson_maxlog(x: Series) -> float:
     return float(stats.yeojohnson(x.drop_nulls().to_numpy())[1])  # type: ignore
 
 

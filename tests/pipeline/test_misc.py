@@ -1,9 +1,5 @@
-from typing import Any
-
 import polars as pl
-import pytest
 from polars import DataFrame
-from polars.testing import assert_frame_equal
 
 from polars_ml import Pipeline
 from polars_ml.pipeline.testing import assert_component_valid

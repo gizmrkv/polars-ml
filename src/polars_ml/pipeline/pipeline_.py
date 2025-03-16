@@ -725,7 +725,8 @@ class Pipeline(PipelineComponent):
     @overload
     def scale(
         self,
-        *column: str,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         method: Literal["standard", "min-max", "robust"] = "standard",
         quantile: tuple[float, float] = (0.25, 0.75),
@@ -735,39 +736,42 @@ class Pipeline(PipelineComponent):
     @overload
     def scale(
         self,
-        *column: str,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         method: Literal["standard", "min-max", "robust"] = "standard",
         quantile: tuple[float, float] = (0.25, 0.75),
-        mapping: Mapping[str, str],
+        inverse_mapping: Mapping[str, str],
         component_name: str | None = None,
     ) -> ScalerInverseContext: ...
 
     def scale(
         self,
-        *column: str,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         method: Literal["standard", "min-max", "robust"] = "standard",
         quantile: tuple[float, float] = (0.25, 0.75),
-        mapping: Mapping[str, str] | None = None,
+        inverse_mapping: Mapping[str, str] | None = None,
         component_name: str | None = None,
     ) -> Self | ScalerInverseContext:
-        if isinstance(mapping, Mapping):
+        if isinstance(inverse_mapping, Mapping):
             return ScalerInverseContext(
                 self,
-                Scaler(*column, by=by, method=method, quantile=quantile),
-                mapping,
+                Scaler(columns, *more_columns, by=by, method=method, quantile=quantile),
+                inverse_mapping,
             )
         else:
             return self.pipe(
-                Scaler(*column, by=by, method=method, quantile=quantile),
+                Scaler(columns, *more_columns, by=by, method=method, quantile=quantile),
                 component_name=component_name,
             )
 
     @overload
     def label_encode(
         self,
-        *exprs: IntoExpr | Iterable[IntoExpr],
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         orders: Mapping[str, Sequence[Any]] | None = None,
         maintain_order: bool = False,
         component_name: str | None = None,
@@ -776,37 +780,44 @@ class Pipeline(PipelineComponent):
     @overload
     def label_encode(
         self,
-        *exprs: IntoExpr | Iterable[IntoExpr],
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         orders: Mapping[str, Sequence[Any]] | None = None,
         maintain_order: bool = False,
-        mapping: Mapping[str, str],
+        inverse_mapping: Mapping[str, str],
         component_name: str | None = None,
     ) -> LabelEncoderInverseContext: ...
 
     def label_encode(
         self,
-        *exprs: IntoExpr | Iterable[IntoExpr],
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         orders: Mapping[str, Sequence[Any]] | None = None,
         maintain_order: bool = False,
-        mapping: Mapping[str, str] | None = None,
+        inverse_mapping: Mapping[str, str] | None = None,
         component_name: str | None = None,
     ) -> Self | LabelEncoderInverseContext:
-        if isinstance(mapping, Mapping):
+        if isinstance(inverse_mapping, Mapping):
             return LabelEncoderInverseContext(
                 self,
-                LabelEncoder(*exprs, orders=orders, maintain_order=maintain_order),
-                mapping,
+                LabelEncoder(
+                    columns, *more_columns, orders=orders, maintain_order=maintain_order
+                ),
+                inverse_mapping,
             )
         else:
             return self.pipe(
-                LabelEncoder(*exprs, orders=orders, maintain_order=maintain_order),
+                LabelEncoder(
+                    columns, *more_columns, orders=orders, maintain_order=maintain_order
+                ),
                 component_name=component_name,
             )
 
     @overload
     def power_transform(
         self,
-        *column: str,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         method: Literal["boxcox", "yeojohnson"] = "boxcox",
         component_name: str | None = None,
@@ -815,47 +826,51 @@ class Pipeline(PipelineComponent):
     @overload
     def power_transform(
         self,
-        *column: str,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         method: Literal["boxcox", "yeojohnson"] = "boxcox",
-        mapping: Mapping[str, str],
+        inverse_mapping: Mapping[str, str],
         component_name: str | None = None,
     ) -> PowerTransformerInverseContext: ...
 
     def power_transform(
         self,
-        *column: str,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         method: Literal["boxcox", "yeojohnson"] = "boxcox",
-        mapping: Mapping[str, str] | None = None,
+        inverse_mapping: Mapping[str, str] | None = None,
         component_name: str | None = None,
     ) -> Self | PowerTransformerInverseContext:
-        if isinstance(mapping, Mapping):
+        if isinstance(inverse_mapping, Mapping):
             return PowerTransformerInverseContext(
                 self,
-                PowerTransformer(*column, by=by, method=method),
-                mapping,
+                PowerTransformer(columns, *more_columns, by=by, method=method),
+                inverse_mapping,
             )
         else:
             return self.pipe(
-                PowerTransformer(*column, by=by, method=method),
+                PowerTransformer(columns, *more_columns, by=by, method=method),
                 component_name=component_name,
             )
 
     def discretize(
         self,
-        *exprs: IntoExpr | Iterable[IntoExpr],
+        exprs: IntoExpr | Iterable[IntoExpr],
+        *more_exprs: IntoExpr | Iterable[IntoExpr],
         quantiles: Sequence[float] | int | None = None,
         breaks: Sequence[float] | None = None,
         labels: Sequence[str] | None = None,
         left_closed: bool = False,
         allow_duplicates: bool = False,
-        suffix: str = "",
+        suffix: str = "_discretized",
         component_name: str | None = None,
     ) -> Self:
         return self.pipe(
             Discretizer(
-                *exprs,
+                exprs,
+                *more_exprs,
                 quantiles=quantiles,
                 breaks=breaks,
                 labels=labels,

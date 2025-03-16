@@ -10,15 +10,17 @@ from polars_ml.pipeline.component import PipelineComponent
 class Discretizer(PipelineComponent):
     def __init__(
         self,
-        *exprs: IntoExpr | Iterable[IntoExpr],
+        exprs: IntoExpr | Iterable[IntoExpr],
+        *more_exprs: IntoExpr | Iterable[IntoExpr],
         quantiles: Sequence[float] | int | None = None,
         breaks: Sequence[float] | None = None,
         labels: Sequence[str] | None = None,
         left_closed: bool = False,
         allow_duplicates: bool = False,
-        suffix: str = "",
+        suffix: str = "_discretized",
     ):
         self.exprs = exprs
+        self.more_exprs = more_exprs
         self.quantiles = quantiles
         self.breaks = breaks
         self.labels = labels
@@ -36,7 +38,9 @@ class Discretizer(PipelineComponent):
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
         if self.quantiles is not None:
-            data = data.select(*self.exprs)
+            data = data.select(self.exprs, *self.more_exprs).select(
+                pl.all().name.suffix(self.suffix)
+            )
             self.breakpoints = {
                 col: data.select(
                     pl.col(col)
@@ -58,22 +62,18 @@ class Discretizer(PipelineComponent):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        targets = set(self.breakpoints.keys()) & set(data.columns)
+        pre = data.select(self.exprs, *self.more_exprs).select(
+            pl.all().name.suffix(self.suffix)
+        )
+        targets = set(self.breakpoints.keys()) & set(pre.columns)
         return data.with_columns(
-            [
-                pl.col(col)
-                .cut(
-                    breaks,  # type: ignore
+            pre.select(
+                pl.col(col).cut(
+                    self.breakpoints[col],  # type: ignore
                     labels=self.labels,
                     left_closed=self.left_closed,
                     include_breaks=False,
                 )
-                .alias(f"{col}{self.suffix}")
-                for col, breaks in (
-                    self.breakpoints
-                    if self.quantiles is not None
-                    else {col: self.breaks for col in targets}
-                ).items()
-                if col in data.columns
-            ]
+            )[col]
+            for col in targets
         )

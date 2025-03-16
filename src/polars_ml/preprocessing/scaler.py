@@ -1,8 +1,9 @@
 import uuid
-from typing import TYPE_CHECKING, Any, Literal, Mapping, Self, Sequence, Type
+from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping, Self, Sequence
 
 import polars as pl
 from polars import DataFrame, Expr
+from polars._typing import ColumnNameOrSelector
 
 from polars_ml.pipeline.component import PipelineComponent
 
@@ -13,22 +14,18 @@ if TYPE_CHECKING:
 class Scaler(PipelineComponent):
     def __init__(
         self,
-        *column: str,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         method: Literal["standard", "min-max", "robust"] = "standard",
         quantile: tuple[float, float] = (0.25, 0.75),
     ):
-        self.columns = column
+        self.columns = columns
+        self.more_columns = more_columns
+        self.by = [by] if isinstance(by, str) else list(by) if by is not None else []
         self.method = method
         self.q1, self.q3 = quantile
         self.suffix = uuid.uuid4().hex
-
-        if isinstance(by, str):
-            self.by = [by]
-        elif isinstance(by, Sequence):
-            self.by = list(by)
-        else:
-            self.by = []
 
         assert 0 <= self.q1 < self.q3 <= 1, (
             f"Quantile values must be in the range [0, 1] and q1 < q3. Got {quantile}"
@@ -59,12 +56,15 @@ class Scaler(PipelineComponent):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
+        data = data.select(self.columns, *self.more_columns, *self.by)
+
+        self.move_scale_columns = [c for c in data.columns if c not in self.by]
         exprs = [
             self.move_expr(col).alias(f"{col}_move_{self.suffix}")
-            for col in self.columns
+            for col in self.move_scale_columns
         ] + [
             self.scale_expr(col).alias(f"{col}_scale_{self.suffix}")
-            for col in self.columns
+            for col in self.move_scale_columns
         ]
         if self.by:
             self.move_scale = data.group_by(self.by).agg(*exprs)
@@ -74,7 +74,7 @@ class Scaler(PipelineComponent):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        targets = set(data.columns) & set(self.columns)
+        targets = set(data.columns) & set(self.move_scale_columns)
         on_args: dict[str, Any] = (
             {"on": self.by}
             if self.by
@@ -100,12 +100,16 @@ class Scaler(PipelineComponent):
 
 
 class ScalerInverse(PipelineComponent):
-    def __init__(self, scaler: Scaler, mapping: Mapping[str, str] | None = None):
+    def __init__(
+        self, scaler: Scaler, inverse_mapping: Mapping[str, str] | None = None
+    ):
         self.scaler = scaler
-        self.mapping = mapping
+        self.inverse_mapping = inverse_mapping
 
     def transform(self, data: DataFrame) -> DataFrame:
-        mapping = self.mapping or {col: col for col in self.scaler.columns}
+        mapping = self.inverse_mapping or {
+            col: col for col in self.scaler.move_scale_columns
+        }
         targets = set(data.columns) & set(mapping.keys())
         sources = set(data.columns) & set(mapping.values())
         on_args: dict[str, Any] = (
@@ -153,7 +157,7 @@ class ScalerInverseContext:
 
     def __exit__(self, *args: Any, **kwargs: Any):
         self.pipeline.pipe(
-            ScalerInverse(self.scaler, mapping=self.mapping),
+            ScalerInverse(self.scaler, inverse_mapping=self.mapping),
             component_name=self.component_name + "_inverse"
             if self.component_name
             else None,
