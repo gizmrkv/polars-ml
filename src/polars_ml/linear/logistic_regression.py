@@ -40,8 +40,9 @@ class LogisticRegression(PipelineComponent, ABC):
         features: IntoExpr | Iterable[IntoExpr],
         label: IntoExpr,
         *,
-        prediction_name: str,
-        include_input: bool,
+        prediction_name: str = "logistic_regression",
+        include_input: bool = True,
+        predict_proba: bool = False,
         model_kwargs: LogisticRegressionParameters
         | Callable[[DataFrame], LogisticRegressionParameters]
         | None = None,
@@ -54,6 +55,7 @@ class LogisticRegression(PipelineComponent, ABC):
         self.label = label
         self.prediction_name = prediction_name
         self.include_input = include_input
+        self.predict_proba = predict_proba
         self.model_kwargs = model_kwargs or {}
         self.fit_kwargs = fit_kwargs or {}
         self.out_dir = Path(out_dir) if out_dir is not None else None
@@ -65,6 +67,7 @@ class LogisticRegression(PipelineComponent, ABC):
     ) -> Self:
         train_features = data.select(self.features)
         train_label = data.select(self.label)
+        self.columns = train_features.columns
 
         model_kwargs = (
             self.model_kwargs(data)
@@ -82,38 +85,34 @@ class LogisticRegression(PipelineComponent, ABC):
 
         if self.out_dir is not None:
             y_pred_proba = self.model.predict_proba(X)
-            feature_names = (
-                train_features.columns
-                if isinstance(self.features, Iterable)
-                else [str(self.features)]
-            )
-            self._save_plots(y, y_pred_proba, feature_names)
+            self._save_plots(y, y_pred_proba)
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
         input = data.select(self.features)
-        pred_proba: NDArray[Any] = self.model.predict_proba(input.to_numpy())
-        prob_columns = {
-            f"{self.prediction_name}_prob_{i}": Series(name, pred_proba[:, i])
-            for i, name in enumerate(self.model.classes_)
-        }
 
-        pred_class = self.model.predict(input.to_numpy())
-        pred_columns = {
-            self.prediction_name: Series(self.prediction_name, pred_class),
-            **prob_columns,
-        }
+        if self.predict_proba:
+            pred_proba: NDArray[Any] = self.model.predict_proba(input.to_numpy())
+            prob_columns = {
+                f"{self.prediction_name}_{name}": pred_proba[:, i]
+                for i, name in enumerate(self.model.classes_)
+            }
+
+            pred_columns = prob_columns
+        else:
+            pred_class = self.model.predict(input.to_numpy())
+            pred_columns = {self.prediction_name: pred_class}
 
         if self.include_input:
             return data.with_columns(
                 [Series(name, values) for name, values in pred_columns.items()]
             )
         else:
-            return DataFrame({name: values for name, values in pred_columns.items()})
+            return DataFrame(
+                [Series(name, values) for name, values in pred_columns.items()]
+            )
 
-    def _save_plots(
-        self, y_true: NDArray[Any], y_pred_proba: NDArray[Any], feature_names: list[str]
-    ):
+    def _save_plots(self, y_true: NDArray[Any], y_pred_proba: NDArray[Any]):
         if self.out_dir is None:
             return
 
@@ -124,7 +123,7 @@ class LogisticRegression(PipelineComponent, ABC):
         self.out_dir.mkdir(parents=True, exist_ok=True)
 
         plt.figure(figsize=(10, 6))
-        if y_pred_proba.shape[1] == 2:  # 二値分類の場合
+        if y_pred_proba.shape[1] == 2:
             fpr, tpr, _ = roc_curve(y_true, y_pred_proba[:, 1])
             roc_auc = auc(fpr, tpr)
             plt.plot(fpr, tpr, label=f"ROC curve (AUC = {roc_auc:.2f})")
@@ -137,7 +136,11 @@ class LogisticRegression(PipelineComponent, ABC):
         plt.savefig(self.out_dir / "roc_curve.png")
         plt.close()
 
-        y_pred = self.model.predict(y_pred_proba)
+        y_pred = np.argmax(y_pred_proba, axis=1)
+        if len(self.model.classes_) > 2:
+            class_mapping = {i: cls for i, cls in enumerate(self.model.classes_)}
+            y_pred = np.array([class_mapping[p] for p in y_pred])
+
         cm = confusion_matrix(y_true, y_pred)
         plt.figure(figsize=(10, 8))
         sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
@@ -154,7 +157,7 @@ class LogisticRegression(PipelineComponent, ABC):
             if len(self.model.classes_) == 2
             else self.model.coef_.mean(axis=0)
         )
-        plt.bar(feature_names, coefficients)
+        plt.bar(self.columns, coefficients)
         plt.xticks(rotation=45, ha="right")
         plt.xlabel("Features")
         plt.ylabel("Coefficient Value")

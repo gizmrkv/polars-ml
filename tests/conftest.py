@@ -50,3 +50,45 @@ def test_data_medium():
             Series("b2", np.random.choice([True, False], size), dtype=pl.Boolean),
         ]
     )
+
+
+@pytest.fixture
+def test_data_simple_regression():
+    np.random.seed(42)
+    size = 1000
+    return DataFrame(
+        [
+            Series("x0", np.random.randn(size), dtype=pl.Float64),
+            Series("x1", np.random.randn(size), dtype=pl.Float64),
+            Series("x2", np.random.randn(size), dtype=pl.Float64),
+        ]
+    ).with_columns(
+        (
+            0.5 * pl.col("x0")
+            + 0.3 * pl.col("x1")
+            + 0.2 * pl.col("x2")
+            + Series(0.01 * np.random.randn(size))
+        ).alias("y")
+    )
+
+
+@pytest.fixture
+def test_data_simple_binary_classification():
+    np.random.seed(42)
+    size = 1000
+    return DataFrame(
+        [
+            Series("x0", np.random.randn(size), dtype=pl.Float64),
+            Series("x1", np.random.randn(size), dtype=pl.Float64),
+            Series("x2", np.random.randn(size), dtype=pl.Float64),
+        ]
+    ).with_columns(
+        (
+            0.5 * pl.col("x0")
+            + 0.3 * pl.col("x1")
+            + 0.2 * pl.col("x2")
+            + Series(0.01 * np.random.randn(size))
+        )
+        .gt(0.0)
+        .alias("y")
+    )

@@ -32,8 +32,8 @@ class Lasso(PipelineComponent, ABC):
         features: IntoExpr | Iterable[IntoExpr],
         label: IntoExpr,
         *,
-        prediction_name: str,
-        include_input: bool,
+        prediction_name: str = "lasso",
+        include_input: bool = True,
         model_kwargs: LassoParameters
         | Callable[[DataFrame], LassoParameters]
         | None = None,
@@ -57,13 +57,14 @@ class Lasso(PipelineComponent, ABC):
     ) -> Self:
         train_features = data.select(self.features)
         train_label = data.select(self.label)
+        self.columns = train_features.columns
 
         model_kwargs = (
             self.model_kwargs(data)
             if callable(self.model_kwargs)
             else self.model_kwargs
         )
-        self.model = linear_model.Lasso(copy_X=True, **model_kwargs)
+        self.model = linear_model.Lasso(copy_X=False, **model_kwargs)
 
         X = train_features.to_numpy()
         y = train_label.to_numpy().squeeze()
@@ -74,12 +75,7 @@ class Lasso(PipelineComponent, ABC):
 
         if self.out_dir is not None:
             y_pred = self.model.predict(X)
-            feature_names = (
-                train_features.columns
-                if isinstance(self.features, Iterable)
-                else [str(self.features)]
-            )
-            self._save_plots(y, y_pred, feature_names)
+            self._save_plots(y, y_pred)
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
@@ -91,9 +87,7 @@ class Lasso(PipelineComponent, ABC):
         else:
             return DataFrame(Series(self.prediction_name, pred))
 
-    def _save_plots(
-        self, y_true: NDArray[Any], y_pred: NDArray[Any], feature_names: list[str]
-    ):
+    def _save_plots(self, y_true: NDArray[Any], y_pred: NDArray[Any]):
         if self.out_dir is None:
             return
 
@@ -132,7 +126,7 @@ class Lasso(PipelineComponent, ABC):
         pos = np.arange(len(sorted_idx))
 
         plt.barh(pos, coefficients[sorted_idx])
-        plt.yticks(pos, np.array(feature_names)[sorted_idx].tolist())
+        plt.yticks(pos, np.array(self.columns)[sorted_idx].tolist())
         plt.xlabel("Coefficient Value")
         plt.title("Feature Coefficients (Lasso)")
         plt.tight_layout()

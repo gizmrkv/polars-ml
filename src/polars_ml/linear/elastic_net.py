@@ -33,8 +33,8 @@ class ElasticNet(PipelineComponent, ABC):
         features: IntoExpr | Iterable[IntoExpr],
         label: IntoExpr,
         *,
-        prediction_name: str,
-        include_input: bool,
+        prediction_name: str = "elastic_net",
+        include_input: bool = True,
         model_kwargs: ElasticNetParameters
         | Callable[[DataFrame], ElasticNetParameters]
         | None = None,
@@ -58,6 +58,7 @@ class ElasticNet(PipelineComponent, ABC):
     ) -> Self:
         train_features = data.select(self.features)
         train_label = data.select(self.label)
+        self.columns = train_features.columns
 
         model_kwargs = (
             self.model_kwargs(data)
@@ -75,12 +76,7 @@ class ElasticNet(PipelineComponent, ABC):
 
         if self.out_dir is not None:
             y_pred = self.model.predict(X)
-            feature_names = (
-                train_features.columns
-                if isinstance(self.features, Iterable)
-                else [str(self.features)]
-            )
-            self._save_plots(y, y_pred, feature_names)
+            self._save_plots(y, y_pred)
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
@@ -92,9 +88,7 @@ class ElasticNet(PipelineComponent, ABC):
         else:
             return DataFrame(Series(self.prediction_name, pred))
 
-    def _save_plots(
-        self, y_true: NDArray[Any], y_pred: NDArray[Any], feature_names: list[str]
-    ):
+    def _save_plots(self, y_true: NDArray[Any], y_pred: NDArray[Any]):
         if self.out_dir is None:
             return
 
@@ -133,7 +127,7 @@ class ElasticNet(PipelineComponent, ABC):
         pos = np.arange(len(sorted_idx))
 
         plt.barh(pos, coefficients[sorted_idx])
-        feature_names_array = np.array(feature_names)
+        feature_names_array = np.array(self.columns)
         sorted_features = feature_names_array[sorted_idx].tolist()
         plt.yticks(pos, sorted_features)
         plt.xlabel("Coefficient Value")

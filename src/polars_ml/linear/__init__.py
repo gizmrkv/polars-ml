@@ -31,8 +31,8 @@ class LinearNameSpace:
         features: IntoExpr | Iterable[IntoExpr],
         label: IntoExpr,
         *,
-        prediction_name: str,
-        include_input: bool,
+        prediction_name: str = "linear_regression",
+        include_input: bool = True,
         model_kwargs: LinearRegressionParameters
         | Callable[[DataFrame], LinearRegressionParameters]
         | None = None,
@@ -60,8 +60,8 @@ class LinearNameSpace:
         features: IntoExpr | Iterable[IntoExpr],
         label: IntoExpr,
         *,
-        prediction_name: str,
-        include_input: bool,
+        prediction_name: str = "logistic_regression",
+        include_input: bool = True,
         model_kwargs: LogisticRegressionParameters
         | Callable[[DataFrame], LogisticRegressionParameters]
         | None = None,
@@ -89,8 +89,8 @@ class LinearNameSpace:
         features: IntoExpr | Iterable[IntoExpr],
         label: IntoExpr,
         *,
-        prediction_name: str,
-        include_input: bool,
+        prediction_name: str = "lasso",
+        include_input: bool = True,
         model_kwargs: LassoParameters
         | Callable[[DataFrame], LassoParameters]
         | None = None,
@@ -118,8 +118,8 @@ class LinearNameSpace:
         features: IntoExpr | Iterable[IntoExpr],
         label: IntoExpr,
         *,
-        prediction_name: str,
-        include_input: bool,
+        prediction_name: str = "ridge",
+        include_input: bool = True,
         model_kwargs: RidgeParameters
         | Callable[[DataFrame], RidgeParameters]
         | None = None,
@@ -147,8 +147,8 @@ class LinearNameSpace:
         features: IntoExpr | Iterable[IntoExpr],
         label: IntoExpr,
         *,
-        prediction_name: str,
-        include_input: bool,
+        prediction_name: str = "elastic_net",
+        include_input: bool = True,
         model_kwargs: ElasticNetParameters
         | Callable[[DataFrame], ElasticNetParameters]
         | None = None,
