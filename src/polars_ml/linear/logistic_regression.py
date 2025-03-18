@@ -93,24 +93,18 @@ class LogisticRegression(PipelineComponent, ABC):
 
         if self.predict_proba:
             pred_proba: NDArray[Any] = self.model.predict_proba(input.to_numpy())
-            prob_columns = {
-                f"{self.prediction_name}_{name}": pred_proba[:, i]
+            columns = [
+                Series(f"{self.prediction_name}_{name}", pred_proba[:, i])
                 for i, name in enumerate(self.model.classes_)
-            }
-
-            pred_columns = prob_columns
+            ]
         else:
             pred_class = self.model.predict(input.to_numpy())
-            pred_columns = {self.prediction_name: pred_class}
+            columns = [Series(self.prediction_name, pred_class)]
 
         if self.include_input:
-            return data.with_columns(
-                [Series(name, values) for name, values in pred_columns.items()]
-            )
+            return data.with_columns(columns)
         else:
-            return DataFrame(
-                [Series(name, values) for name, values in pred_columns.items()]
-            )
+            return DataFrame(columns)
 
     def _save_plots(self, y_true: NDArray[Any], y_pred_proba: NDArray[Any]):
         if self.out_dir is None:

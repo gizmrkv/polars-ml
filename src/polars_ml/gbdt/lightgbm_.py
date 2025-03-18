@@ -11,9 +11,8 @@ from typing import (
     Union,
 )
 
-import polars as pl
 from numpy.typing import NDArray
-from polars import DataFrame
+from polars import DataFrame, Series
 from polars._typing import IntoExpr
 
 from polars_ml.pipeline.component import PipelineComponent
@@ -223,8 +222,8 @@ class LightGBM(PipelineComponent):
         label: IntoExpr,
         params: LightGBMParameters | None = None,
         *,
-        prediction_name: str = "prediction",
-        append_prediction: bool = True,
+        prediction_name: str = "lightgbm",
+        include_input: bool = True,
         train_kwargs: LightGBMTrainArguments
         | Callable[[DataFrame], LightGBMTrainArguments]
         | None = None,
@@ -243,7 +242,7 @@ class LightGBM(PipelineComponent):
         self.label = label
         self.params = params or {}
         self.prediction_name = prediction_name
-        self.append_prediction = append_prediction
+        self.include_input = include_input
         self.train_kwargs = train_kwargs or {}
         self.predict_kwargs = predict_kwargs or {}
         self.train_dataset_kwargs = train_dataset_kwargs or {}
@@ -316,7 +315,6 @@ class LightGBM(PipelineComponent):
             else self.train_kwargs
         )
 
-        print(self.params, train_kwargs)
         self.model = lgb.train(
             dict(**self.params),
             train_dataset,
@@ -349,12 +347,14 @@ class LightGBM(PipelineComponent):
         )
         pred: NDArray[Any] = self.model.predict(input.to_numpy(), **predict_kwargs)  # type: ignore
         if pred.ndim == 1:
-            schema = [self.prediction_name]
+            columns = [Series(self.prediction_name, pred)]
         else:
-            schema = [f"{self.prediction_name}_{i}" for i in range(pred.shape[1])]
+            columns = [
+                Series(f"{self.prediction_name}_{i}", pred[:, i])
+                for i in range(pred.shape[1])
+            ]
 
-        pred_df = pl.from_numpy(pred, schema=schema)
-        if self.append_prediction:
-            return pl.concat([data, pred_df], how="horizontal")
+        if self.include_input:
+            return data.with_columns(columns)
         else:
-            return pred_df
+            return DataFrame(columns)
