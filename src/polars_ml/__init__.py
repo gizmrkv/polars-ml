@@ -1,4 +1,4 @@
 from .eda import EDA
-from .pipeline import Pipeline
+from .pipeline import Pipeline, PipelineComponent
 
-__all__ = ["EDA", "Pipeline"]
+__all__ = ["PipelineComponent", "Pipeline", "EDA"]

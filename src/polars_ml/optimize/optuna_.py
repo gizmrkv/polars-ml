@@ -9,6 +9,12 @@ from polars import DataFrame
 from polars_ml.pipeline.component import PipelineComponent
 
 
+class ModelFunction(Protocol):
+    def __call__(
+        self, *args: Any, trial: optuna.Trial | None = None, **kwargs: Any
+    ) -> PipelineComponent: ...
+
+
 class ObjectiveFunction(Protocol):
     def __call__(
         self,
@@ -20,11 +26,11 @@ class ObjectiveFunction(Protocol):
     ) -> Any: ...
 
 
-class Optuner(PipelineComponent):
+class OptunaOptimizer(PipelineComponent):
     def __init__(
         self,
-        model_fn: Callable[..., PipelineComponent],
-        objective: ObjectiveFunction,
+        model_fn: ModelFunction,
+        objective_fn: ObjectiveFunction,
         search_space: Mapping[str, Mapping[str, Any]],
         *,
         sampler: optuna.samplers.BaseSampler | None = None,
@@ -40,7 +46,7 @@ class Optuner(PipelineComponent):
         storage: str | Path | optuna.storages.BaseStorage = "./journal.log",
     ):
         self.model_fn = model_fn
-        self.objective = objective
+        self.objective_fn = objective_fn
         self.search_space = search_space
         self.sampler = sampler
         self.pruner = pruner
@@ -80,7 +86,9 @@ class Optuner(PipelineComponent):
         ) -> Callable[[optuna.Trial], Any]:
             def _objective(trial: optuna.Trial) -> Any:
                 return objective(
-                    self.model_fn(**self.suggest_sample(trial, search_space)),
+                    self.model_fn(
+                        **self.suggest_sample(trial, search_space), trial=trial
+                    ),
                     deepcopy(data),
                     deepcopy(validation_data),
                     trial=trial,
@@ -89,7 +97,7 @@ class Optuner(PipelineComponent):
             return _objective
 
         study.optimize(
-            wrap_objective(self.objective, self.search_space),
+            wrap_objective(self.objective_fn, self.search_space),
             n_trials=self.n_trials,
             timeout=self.timeout,
             n_jobs=self.n_jobs,
@@ -99,6 +107,7 @@ class Optuner(PipelineComponent):
 
         self.best_params = study.best_params
         self.best_model = self.model_fn(**self.best_params)
+        self.best_model.fit(data, validation_data)
 
         return self
 

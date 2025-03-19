@@ -92,3 +92,13 @@ def test_data_simple_binary_classification():
         .gt(0.0)
         .alias("y")
     )
+
+
+@pytest.fixture
+def test_data_friedman1():
+    from sklearn.datasets import make_friedman1
+
+    X, y = make_friedman1(10000)
+    return DataFrame(
+        [Series(f"x_{i}", X[:, i]) for i in range(X.shape[1])] + [Series("y", y)]
+    )

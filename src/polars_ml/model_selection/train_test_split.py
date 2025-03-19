@@ -16,14 +16,14 @@ def train_test_split(
     if stratify is None:
         data = data.with_row_index(index_name).select(
             index_name,
-            pl.col(index_name).alias("is_train") < data.height * test_size,
+            pl.col(index_name).alias("is_train") > data.height * test_size,
         )
     else:
         data = data.with_row_index(index_name).select(
             index_name,
             stratify or pl.lit(0),
             pl.cum_count(stratify).over(stratify).alias("is_train")
-            <= pl.len().over(stratify) * test_size,
+            > pl.len().over(stratify) * test_size,
         )
 
     data = data.with_columns(

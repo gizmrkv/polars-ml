@@ -7,8 +7,8 @@ def assert_component_valid(
     component: PipelineComponent,
     data: DataFrame,
     expected: DataFrame | None = None,
-    valid_data: DataFrame | None = None,
-    valid_expected: DataFrame | None = None,
+    validation_data: DataFrame | None = None,
+    validation_expected: DataFrame | None = None,
     *,
     n_trials: int = 1,
     is_deterministic: bool = True,
@@ -17,7 +17,9 @@ def assert_component_valid(
 ):
     from polars.testing import assert_frame_equal
 
-    self = component.fit(data.clone())
+    self = component.fit(
+        data.clone(), validation_data.clone() if validation_data is not None else None
+    )
     assert self is component
 
     data_copy = data.clone()
@@ -26,10 +28,10 @@ def assert_component_valid(
     if expected is not None:
         assert_frame_equal(out, expected)
 
-    if valid_data is not None:
-        valid_out = component.transform(valid_data.clone())
-        if valid_expected is not None:
-            assert_frame_equal(valid_out, valid_expected)
+    if validation_data is not None:
+        valid_out = component.transform(validation_data.clone())
+        if validation_expected is not None:
+            assert_frame_equal(valid_out, validation_expected)
 
     if not is_inplace:
         assert_frame_equal(data_copy, data)

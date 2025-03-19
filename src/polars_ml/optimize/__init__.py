@@ -6,7 +6,7 @@ import optuna.storages.journal
 
 from polars_ml.pipeline.component import PipelineComponent
 
-from .optuner import ObjectiveFunction, Optuner
+from .optuna_ import ObjectiveFunction, OptunaOptimizer
 
 if TYPE_CHECKING:
     from polars_ml import Pipeline
@@ -16,7 +16,7 @@ class OptimizeNameSpace:
     def __init__(self, pipeline: "Pipeline"):
         self.pipeline = pipeline
 
-    def optuner(
+    def optuna(
         self,
         model_fn: Callable[..., PipelineComponent],
         objective: ObjectiveFunction,
@@ -36,7 +36,7 @@ class OptimizeNameSpace:
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
-            Optuner(
+            OptunaOptimizer(
                 model_fn,
                 objective,
                 search_space,
