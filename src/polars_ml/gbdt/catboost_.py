@@ -11,6 +11,7 @@ from typing import (
     Union,
 )
 
+import numpy as np
 from numpy.typing import NDArray
 from polars import DataFrame, Series
 from polars._typing import IntoExpr
@@ -275,11 +276,10 @@ class CatBoost(PipelineComponent):
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
         import catboost as cb
-        import matplotlib.pyplot as plt
-        import numpy as np
 
         train_features = data.select(self.features)
         train_label = data.select(self.label)
+        self.feature_names = train_features.columns
 
         pool_kwargs = (
             self.pool_kwargs(data) if callable(self.pool_kwargs) else self.pool_kwargs
@@ -287,7 +287,6 @@ class CatBoost(PipelineComponent):
 
         pool_kwargs["feature_names"] = train_features.columns
 
-        self.feature_names = train_features.columns
         train_pool = cb.Pool(
             data=train_features.to_numpy(),
             label=train_label.to_numpy().squeeze(),
@@ -330,35 +329,7 @@ class CatBoost(PipelineComponent):
         self.model = cb.train(params=self.params, dtrain=train_pool, **train_kwargs)
 
         if self.out_dir is not None:
-            self.out_dir.mkdir(parents=True, exist_ok=True)
-            self.model.save_model(str(self.out_dir / "model.cbm"))
-
-            feature_importances = self.model.get_feature_importance()
-            feature_names = self.model.feature_names_
-
-            if feature_importances is not None and feature_names is not None:
-                n_features = len(self.feature_names)
-                indices = np.arange(n_features)
-
-                plt.figure(figsize=(10, 6))
-                plt.barh(indices, feature_importances)  # type: ignore
-                plt.yticks(indices, feature_names)
-                plt.xlabel("Feature Importance")
-                plt.tight_layout()
-                plt.savefig(str(self.out_dir / "feature_importance.png"))
-                plt.close()
-
-                with open(self.out_dir / "feature_importance.txt", "w") as f:
-                    for i in range(n_features):
-                        f.write(f"{feature_names[i]}: {feature_importances[i]}\n")  # type: ignore
-
-            tree_count = getattr(self.model, "tree_count_", 0)
-            for i in range(min(5, tree_count)):
-                self.model.plot_tree(i, pool=train_pool)
-                plt.savefig(
-                    str(self.out_dir / f"tree_{i}.png"), bbox_inches="tight", dpi=300
-                )
-                plt.close()
+            self.save()
 
         return self
 
@@ -372,21 +343,45 @@ class CatBoost(PipelineComponent):
 
         pred: NDArray[Any] = self.model.predict(input_data.to_numpy(), **predict_kwargs)
 
-        pred_ndim = (
-            pred.ndim
-            if hasattr(pred, "ndim")
-            else (2 if pred.shape and len(pred.shape) > 1 else 1)
-        )
-
-        if pred_ndim == 1:
+        if pred.ndim == 1:
             columns = [Series(self.prediction_name, pred)]
         else:
             columns = [
                 Series(f"{self.prediction_name}_{i}", pred[:, i])
-                for i in range(pred.shape[1])  # type: ignore
+                for i in range(pred.shape[1])
             ]
 
         if self.include_input:
             return data.with_columns(columns)
         else:
             return DataFrame(columns)
+
+    def save(self, out_dir: str | Path | None = None):
+        import matplotlib.pyplot as plt
+
+        out_dir = Path(out_dir) if out_dir is not None else self.out_dir
+        if out_dir is None:
+            raise ValueError("No output directory provided")
+
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        self.model.save_model(str(out_dir / "model.cbm"))
+
+        feature_importances = self.model.get_feature_importance()
+
+        if feature_importances is not None:
+            n_features = len(self.feature_names)
+            indices = np.arange(n_features)
+
+            plt.figure(figsize=(10, 6))
+            plt.barh(indices, feature_importances)  # type: ignore
+            plt.yticks(indices, self.feature_names)
+            plt.xlabel("Feature Importance")
+            plt.tight_layout()
+            plt.savefig(str(out_dir / "feature_importance.png"))
+            plt.close()
+
+        for i in range(min(5, self.model.tree_count_ or 0)):
+            self.model.plot_tree(i)
+            plt.savefig(out_dir / f"tree_{i}.png")
+            plt.close()

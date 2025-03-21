@@ -2,14 +2,14 @@ from abc import ABC
 from pathlib import Path
 from typing import Any, Callable, Iterable, Literal, Mapping, Self, TypedDict
 
-import numpy as np
 from numpy.typing import NDArray
 from polars import DataFrame, Series
 from polars._typing import IntoExpr
 from sklearn import linear_model
-from sklearn.metrics import auc, roc_curve
 
 from polars_ml.pipeline.component import PipelineComponent
+
+from .utils import plot_feature_coefficients
 
 
 class LogisticRegressionParameters(TypedDict, total=False):
@@ -67,7 +67,7 @@ class LogisticRegression(PipelineComponent, ABC):
     ) -> Self:
         train_features = data.select(self.features)
         train_label = data.select(self.label)
-        self.columns = train_features.columns
+        self.feature_names = train_features.columns
 
         model_kwargs = (
             self.model_kwargs(data)
@@ -84,15 +84,15 @@ class LogisticRegression(PipelineComponent, ABC):
         self.model.fit(X, y, **fit_kwargs)
 
         if self.out_dir is not None:
-            y_pred_proba = self.model.predict_proba(X)
-            self._save_plots(y, y_pred_proba)
+            self.save()
+
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
         input = data.select(self.features)
 
         if self.predict_proba:
-            pred_proba: NDArray[Any] = self.model.predict_proba(input.to_numpy())
+            pred_proba = self.model.predict_proba(input.to_numpy())
             columns = [
                 Series(f"{self.prediction_name}_{name}", pred_proba[:, i])
                 for i, name in enumerate(self.model.classes_)
@@ -106,56 +106,20 @@ class LogisticRegression(PipelineComponent, ABC):
         else:
             return DataFrame(columns)
 
-    def _save_plots(self, y_true: NDArray[Any], y_pred_proba: NDArray[Any]):
-        if self.out_dir is None:
-            return
+    def save(self, out_dir: str | Path | None = None):
+        out_dir = Path(out_dir) if out_dir else self.out_dir
+        if out_dir is None:
+            raise ValueError("No output directory provided")
 
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-        from sklearn.metrics import confusion_matrix
+        out_dir.mkdir(parents=True, exist_ok=True)
 
-        self.out_dir.mkdir(parents=True, exist_ok=True)
-
-        plt.figure(figsize=(10, 6))
-        if y_pred_proba.shape[1] == 2:
-            fpr, tpr, _ = roc_curve(y_true, y_pred_proba[:, 1])
-            roc_auc = auc(fpr, tpr)
-            plt.plot(fpr, tpr, label=f"ROC curve (AUC = {roc_auc:.2f})")
-            plt.plot([0, 1], [0, 1], "k--")
-            plt.xlabel("False Positive Rate")
-            plt.ylabel("True Positive Rate")
-            plt.title("Receiver Operating Characteristic (ROC) Curve")
-            plt.legend(loc="lower right")
-        plt.tight_layout()
-        plt.savefig(self.out_dir / "roc_curve.png")
-        plt.close()
-
-        y_pred = np.argmax(y_pred_proba, axis=1)
-        if len(self.model.classes_) > 2:
-            class_mapping = {i: cls for i, cls in enumerate(self.model.classes_)}
-            y_pred = np.array([class_mapping[p] for p in y_pred])
-
-        cm = confusion_matrix(y_true, y_pred)
-        plt.figure(figsize=(10, 8))
-        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
-        plt.xlabel("Predicted")
-        plt.ylabel("Actual")
-        plt.title("Confusion Matrix")
-        plt.tight_layout()
-        plt.savefig(self.out_dir / "confusion_matrix.png")
-        plt.close()
-
-        plt.figure(figsize=(12, 6))
-        coefficients = (
-            self.model.coef_[0]
-            if len(self.model.classes_) == 2
-            else self.model.coef_.mean(axis=0)
+        plot_feature_coefficients(
+            self.model.coef_,
+            self.feature_names,
+            filepath=out_dir / "feature_coefficients.png",
         )
-        plt.bar(self.columns, coefficients)
-        plt.xticks(rotation=45, ha="right")
-        plt.xlabel("Features")
-        plt.ylabel("Coefficient Value")
-        plt.title("Feature Coefficients")
-        plt.tight_layout()
-        plt.savefig(self.out_dir / "feature_coefficients.png")
-        plt.close()
+
+        coef_df = DataFrame(
+            {"feature": self.feature_names, "coefficient": self.model.coef_}
+        )
+        coef_df.write_csv(out_dir / "feature_coefficients.csv")

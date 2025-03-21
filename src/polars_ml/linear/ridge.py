@@ -9,6 +9,8 @@ from sklearn import linear_model
 
 from polars_ml.pipeline.component import PipelineComponent
 
+from .utils import plot_feature_coefficients
+
 
 class RidgeParameters(TypedDict, total=False):
     alpha: float | NDArray[Any]  # 単一の値または配列可能
@@ -57,14 +59,14 @@ class Ridge(PipelineComponent, ABC):
     ) -> Self:
         train_features = data.select(self.features)
         train_label = data.select(self.label)
-        self.columns = train_features.columns
+        self.feature_names = train_features.columns
 
         model_kwargs = (
             self.model_kwargs(data)
             if callable(self.model_kwargs)
             else self.model_kwargs
         )
-        self.model = linear_model.Ridge(copy_X=True, **model_kwargs)
+        self.model = linear_model.Ridge(copy_X=False, **model_kwargs)
 
         X = train_features.to_numpy()
         y = train_label.to_numpy().squeeze()
@@ -74,8 +76,7 @@ class Ridge(PipelineComponent, ABC):
         self.model.fit(X, y, **fit_kwargs)
 
         if self.out_dir is not None:
-            y_pred = self.model.predict(X)
-            self._save_plots(y, y_pred)
+            self.save()
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
@@ -87,59 +88,20 @@ class Ridge(PipelineComponent, ABC):
         else:
             return DataFrame(Series(self.prediction_name, pred))
 
-    def _save_plots(self, y_true: NDArray[Any], y_pred: NDArray[Any]):
-        if self.out_dir is None:
-            return
+    def save(self, out_dir: str | Path | None = None):
+        out_dir = Path(out_dir) if out_dir else self.out_dir
+        if out_dir is None:
+            raise ValueError("No output directory provided")
 
-        import matplotlib.pyplot as plt
-        import numpy as np
+        out_dir.mkdir(parents=True, exist_ok=True)
 
-        self.out_dir.mkdir(parents=True, exist_ok=True)
-
-        plt.figure(figsize=(10, 6))
-        plt.scatter(y_true, y_pred, alpha=0.5)
-        plt.plot(
-            [y_true.min(), y_true.max()], [y_true.min(), y_true.max()], "r--", lw=2
+        plot_feature_coefficients(
+            self.model.coef_,
+            self.feature_names,
+            filepath=out_dir / "feature_coefficients.png",
         )
-        plt.xlabel("Actual Values")
-        plt.ylabel("Predicted Values")
-        plt.title("Actual vs Predicted Values (Ridge)")
-        plt.tight_layout()
-        plt.savefig(self.out_dir / "ridge_actual_vs_predicted.png")
-        plt.close()
 
-        residuals = y_true - y_pred
-        plt.figure(figsize=(10, 6))
-        plt.scatter(y_pred, residuals, alpha=0.5)
-        plt.axhline(y=0, color="r", linestyle="--")
-        plt.xlabel("Predicted Values")
-        plt.ylabel("Residuals")
-        plt.title("Residual Plot (Ridge)")
-        plt.tight_layout()
-        plt.savefig(self.out_dir / "ridge_residuals.png")
-        plt.close()
-
-        plt.figure(figsize=(12, 6))
-        coefficients = self.model.coef_
-        coef_importance = np.abs(coefficients)
-        sorted_idx = np.argsort(coef_importance)
-        pos = np.arange(len(sorted_idx))
-
-        plt.barh(pos, coefficients[sorted_idx])
-        feature_names_array = np.array(self.columns)
-        sorted_features = feature_names_array[sorted_idx].tolist()
-        plt.yticks(pos, sorted_features)
-        plt.xlabel("Coefficient Value")
-        plt.title("Feature Coefficients (Ridge)")
-        plt.tight_layout()
-        plt.savefig(self.out_dir / "ridge_feature_coefficients.png")
-        plt.close()
-
-        plt.figure(figsize=(10, 6))
-        plt.hist(coefficients, bins=20)
-        plt.xlabel("Coefficient Values")
-        plt.ylabel("Frequency")
-        plt.title("Distribution of Coefficients (Ridge)")
-        plt.tight_layout()
-        plt.savefig(self.out_dir / "ridge_coefficient_distribution.png")
-        plt.close()
+        coef_df = DataFrame(
+            {"feature": self.feature_names, "coefficient": self.model.coef_}
+        )
+        coef_df.write_csv(out_dir / "feature_coefficients.csv")

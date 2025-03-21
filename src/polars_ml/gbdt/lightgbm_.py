@@ -258,6 +258,8 @@ class LightGBM(PipelineComponent):
 
         train_features = data.select(self.features)
         train_label = data.select(self.label)
+        self.feature_names = train_features.columns
+
         train_dataset_kwargs = (
             self.train_dataset_kwargs(data)
             if callable(self.train_dataset_kwargs)
@@ -324,17 +326,7 @@ class LightGBM(PipelineComponent):
         )
 
         if self.out_dir is not None:
-            import matplotlib.pyplot as plt
-
-            self.out_dir.mkdir(parents=True, exist_ok=True)
-
-            self.model.save_model(self.out_dir / "model.txt")
-
-            for importance_type in ["gain", "split"]:
-                lgb.plot_importance(self.model, importance_type=importance_type)
-                plt.tight_layout()
-                plt.savefig(self.out_dir / f"importance_{importance_type}.png")
-                plt.close()
+            self.save()
 
         return self
 
@@ -358,3 +350,26 @@ class LightGBM(PipelineComponent):
             return data.with_columns(columns)
         else:
             return DataFrame(columns)
+
+    def save(self, out_dir: str | Path | None = None):
+        import matplotlib.pyplot as plt
+
+        out_dir = Path(out_dir) if out_dir else self.out_dir
+        if out_dir is None:
+            raise ValueError("No output directory provided")
+
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        self.model.save_model(out_dir / "model.txt")
+
+        for importance_type in ["gain", "split"]:
+            lgb.plot_importance(self.model, importance_type=importance_type)
+            plt.tight_layout()
+            plt.savefig(out_dir / f"importance_{importance_type}.png")
+            plt.close()
+
+        for i in range(min(5, self.model.num_trees())):
+            lgb.plot_tree(self.model, tree_index=i)
+            plt.tight_layout()
+            plt.savefig(out_dir / f"tree_{i}.png")
+            plt.close()

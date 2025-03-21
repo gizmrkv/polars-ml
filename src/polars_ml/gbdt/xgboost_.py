@@ -226,6 +226,8 @@ class XGBoost(PipelineComponent):
 
         train_features = data.select(self.features)
         train_label = data.select(self.label)
+        self.feature_names = train_features.columns
+
         dmatrix_kwargs = (
             self.dmatrix_kwargs(data)
             if callable(self.dmatrix_kwargs)
@@ -277,30 +279,7 @@ class XGBoost(PipelineComponent):
         )
 
         if self.out_dir is not None:
-            import matplotlib.pyplot as plt
-
-            self.out_dir.mkdir(parents=True, exist_ok=True)
-
-            self.model.save_model(str(self.out_dir / "model.json"))
-
-            for importance_type in [
-                "weight",
-                "gain",
-                "cover",
-                "total_gain",
-                "total_cover",
-            ]:
-                xgb.plot_importance(self.model, importance_type=importance_type)
-                plt.tight_layout()
-                plt.savefig(self.out_dir / f"importance_{importance_type}.png")
-                plt.close()
-
-            for i in range(min(5, self.model.num_boosted_rounds())):
-                xgb.plot_tree(self.model, num_trees=i)
-                plt.savefig(
-                    self.out_dir / f"tree_{i}.png", bbox_inches="tight", dpi=300
-                )
-                plt.close()
+            self.save()
 
         return self
 
@@ -339,3 +318,31 @@ class XGBoost(PipelineComponent):
             return data.with_columns(columns)
         else:
             return DataFrame(columns)
+
+    def save(self, out_dir: str | Path | None = None):
+        import matplotlib.pyplot as plt
+
+        out_dir = Path(out_dir) if out_dir else self.out_dir
+        if out_dir is None:
+            raise ValueError("No output directory provided")
+
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        self.model.save_model(str(out_dir / "model.json"))
+
+        for importance_type in [
+            "weight",
+            "gain",
+            "cover",
+            "total_gain",
+            "total_cover",
+        ]:
+            xgb.plot_importance(self.model, importance_type=importance_type)
+            plt.tight_layout()
+            plt.savefig(out_dir / f"importance_{importance_type}.png")
+            plt.close()
+
+        for i in range(min(5, self.model.num_boosted_rounds())):
+            xgb.plot_tree(self.model, num_trees=i)
+            plt.savefig(out_dir / f"tree_{i}.png")
+            plt.close()
