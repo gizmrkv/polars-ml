@@ -39,6 +39,7 @@ from polars_ml.gbdt import GBDTNameSpace
 from polars_ml.linear import LinearNameSpace
 from polars_ml.optimize import OptimizeNameSpace
 from polars_ml.pipeline.component import PipelineComponent
+from polars_ml.plot import PlotNameSpace
 from polars_ml.preprocessing import (
     Discretizer,
     LabelEncoder,
@@ -901,3 +902,7 @@ class Pipeline(PipelineComponent):
     @property
     def optimize(self) -> OptimizeNameSpace:
         return OptimizeNameSpace(self)
+
+    @property
+    def plot(self) -> PlotNameSpace:
+        return PlotNameSpace(self)
