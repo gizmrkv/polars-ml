@@ -1,4 +1,3 @@
-from abc import ABC
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, Self, TypedDict
 
@@ -22,7 +21,7 @@ class LinearRegressionFitArguments(TypedDict, total=False):
     sample_weight: NDArray[Any]
 
 
-class LinearRegression(PipelineComponent, ABC):
+class LinearRegression(PipelineComponent):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],

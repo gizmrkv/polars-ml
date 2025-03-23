@@ -1,4 +1,3 @@
-from abc import ABC
 from pathlib import Path
 from typing import Any, Callable, Iterable, Literal, Mapping, Self, TypedDict
 
@@ -28,7 +27,7 @@ class LassoFitArguments(TypedDict, total=False):
     sample_weight: NDArray[Any]
 
 
-class Lasso(PipelineComponent, ABC):
+class Lasso(PipelineComponent):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],

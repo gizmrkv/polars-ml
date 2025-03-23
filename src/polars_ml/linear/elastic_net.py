@@ -1,4 +1,3 @@
-from abc import ABC
 from pathlib import Path
 from typing import Any, Callable, Iterable, Literal, Mapping, Self, TypedDict
 
@@ -29,7 +28,7 @@ class ElasticNetFitArguments(TypedDict, total=False):
     sample_weight: NDArray[Any]
 
 
-class ElasticNet(PipelineComponent, ABC):
+class ElasticNet(PipelineComponent):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],

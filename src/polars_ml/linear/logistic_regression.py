@@ -1,4 +1,3 @@
-from abc import ABC
 from pathlib import Path
 from typing import Any, Callable, Iterable, Literal, Mapping, Self, TypedDict
 
@@ -34,7 +33,7 @@ class LogisticRegressionFitArguments(TypedDict, total=False):
     sample_weight: NDArray[Any]
 
 
-class LogisticRegression(PipelineComponent, ABC):
+class LogisticRegression(PipelineComponent):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
