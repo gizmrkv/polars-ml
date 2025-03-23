@@ -25,7 +25,7 @@ class HistogramPlot(PipelineComponent):
         self.x = x
         self.hue = hue
         self.show_progress = show_progress
-        self.subplots_kwargs = subplots_kwargs or {"figsize": (10, 10)}
+        self.subplots_kwargs = subplots_kwargs or {"figsize": (10, 6)}
         self.histogram_plot_kwargs = histogram_plot_kwargs or {"kde": True}
         self.out_dir = Path(out_dir)
 
@@ -55,7 +55,7 @@ class HistogramPlot(PipelineComponent):
             title = x + (f" by {hue}" if hue else "")
             ax.set_title(title)
             if hue:
-                ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
+                ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5))
 
             fig.tight_layout()
 
