@@ -50,6 +50,7 @@ from polars_ml.preprocessing import (
     ScalerInverseContext,
 )
 from polars_ml.reduction import ReductionNameSpace
+from polars_ml.text import TextNameSpace
 
 from .group_by import (
     GroupByDynamicNameSpace,
@@ -911,3 +912,7 @@ class Pipeline(PipelineComponent):
     @property
     def reduction(self) -> ReductionNameSpace:
         return ReductionNameSpace(self)
+
+    @property
+    def text(self) -> TextNameSpace:
+        return TextNameSpace(self)

@@ -149,11 +149,3 @@ class UMAP(PipelineComponent):
             plt.grid(True)
             plt.savefig(out_dir / "umap_embedding.png")
             plt.close()
-
-            embedding_df = DataFrame(
-                {
-                    f"{self.prefix}_{i}": self.model.embedding_[:, i]
-                    for i in range(self.model.embedding_.shape[1])
-                }
-            )
-            embedding_df.write_csv(out_dir / "umap_embedding.csv")
