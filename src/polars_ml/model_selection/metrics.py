@@ -32,8 +32,6 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-from polars_ml import Pipeline
-
 
 def evaluate_regression_metrics(
     data: DataFrame, y_true: str, y_pred: str, *, by: str | None = None
@@ -130,6 +128,8 @@ def _evaluate_classification_metrics(
         )
 
     if y_pred_class is None and y_pred_proba_prefix is not None:
+        from polars_ml import Pipeline
+
         y_pred_class = uuid.uuid4().hex
         data = (
             Pipeline()
