@@ -1,11 +1,13 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Iterable
+from typing import TYPE_CHECKING, Iterable
 
+import umap
 from polars import DataFrame
 from polars._typing import IntoExpr
+from sklearn import decomposition
 
-from .pca import PCA, PCAParameters
-from .umap_ import UMAP, UMAPParameters
+from .pca import PCA
+from .umap_ import UMAP
 
 __all__ = ["PCA", "UMAP"]
 
@@ -20,21 +22,19 @@ class ReductionNameSpace:
     def pca(
         self,
         features: IntoExpr | Iterable[IntoExpr],
+        pca: decomposition.PCA,
         *,
         prefix: str = "pca",
         include_input: bool = True,
-        model_kwargs: PCAParameters
-        | Callable[[DataFrame], PCAParameters]
-        | None = None,
         out_dir: str | Path | None = None,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
             PCA(
                 features,
+                pca,
                 prefix=prefix,
                 include_input=include_input,
-                model_kwargs=model_kwargs,
                 out_dir=out_dir,
             ),
             component_name=component_name,
@@ -43,21 +43,19 @@ class ReductionNameSpace:
     def umap(
         self,
         features: IntoExpr | Iterable[IntoExpr],
+        umap: umap.UMAP,
         *,
         prefix: str = "umap",
         include_input: bool = True,
-        model_kwargs: UMAPParameters
-        | Callable[[DataFrame], UMAPParameters]
-        | None = None,
         out_dir: str | Path | None = None,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
             UMAP(
                 features,
+                umap,
                 prefix=prefix,
                 include_input=include_input,
-                model_kwargs=model_kwargs,
                 out_dir=out_dir,
             ),
             component_name=component_name,

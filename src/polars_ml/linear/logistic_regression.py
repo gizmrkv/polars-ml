@@ -1,7 +1,6 @@
 from pathlib import Path
-from typing import Any, Callable, Iterable, Literal, Mapping, Self, TypedDict
+from typing import Any, Callable, Iterable, Mapping, Self
 
-from numpy.typing import NDArray
 from polars import DataFrame, Series
 from polars._typing import IntoExpr
 from sklearn import linear_model
@@ -11,51 +10,27 @@ from polars_ml.pipeline.component import PipelineComponent
 from .utils import plot_feature_coefficients
 
 
-class LogisticRegressionParameters(TypedDict, total=False):
-    penalty: Literal["l1", "l2", "elasticnet"] | None
-    dual: bool
-    tol: float
-    C: float
-    fit_intercept: bool
-    intercept_scaling: float
-    class_weight: Mapping[str, float] | str
-    random_state: int
-    solver: Literal["lbfgs", "liblinear", "newton-cg", "sag", "saga"]
-    max_iter: int
-    multi_class: Literal["auto", "ovr", "multinomial"]
-    verbose: int
-    warm_start: bool
-    n_jobs: int
-    l1_ratio: float
-
-
-class LogisticRegressionFitArguments(TypedDict, total=False):
-    sample_weight: NDArray[Any]
-
-
 class LogisticRegression(PipelineComponent):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
         label: IntoExpr,
+        model: linear_model.LogisticRegression,
         *,
         prediction_name: str = "logistic_regression",
         include_input: bool = True,
         predict_proba: bool = False,
-        model_kwargs: LogisticRegressionParameters
-        | Callable[[DataFrame], LogisticRegressionParameters]
-        | None = None,
-        fit_kwargs: LogisticRegressionFitArguments
-        | Callable[[DataFrame], LogisticRegressionFitArguments]
+        fit_kwargs: Mapping[str, Any]
+        | Callable[[DataFrame], Mapping[str, Any]]
         | None = None,
         out_dir: str | Path | None = None,
     ):
         self.features = features
         self.label = label
+        self.model = model
         self.prediction_name = prediction_name
         self.include_input = include_input
         self.predict_proba = predict_proba
-        self.model_kwargs = model_kwargs or {}
         self.fit_kwargs = fit_kwargs or {}
         self.out_dir = Path(out_dir) if out_dir is not None else None
 
@@ -67,13 +42,6 @@ class LogisticRegression(PipelineComponent):
         train_features = data.select(self.features)
         train_label = data.select(self.label)
         self.feature_names = train_features.columns
-
-        model_kwargs = (
-            self.model_kwargs(data)
-            if callable(self.model_kwargs)
-            else self.model_kwargs
-        )
-        self.model = linear_model.LogisticRegression(**model_kwargs)
 
         X = train_features.to_numpy()
         y = train_label.to_numpy().squeeze()

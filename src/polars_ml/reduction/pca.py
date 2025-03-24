@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, Iterable, Literal, Mapping, Self, TypedDict
+from typing import Iterable, Mapping, Self
 
 import numpy as np
 from polars import DataFrame, Series
@@ -9,31 +9,20 @@ from sklearn import decomposition
 from polars_ml.pipeline.component import PipelineComponent
 
 
-class PCAParameters(TypedDict, total=False):
-    n_components: int | float | Literal["mle"] | None
-    whiten: bool
-    svd_solver: Literal["auto", "full", "arpack", "randomized"]
-    tol: float
-    iterated_power: int | Literal["auto"]
-    random_state: int | np.random.RandomState | None
-
-
 class PCA(PipelineComponent):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
+        pca: decomposition.PCA,
         *,
         prefix: str = "pca",
         include_input: bool = True,
-        model_kwargs: PCAParameters
-        | Callable[[DataFrame], PCAParameters]
-        | None = None,
         out_dir: str | Path | None = None,
     ):
         self.features = features
+        self.pca = pca
         self.prefix = prefix
         self.include_input = include_input
-        self.model_kwargs = model_kwargs or {}
         self.out_dir = Path(out_dir) if out_dir is not None else None
 
     def fit(
@@ -44,15 +33,8 @@ class PCA(PipelineComponent):
         train_features = data.select(self.features)
         self.feature_names = train_features.columns
 
-        model_kwargs = (
-            self.model_kwargs(data)
-            if callable(self.model_kwargs)
-            else self.model_kwargs
-        )
-        self.model = decomposition.PCA(copy=False, **model_kwargs)
-
         X = train_features.to_numpy()
-        self.model.fit(X)
+        self.pca.fit(X)
 
         if self.out_dir is not None:
             self.save()
@@ -61,7 +43,7 @@ class PCA(PipelineComponent):
 
     def transform(self, data: DataFrame) -> DataFrame:
         input_data = data.select(self.features)
-        transformed = self.model.transform(input_data.to_numpy())
+        transformed = self.pca.transform(input_data.to_numpy())
 
         pc_columns = [
             Series(f"{self.prefix}_{i}", transformed[:, i])
@@ -80,7 +62,7 @@ class PCA(PipelineComponent):
 
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        explained_variance_ratio = self.model.explained_variance_ratio_
+        explained_variance_ratio = self.pca.explained_variance_ratio_
         cumulative_variance_ratio = np.cumsum(explained_variance_ratio)
 
         variance_df = DataFrame(
@@ -99,8 +81,8 @@ class PCA(PipelineComponent):
             {
                 "feature": self.feature_names,
                 **{
-                    f"{self.prefix}_{i}": self.model.components_[i]
-                    for i in range(self.model.components_.shape[0])
+                    f"{self.prefix}_{i}": self.pca.components_[i]
+                    for i in range(self.pca.components_.shape[0])
                 },
             }
         )
@@ -122,14 +104,14 @@ class PCA(PipelineComponent):
         plt.savefig(out_dir / "scree_plot.png")
         plt.close()
 
-        if self.model.components_.shape[0] >= 2:
+        if self.pca.components_.shape[0] >= 2:
             plt.figure(figsize=(12, 10))
 
-            plt.scatter(self.model.components_[0], self.model.components_[1])
+            plt.scatter(self.pca.components_[0], self.pca.components_[1])
 
             for i, txt in enumerate(self.feature_names):
                 plt.annotate(
-                    txt, (self.model.components_[0, i], self.model.components_[1, i])
+                    txt, (self.pca.components_[0, i], self.pca.components_[1, i])
                 )
 
             plt.xlabel(f"{self.prefix}_1")

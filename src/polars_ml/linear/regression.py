@@ -1,7 +1,6 @@
 from pathlib import Path
-from typing import Any, Callable, Iterable, Mapping, Self, TypedDict
+from typing import Any, Callable, Iterable, Mapping, Self
 
-from numpy.typing import NDArray
 from polars import DataFrame, Series
 from polars._typing import IntoExpr
 from sklearn import linear_model
@@ -11,37 +10,28 @@ from polars_ml.pipeline.component import PipelineComponent
 from .utils import plot_feature_coefficients
 
 
-class LinearRegressionParameters(TypedDict, total=False):
-    fit_intercept: bool
-    n_jobs: int
-    positive: bool
-
-
-class LinearRegressionFitArguments(TypedDict, total=False):
-    sample_weight: NDArray[Any]
-
-
 class LinearRegression(PipelineComponent):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
         label: IntoExpr,
+        model: linear_model.LinearRegression
+        | linear_model.Lasso
+        | linear_model.Ridge
+        | linear_model.ElasticNet,
         *,
         prediction_name: str = "linear_regression",
         include_input: bool = True,
-        model_kwargs: LinearRegressionParameters
-        | Callable[[DataFrame], LinearRegressionParameters]
-        | None = None,
-        fit_kwargs: LinearRegressionFitArguments
-        | Callable[[DataFrame], LinearRegressionFitArguments]
+        fit_kwargs: Mapping[str, Any]
+        | Callable[[DataFrame], Mapping[str, Any]]
         | None = None,
         out_dir: str | Path | None = None,
     ):
         self.features = features
         self.label = label
+        self.model = model
         self.prediction_name = prediction_name
         self.include_input = include_input
-        self.model_kwargs = model_kwargs or {}
         self.fit_kwargs = fit_kwargs or {}
         self.out_dir = Path(out_dir) if out_dir is not None else None
 
@@ -53,13 +43,6 @@ class LinearRegression(PipelineComponent):
         train_features = data.select(self.features)
         train_label = data.select(self.label)
         self.feature_names = train_features.columns
-
-        model_kwargs = (
-            self.model_kwargs(data)
-            if callable(self.model_kwargs)
-            else self.model_kwargs
-        )
-        self.model = linear_model.LinearRegression(copy_X=False, **model_kwargs)
 
         X = train_features.to_numpy()
         y = train_label.to_numpy().squeeze()
