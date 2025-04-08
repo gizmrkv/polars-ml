@@ -108,7 +108,7 @@ class TabularDataModule(L.LightningDataModule):
             )
         return inputs
 
-    def setup(self, stage: Optional[str] = None):
+    def setup(self, stage: str | None = None):
         self.train_dataset = TensorDataset(*self.to_input(self.data))
         if isinstance(self.validation_data, DataFrame):
             self.validation_dataset = TensorDataset(

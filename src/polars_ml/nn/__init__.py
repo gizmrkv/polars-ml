@@ -23,10 +23,10 @@ class NNNameSpace:
         input_fn: Callable[[DataFrame], tuple[torch.Tensor, ...]],
         data_module_fn: Callable[
             [DataFrame, DataFrame | Mapping[str, DataFrame] | None],
-            L.LightningDataModule,
+            "L.LightningDataModule",
         ],
-        model: L.LightningModule,
-        trainer: L.Trainer,
+        model: "L.LightningModule",
+        trainer: "L.Trainer",
         *,
         ckpt_path: str | Path | None = None,
         prediction_name: str = "pytorch_lightning",
