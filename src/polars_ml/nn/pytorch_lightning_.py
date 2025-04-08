@@ -1,25 +1,27 @@
 from pathlib import Path
-from typing import Callable, Iterable, Mapping, Optional, Self, Tuple
+from typing import TYPE_CHECKING, Callable, Iterable, Mapping, Optional, Self, Tuple
 
-import lightning as L
 import polars as pl
-import torch
 from polars import DataFrame, Series
-from torch.utils.data import DataLoader, TensorDataset
 
 from polars_ml.pipeline.component import PipelineComponent
+
+if TYPE_CHECKING:
+    import lightning as L
+    import torch
+    from torch.utils.data import DataLoader, TensorDataset
 
 
 class PytorchLightning(PipelineComponent):
     def __init__(
         self,
-        input_fn: Callable[[DataFrame], tuple[torch.Tensor, ...]],
+        input_fn: Callable[[DataFrame], tuple["torch.Tensor", ...]],
         data_module_fn: Callable[
             [DataFrame, DataFrame | Mapping[str, DataFrame] | None],
-            L.LightningDataModule,
+            "L.LightningDataModule",
         ],
-        model: L.LightningModule,
-        trainer: L.Trainer,
+        model: "L.LightningModule",
+        trainer: "L.Trainer",
         *,
         ckpt_path: str | Path | None = None,
         prediction_name: str = "pytorch_lightning",
@@ -43,6 +45,8 @@ class PytorchLightning(PipelineComponent):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
+        import torch
+
         inputs = self.input_fn(data)
         output: torch.Tensor = self.model(*inputs)
         if output.ndim == 1:
