@@ -20,7 +20,7 @@ class NNNameSpace:
 
     def lightning(
         self,
-        input_fn: Callable[[DataFrame], tuple[torch.Tensor, ...]],
+        input_fn: Callable[[DataFrame], tuple["torch.Tensor", ...]],
         data_module_fn: Callable[
             [DataFrame, DataFrame | Mapping[str, DataFrame] | None],
             "L.LightningDataModule",
