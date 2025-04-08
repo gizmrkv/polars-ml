@@ -1,14 +1,11 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Mapping
+from typing import TYPE_CHECKING, Any, Mapping, Optional, Union
 
-import optuna
-import optuna.storages.journal
-
-from polars_ml.pipeline.component import PipelineComponent
-
-from .optuna_ import ObjectiveFunction, OptunaOptimizer
+from .optuna_ import ModelFunction, ObjectiveFunction, OptunaOptimizer
 
 if TYPE_CHECKING:
+    import optuna
+
     from polars_ml import Pipeline
 
 
@@ -18,12 +15,12 @@ class OptimizeNameSpace:
 
     def optuna(
         self,
-        model_fn: Callable[..., PipelineComponent],
+        model_fn: ModelFunction,
         objective: ObjectiveFunction,
         search_space: Mapping[str, Mapping[str, Any]],
         *,
-        sampler: optuna.samplers.BaseSampler | None = None,
-        pruner: optuna.pruners.BasePruner | None = None,
+        sampler: Optional["optuna.samplers.BaseSampler"] = None,
+        pruner: Optional[optuna.pruners.BasePruner] = None,
         study_name: str | None = None,
         is_higher_better: bool = False,
         load_if_exists: bool = False,
@@ -32,7 +29,7 @@ class OptimizeNameSpace:
         n_jobs: int = 1,
         gc_after_trial: bool = False,
         show_progress_bar: bool = False,
-        storage: str | Path | optuna.storages.BaseStorage = "./journal.log",
+        storage: Union[str, Path, "optuna.storages.BaseStorage"] = "./journal.log",
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(

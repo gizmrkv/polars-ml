@@ -1,17 +1,29 @@
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Callable, Iterable, Mapping, Protocol, Self
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    Mapping,
+    Optional,
+    Protocol,
+    Self,
+    Union,
+)
 
-import optuna
-import optuna.storages.journal
 from polars import DataFrame
 
 from polars_ml.pipeline.component import PipelineComponent
 
+if TYPE_CHECKING:
+    import optuna
+    import optuna.storages.journal
+
 
 class ModelFunction(Protocol):
     def __call__(
-        self, *args: Any, trial: optuna.Trial | None = None, **kwargs: Any
+        self, *args: Any, trial: Optional["optuna.Trial"] = None, **kwargs: Any
     ) -> PipelineComponent: ...
 
 
@@ -22,7 +34,7 @@ class ObjectiveFunction(Protocol):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
         *,
-        trial: optuna.Trial | None = None,
+        trial: Optional["optuna.Trial"] = None,
     ) -> Any: ...
 
 
@@ -33,8 +45,8 @@ class OptunaOptimizer(PipelineComponent):
         objective_fn: ObjectiveFunction,
         search_space: Mapping[str, Mapping[str, Any]],
         *,
-        sampler: optuna.samplers.BaseSampler | None = None,
-        pruner: optuna.pruners.BasePruner | None = None,
+        sampler: Optional["optuna.samplers.BaseSampler"] = None,
+        pruner: Optional[optuna.pruners.BasePruner] = None,
         study_name: str | None = None,
         is_higher_better: bool = False,
         load_if_exists: bool = False,
@@ -43,7 +55,7 @@ class OptunaOptimizer(PipelineComponent):
         n_jobs: int = 1,
         gc_after_trial: bool = False,
         show_progress_bar: bool = False,
-        storage: str | Path | optuna.storages.BaseStorage = "./journal.log",
+        storage: Union[str, Path, "optuna.storages.BaseStorage"] = "./journal.log",
     ):
         self.model_fn = model_fn
         self.objective_fn = objective_fn
@@ -83,7 +95,7 @@ class OptunaOptimizer(PipelineComponent):
         def wrap_objective(
             objective: ObjectiveFunction,
             search_space: Mapping[str, Mapping[str, Any]],
-        ) -> Callable[[optuna.Trial], Any]:
+        ) -> Callable[["optuna.Trial"], Any]:
             def _objective(trial: optuna.Trial) -> Any:
                 return objective(
                     self.model_fn(
@@ -157,7 +169,7 @@ class OptunaOptimizer(PipelineComponent):
 
     def suggest_sample(
         self,
-        trial: optuna.Trial,
+        trial: "optuna.Trial",
         search_space: Mapping[str, Mapping[str, Any]],
         prefix: str = "",
     ) -> dict[str, Any]:
