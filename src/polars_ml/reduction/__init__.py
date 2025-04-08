@@ -1,10 +1,7 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable
 
-import umap
-from polars import DataFrame
 from polars._typing import IntoExpr
-from sklearn import decomposition
 
 from .pca import PCA
 from .umap_ import UMAP
@@ -12,6 +9,9 @@ from .umap_ import UMAP
 __all__ = ["PCA", "UMAP"]
 
 if TYPE_CHECKING:
+    import umap
+    from sklearn import decomposition
+
     from polars_ml import Pipeline
 
 
@@ -22,7 +22,7 @@ class ReductionNameSpace:
     def pca(
         self,
         features: IntoExpr | Iterable[IntoExpr],
-        pca: decomposition.PCA,
+        pca: "decomposition.PCA",
         *,
         prefix: str = "pca",
         include_input: bool = True,
@@ -43,7 +43,7 @@ class ReductionNameSpace:
     def umap(
         self,
         features: IntoExpr | Iterable[IntoExpr],
-        umap: umap.UMAP,
+        umap: "umap.UMAP",
         *,
         prefix: str = "umap",
         include_input: bool = True,

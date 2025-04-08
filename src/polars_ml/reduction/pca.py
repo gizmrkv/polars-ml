@@ -1,12 +1,14 @@
 from pathlib import Path
-from typing import Iterable, Mapping, Self
+from typing import TYPE_CHECKING, Iterable, Mapping, Self
 
 import numpy as np
 from polars import DataFrame, Series
 from polars._typing import IntoExpr
-from sklearn import decomposition
 
 from polars_ml.pipeline.component import PipelineComponent
+
+if TYPE_CHECKING:
+    from sklearn import decomposition
 
 
 class PCA(PipelineComponent):
