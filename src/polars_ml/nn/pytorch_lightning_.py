@@ -9,7 +9,6 @@ from polars_ml.pipeline.component import PipelineComponent
 if TYPE_CHECKING:
     import lightning as L
     import torch
-    from torch.utils.data import DataLoader, TensorDataset
 
 
 class PytorchLightning(PipelineComponent):
@@ -63,93 +62,3 @@ class PytorchLightning(PipelineComponent):
             return data.with_columns(columns)
         else:
             return DataFrame(columns)
-
-
-class TabularDataModule(L.LightningDataModule):
-    def __init__(
-        self,
-        data: DataFrame,
-        validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
-        *,
-        numeric_columns: Iterable[str] | None = None,
-        category_columns: Iterable[str] | None = None,
-        label_column: str | None = None,
-        numeric_dtype: pl.DataType = pl.Float32(),
-        category_dtype: pl.DataType = pl.Int64(),
-        label_dtype: pl.DataType = pl.Float32(),
-        batch_size: int = 1024,
-    ):
-        super().__init__()
-        self.data = data
-        self.validation_data = validation_data
-        self.numeric_columns = numeric_columns
-        self.category_columns = category_columns
-        self.label_column = label_column
-        self.numeric_dtype = numeric_dtype
-        self.category_dtype = category_dtype
-        self.label_dtype = label_dtype
-        self.batch_size = batch_size
-
-    def to_input(self, data: DataFrame) -> list[torch.Tensor]:
-        inputs = []
-        if self.numeric_columns:
-            inputs.append(
-                data.select(self.numeric_columns).to_torch(dtype=self.numeric_dtype)
-            )
-        if self.category_columns:
-            inputs.append(
-                data.select(self.category_columns).to_torch(dtype=self.category_dtype)
-            )
-        if self.label_column:
-            inputs.append(
-                data.select(self.label_column)
-                .to_torch(dtype=self.label_dtype)
-                .squeeze()
-            )
-        return inputs
-
-    def setup(self, stage: str | None = None):
-        self.train_dataset = TensorDataset(*self.to_input(self.data))
-        if isinstance(self.validation_data, DataFrame):
-            self.validation_dataset = TensorDataset(
-                *self.to_input(self.validation_data)
-            )
-        elif isinstance(self.validation_data, Mapping):
-            self.validation_dataset = [
-                TensorDataset(*self.to_input(data))
-                for data in self.validation_data.values()
-            ]
-        else:
-            self.validation_dataset = None
-
-    def train_dataloader(self) -> DataLoader[Tuple[torch.Tensor, ...]]:
-        return DataLoader(
-            self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=4
-        )
-
-    def val_dataloader(
-        self,
-    ) -> (
-        DataLoader[Tuple[torch.Tensor, ...]]
-        | list[DataLoader[Tuple[torch.Tensor, ...]]]
-        | None
-    ):
-        if isinstance(self.validation_dataset, TensorDataset):
-            return DataLoader(
-                self.validation_dataset,
-                batch_size=self.batch_size,
-                shuffle=False,
-                num_workers=4,
-            )
-        elif isinstance(self.validation_dataset, list):
-            return [
-                DataLoader(
-                    dataset,
-                    batch_size=self.batch_size,
-                    shuffle=False,
-                    num_workers=4,
-                )
-                for dataset in self.validation_dataset
-            ]
-        else:
-            raise ValueError("Required validation data.")
