@@ -1,13 +1,14 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Mapping
 
-import lightning as L
-import torch
 from polars import DataFrame
 
 from .pytorch_lightning_ import PytorchLightning
 
 if TYPE_CHECKING:
+    import lightning as L
+    import torch
+
     from polars_ml import Pipeline
 
 __all__ = ["PytorchLightning"]
