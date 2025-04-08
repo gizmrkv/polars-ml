@@ -13,5 +13,7 @@ data/
 *.png
 *.log
 
+notebook/
 competitions/
 models/
+

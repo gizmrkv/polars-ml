@@ -20,16 +20,23 @@ class HistogramPlot(PipelineComponent):
         show_progress: bool = True,
         subplots_kwargs: Mapping[str, Any] | None = None,
         histogram_plot_kwargs: Mapping[str, Any] | None = None,
-        out_dir: str | Path = "histogram_plot",
+        out_dir: str | Path | None = None,
     ):
         self.x = x
         self.hue = hue
         self.show_progress = show_progress
         self.subplots_kwargs = subplots_kwargs or {"figsize": (10, 6)}
-        self.histogram_plot_kwargs = histogram_plot_kwargs or {"kde": True}
-        self.out_dir = Path(out_dir)
+        self.histogram_plot_kwargs = histogram_plot_kwargs or {
+            "alpha": 0.5,
+            "kde": True,
+            "element": "step",
+        }
+        self.out_dir = Path(out_dir) if out_dir else None
 
     def transform(self, data: DataFrame) -> DataFrame:
+        if self.out_dir is None:
+            return data
+
         self.out_dir.mkdir(exist_ok=True, parents=True)
 
         xs = data.lazy().select(self.x).collect_schema().names()
@@ -50,17 +57,13 @@ class HistogramPlot(PipelineComponent):
 
             sns.histplot(tmp, x=x, hue=hue, ax=ax, **self.histogram_plot_kwargs)
 
-            ax.set_xlabel(x)
-            ax.set_ylabel("Count")
+            plt.xlabel(x)
+            plt.ylabel("Count")
             title = x + (f" by {hue}" if hue else "")
-            ax.set_title(title)
-            if hue:
-                ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5))
-
-            fig.tight_layout()
-
-            fig.savefig(self.out_dir / f"{title}.png")
+            plt.title(title)
+            plt.tight_layout()
+            plt.savefig(self.out_dir / f"{title}.png")
             fig.clear()
-            plt.close(fig)
+            plt.close()
 
         return data

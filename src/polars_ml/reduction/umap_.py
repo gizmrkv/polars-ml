@@ -1,19 +1,21 @@
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Self
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, Self
 
-import umap
 from numpy.typing import NDArray
 from polars import DataFrame, Series
 from polars._typing import IntoExpr
 
 from polars_ml.pipeline.component import PipelineComponent
 
+if TYPE_CHECKING:
+    import umap
+
 
 class UMAP(PipelineComponent):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
-        umap: umap.UMAP,
+        umap: "umap.UMAP",
         *,
         prefix: str = "umap",
         include_input: bool = True,
@@ -56,17 +58,16 @@ class UMAP(PipelineComponent):
             return DataFrame(umap_columns)
 
     def save(self, out_dir: str | Path | None = None):
+        import joblib
+        import matplotlib.pyplot as plt
+
         out_dir = Path(out_dir) if out_dir else self.out_dir
         if out_dir is None:
             raise ValueError("No output directory provided")
 
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        import joblib
-
         joblib.dump(self.umap, out_dir / "umap.pkl")
-
-        import matplotlib.pyplot as plt
 
         if self.umap.embedding_.shape[1] >= 2:
             plt.figure(figsize=(12, 10))

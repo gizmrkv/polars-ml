@@ -352,6 +352,7 @@ class LightGBM(PipelineComponent):
             return DataFrame(columns)
 
     def save(self, out_dir: str | Path | None = None):
+        import lightgbm as lgb
         import matplotlib.pyplot as plt
 
         out_dir = Path(out_dir) if out_dir else self.out_dir
@@ -363,7 +364,7 @@ class LightGBM(PipelineComponent):
         self.model.save_model(out_dir / "model.txt")
 
         for importance_type in ["gain", "split"]:
-            lgb.plot_importance(self.model, importance_type=importance_type)
+            lgb.plot_importance(self.model, importance_type=importance_type, dpi=300)
             plt.tight_layout()
             plt.savefig(out_dir / f"importance_{importance_type}.png")
             plt.close()

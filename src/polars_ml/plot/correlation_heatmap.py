@@ -16,7 +16,7 @@ class CorrelationHeatmapPlot(PipelineComponent):
         *,
         subplots_kwargs: Mapping[str, Any] | None = None,
         heatmap_kwargs: Mapping[str, Any] | None = None,
-        out_dir: str | Path = "correlation_heatmap",
+        out_dir: str | Path | None = None,
     ):
         self.features = features
         self.subplots_kwargs = subplots_kwargs or {"figsize": (10, 10)}
@@ -27,9 +27,12 @@ class CorrelationHeatmapPlot(PipelineComponent):
             "center": 0,
             "linewidths": 0.5,
         }
-        self.out_dir = Path(out_dir)
+        self.out_dir = Path(out_dir) if out_dir else None
 
     def transform(self, data: DataFrame) -> DataFrame:
+        if self.out_dir is None:
+            return data
+
         self.out_dir.mkdir(exist_ok=True, parents=True)
         d = data.select(self.features)
         m = d.corr().to_numpy()

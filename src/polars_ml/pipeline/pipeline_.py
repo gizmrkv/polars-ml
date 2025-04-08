@@ -37,6 +37,7 @@ from polars._typing import (
 from polars_ml.ensemble import EnsembleNameSpace
 from polars_ml.gbdt import GBDTNameSpace
 from polars_ml.linear import LinearNameSpace
+from polars_ml.nn import NNNameSpace
 from polars_ml.optimize import OptimizeNameSpace
 from polars_ml.pipeline.component import PipelineComponent
 from polars_ml.plot import PlotNameSpace
@@ -916,3 +917,7 @@ class Pipeline(PipelineComponent):
     @property
     def text(self) -> TextNameSpace:
         return TextNameSpace(self)
+
+    @property
+    def nn(self) -> NNNameSpace:
+        return NNNameSpace(self)

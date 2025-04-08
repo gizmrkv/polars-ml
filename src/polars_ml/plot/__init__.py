@@ -28,7 +28,7 @@ class PlotNameSpace:
         *,
         subplots_kwargs: Mapping[str, Any] | None = None,
         heatmap_kwargs: Mapping[str, Any] | None = None,
-        out_dir: str | Path = "correlation_heatmap",
+        out_dir: str | Path | None = None,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
@@ -48,7 +48,7 @@ class PlotNameSpace:
         show_progress: bool = True,
         subplots_kwargs: Mapping[str, Any] | None = None,
         heatmap_kwargs: Mapping[str, Any] | None = None,
-        out_dir: str | Path = "pair_count_heatmap",
+        out_dir: str | Path | None = None,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
@@ -70,7 +70,7 @@ class PlotNameSpace:
         show_progress: bool = True,
         subplots_kwargs: Mapping[str, Any] | None = None,
         histogram_plot_kwargs: Mapping[str, Any] | None = None,
-        out_dir: str | Path = "histogram_plot",
+        out_dir: str | Path | None = None,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(
@@ -94,7 +94,7 @@ class PlotNameSpace:
         show_progress: bool = True,
         subplots_kwargs: Mapping[str, Any] | None = None,
         scatter_plot_kwargs: Mapping[str, Any] | None = None,
-        out_dir: str | Path = "scatter_plot",
+        out_dir: str | Path | None = None,
         component_name: str | None = None,
     ) -> "Pipeline":
         return self.pipeline.pipe(

@@ -39,7 +39,7 @@ class Stacking(PipelineComponent):
             valid_data = data.select(pl.all().gather(valid_idx))
 
             if validation_data is not None:
-                valid_data = {f"validation_{i}": valid_data} | validation_data
+                valid_data = {"validation_fold": valid_data} | validation_data
 
             model = self.model_fn(train_data, i)
             model.fit(train_data, valid_data)

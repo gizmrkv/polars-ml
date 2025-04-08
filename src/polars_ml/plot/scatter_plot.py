@@ -21,7 +21,7 @@ class ScatterPlot(PipelineComponent):
         show_progress: bool = True,
         subplots_kwargs: Mapping[str, Any] | None = None,
         scatter_plot_kwargs: Mapping[str, Any] | None = None,
-        out_dir: str | Path = "scatter_plot",
+        out_dir: str | Path | None = None,
     ):
         self.x = x
         self.y = y
@@ -33,9 +33,12 @@ class ScatterPlot(PipelineComponent):
             "edgecolor": None,
             "alpha": 0.5,
         }
-        self.out_dir = Path(out_dir)
+        self.out_dir = Path(out_dir) if out_dir else None
 
     def transform(self, data: DataFrame) -> DataFrame:
+        if self.out_dir is None:
+            return data
+
         self.out_dir.mkdir(exist_ok=True, parents=True)
 
         xs = data.lazy().select(self.x).collect_schema().names()
