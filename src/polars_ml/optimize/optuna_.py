@@ -46,7 +46,7 @@ class OptunaOptimizer(PipelineComponent):
         search_space: Mapping[str, Mapping[str, Any]],
         *,
         sampler: Optional["optuna.samplers.BaseSampler"] = None,
-        pruner: Optional[optuna.pruners.BasePruner] = None,
+        pruner: Optional["optuna.pruners.BasePruner"] = None,
         study_name: str | None = None,
         is_higher_better: bool = False,
         load_if_exists: bool = False,
@@ -57,6 +57,9 @@ class OptunaOptimizer(PipelineComponent):
         show_progress_bar: bool = False,
         storage: Union[str, Path, "optuna.storages.BaseStorage"] = "./journal.log",
     ):
+        import optuna
+        import optuna.storages.journal
+
         self.model_fn = model_fn
         self.objective_fn = objective_fn
         self.search_space = search_space
@@ -83,6 +86,8 @@ class OptunaOptimizer(PipelineComponent):
         data: DataFrame,
         validation_data: DataFrame | Mapping[str, DataFrame] | None = None,
     ) -> Self:
+        import optuna
+
         study = optuna.create_study(
             storage=self.storage,
             sampler=self.sampler,

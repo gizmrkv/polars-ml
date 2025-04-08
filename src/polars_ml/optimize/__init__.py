@@ -20,7 +20,7 @@ class OptimizeNameSpace:
         search_space: Mapping[str, Mapping[str, Any]],
         *,
         sampler: Optional["optuna.samplers.BaseSampler"] = None,
-        pruner: Optional[optuna.pruners.BasePruner] = None,
+        pruner: Optional["optuna.pruners.BasePruner"] = None,
         study_name: str | None = None,
         is_higher_better: bool = False,
         load_if_exists: bool = False,
