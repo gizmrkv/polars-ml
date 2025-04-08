@@ -1,12 +1,12 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from sklearn.decomposition import TruncatedSVD
-from sklearn.feature_extraction.text import TfidfVectorizer
-
 from .tfidf_truncated_svd import TfidfTruncatedSVD
 
 if TYPE_CHECKING:
+    from sklearn.decomposition import TruncatedSVD
+    from sklearn.feature_extraction.text import TfidfVectorizer
+
     from polars_ml import Pipeline
 
 
@@ -17,8 +17,8 @@ class TextNameSpace:
     def tfidf_truncated_svd(
         self,
         text_column: str,
-        tfidf: TfidfVectorizer,
-        svd: TruncatedSVD,
+        tfidf: "TfidfVectorizer",
+        svd: "TruncatedSVD",
         *,
         prefix: str = "tfidf_truncated_svd",
         include_input: bool = True,

@@ -1,20 +1,22 @@
 from pathlib import Path
-from typing import Mapping, Self
+from typing import TYPE_CHECKING, Mapping, Self
 
 import numpy as np
 from polars import DataFrame, Series
-from sklearn.decomposition import TruncatedSVD
-from sklearn.feature_extraction.text import TfidfVectorizer
 
 from polars_ml.pipeline.component import PipelineComponent
+
+if TYPE_CHECKING:
+    from sklearn.decomposition import TruncatedSVD
+    from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 class TfidfTruncatedSVD(PipelineComponent):
     def __init__(
         self,
         text_column: str,
-        tfidf: TfidfVectorizer,
-        svd: TruncatedSVD,
+        tfidf: "TfidfVectorizer",
+        svd: "TruncatedSVD",
         *,
         prefix: str = "tfidf_truncated_svd",
         include_input: bool = True,

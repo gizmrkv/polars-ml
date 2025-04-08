@@ -15,7 +15,7 @@ class PCA(PipelineComponent):
     def __init__(
         self,
         features: IntoExpr | Iterable[IntoExpr],
-        pca: decomposition.PCA,
+        pca: "decomposition.PCA",
         *,
         prefix: str = "pca",
         include_input: bool = True,
