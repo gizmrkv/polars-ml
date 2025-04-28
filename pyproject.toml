@@ -23,6 +23,7 @@ dev-dependencies = [
     "lightgbm>=4.6.0",
     "xgboost>=3.0.0",
     "catboost>=1.2.8",
+    "optuna>=4.3.0",
 ]
 
 [tool.hatch.metadata]

@@ -5,7 +5,7 @@ import polars as pl
 from polars import DataFrame, Series
 from polars._typing import IntoExpr
 
-from polars_ml.component import Component
+from polars_ml import Component
 from polars_ml.model_selection import KFold
 
 

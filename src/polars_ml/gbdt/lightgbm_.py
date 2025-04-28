@@ -5,7 +5,7 @@ import polars as pl
 from numpy.typing import NDArray
 from polars import DataFrame, Series
 
-from polars_ml.component import Component
+from polars_ml import Component
 
 if TYPE_CHECKING:
     import lightgbm as lgb
