@@ -1,11 +1,11 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Collection, Mapping, Union
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, Union
 
 import polars as pl
 from numpy.typing import NDArray
 from polars import DataFrame, Series
 
-from polars_ml import Component
+from polars_ml.component import Component
 
 if TYPE_CHECKING:
     import lightgbm as lgb
@@ -15,9 +15,9 @@ class LightGBM(Component):
     def __init__(
         self,
         label: str,
-        exclude: str | Collection[str] | None = None,
-        *,
         params: dict[str, Any],
+        *,
+        exclude: str | Iterable[str] | None = None,
         weight: str | None = None,
         group: Callable[[DataFrame], DataFrame] | None = None,
         init_score: str | None = None,
@@ -40,13 +40,13 @@ class LightGBM(Component):
         include_input: bool = True,
     ):
         self.label = label
+        self.params = params
         if isinstance(exclude, str):
             self.exclude = [exclude]
-        elif isinstance(exclude, Collection):
+        elif isinstance(exclude, Iterable):
             self.exclude = list(exclude)
         else:
             self.exclude = []
-        self.params = params
         self.weight = weight
         self.group = group
         self.init_score = init_score

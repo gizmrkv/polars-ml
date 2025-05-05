@@ -128,22 +128,20 @@ def _evaluate_classification_metrics(
         )
 
     if y_pred_class is None and y_pred_proba_prefix is not None:
-        from polars_ml import Pipeline
+        import polars_ml as pml
 
         y_pred_class = uuid.uuid4().hex
-        data = (
-            Pipeline()
-            .horizontal.argmax(
+        data = pml.Pipeline(
+            pml.HorizontalArgMax(
                 cs.starts_with(y_pred_proba_prefix), value_name=y_pred_class
-            )
-            .with_columns(
+            ),
+            lambda df: df.with_columns(
                 pl.col(y_pred_class)
                 .list.first()
                 .str.extract(rf"{y_pred_proba_prefix}(\d+)")
                 .cast(pl.UInt8)
-            )
-            .transform(data)
-        )
+            ),
+        ).transform(data)
 
     assert isinstance(y_pred_class, str)
 
@@ -180,9 +178,6 @@ def _evaluate_classification_metrics(
             cs.starts_with(y_pred_proba_prefix)
         ).to_numpy()
         metrics |= {
-            "roc_auc_ovr": roc_auc_score(
-                y_true_values, y_pred_proba_values, multi_class="ovr", labels=labels
-            ),
             "roc_auc_ovo": roc_auc_score(
                 y_true_values, y_pred_proba_values, multi_class="ovo", labels=labels
             ),

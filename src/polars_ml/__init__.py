@@ -1,6 +1,30 @@
-from . import gbdt
-from .apply import Apply
+from . import gbdt, optimize
+from .built_in import (
+    Concat,
+    Extend,
+    Join,
+    JoinAsof,
+    JoinWhere,
+    MergeSorted,
+    Update,
+    VStack,
+)
 from .component import Component
+from .horizontal import (
+    HorizontalAgg,
+    HorizontalAll,
+    HorizontalArgMax,
+    HorizontalArgMin,
+    HorizontalCount,
+    HorizontalMax,
+    HorizontalMean,
+    HorizontalMedian,
+    HorizontalMin,
+    HorizontalNUnique,
+    HorizontalQuantile,
+    HorizontalStd,
+    HorizontalSum,
+)
 from .pipeline import Pipeline
 from .preprocessing import (
     Discretizer,
@@ -11,8 +35,11 @@ from .preprocessing import (
     PowerTransformer,
     Scaler,
 )
+from .utility import Apply, GroupByThen, Impute, iter_axes
 
 __all__ = [
+    "gbdt",
+    "optimize",
     "Apply",
     "Component",
     "Pipeline",
@@ -23,4 +50,28 @@ __all__ = [
     "InversePowerTransformer",
     "Scaler",
     "InverseScaler",
+    "iter_axes",
+    "HorizontalAgg",
+    "HorizontalAll",
+    "HorizontalArgMax",
+    "HorizontalArgMin",
+    "HorizontalCount",
+    "HorizontalMax",
+    "HorizontalMean",
+    "HorizontalMedian",
+    "HorizontalMin",
+    "HorizontalNUnique",
+    "HorizontalQuantile",
+    "HorizontalStd",
+    "HorizontalSum",
+    "Concat",
+    "Extend",
+    "GroupByThen",
+    "Impute",
+    "Join",
+    "JoinAsof",
+    "JoinWhere",
+    "MergeSorted",
+    "Update",
+    "VStack",
 ]

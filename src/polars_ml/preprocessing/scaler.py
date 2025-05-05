@@ -96,6 +96,9 @@ class Scaler(Component):
             .select(data.columns)
         )
 
+    def inverser(self, mapping: Mapping[str, str] | None = None) -> "InverseScaler":
+        return InverseScaler(self, mapping)
+
 
 class InverseScaler(Component):
     def __init__(

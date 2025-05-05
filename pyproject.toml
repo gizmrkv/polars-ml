@@ -7,7 +7,7 @@ authors = [
 ]
 dependencies = [
     "polars>=1.28.1",
-    "scikit-learn>=1.6.1",
+    "scikit-learn>=1.4.0,<1.5.3",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
@@ -20,10 +20,13 @@ build-backend = "hatchling.build"
 managed = true
 dev-dependencies = [
     "ipykernel>=6.29.5",
-    "lightgbm>=4.6.0",
-    "xgboost>=3.0.0",
+    "lightgbm>=4.0,<4.6",
+    "xgboost>=1.6,<2.2",
     "catboost>=1.2.8",
     "optuna>=4.3.0",
+    "matplotlib>=3.10.1",
+    "seaborn>=0.13.2",
+    "autogluon>=1.2",
 ]
 
 [tool.hatch.metadata]

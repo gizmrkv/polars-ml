@@ -13,7 +13,7 @@ from typing import (
 
 from polars import DataFrame
 
-from polars_ml import Component
+from polars_ml.component import Component
 
 if TYPE_CHECKING:
     import optuna

@@ -51,6 +51,11 @@ class LabelEncoder(Component):
             if col in data.columns
         )
 
+    def inverser(
+        self, mapping: Mapping[str, str] | None = None
+    ) -> "InverseLabelEncoder":
+        return InverseLabelEncoder(self, mapping)
+
 
 class InverseLabelEncoder(Component):
     def __init__(

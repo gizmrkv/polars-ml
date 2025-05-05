@@ -10,4 +10,7 @@ wheels/
 .venv
 
 *.lock
+*.png
+*.pkl
+out/
 notebook/

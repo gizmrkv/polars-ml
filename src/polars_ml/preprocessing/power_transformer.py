@@ -69,6 +69,11 @@ class PowerTransformer(Component):
             .select(data.columns)
         )
 
+    def inverser(
+        self, mapping: Mapping[str, str] | None = None
+    ) -> "InversePowerTransformer":
+        return InversePowerTransformer(self, mapping)
+
 
 class InversePowerTransformer(Component):
     def __init__(

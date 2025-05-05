@@ -1,14 +1,15 @@
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Iterable, Iterator, Mapping
 
 from polars import DataFrame
 
-from .apply import Apply
 from .component import Component
+from .utility import Apply
 
 
 class Pipeline(Component):
-    def __init__(self, *components: Component):
-        self.components = list(components)
+    def __init__(self, *components: Component | Callable[[DataFrame], DataFrame | Any]):
+        self.components: list[Component] = []
+        self.extend(components)
 
     def fit(
         self,
@@ -71,7 +72,9 @@ class Pipeline(Component):
         self.components.append(component)
         return self
 
-    def extend(self, components: list[Component]) -> "Pipeline":
+    def extend(
+        self, components: Iterable[Component | Callable[[DataFrame], DataFrame | Any]]
+    ) -> "Pipeline":
         for component in components:
             self.append(component)
         return self
@@ -82,5 +85,5 @@ class Pipeline(Component):
     def __len__(self) -> int:
         return len(self.components)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Component]:
         return iter(self.components)
