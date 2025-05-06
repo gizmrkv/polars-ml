@@ -1,23 +1,11 @@
-from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Iterable,
-    Mapping,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Callable, Mapping
 
-import polars as pl
 from polars import DataFrame, Series
 
 from polars_ml.component import Component
 
 if TYPE_CHECKING:
     import lightning as L
-    import torch
 
 
 class PytorchLightning(Component):
