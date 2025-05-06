@@ -1,4 +1,4 @@
-from . import gbdt, optimize
+from . import gbdt, nn, optimize
 from .built_in import (
     Concat,
     Extend,
@@ -39,6 +39,7 @@ from .utility import Apply, GroupByThen, Impute, iter_axes
 
 __all__ = [
     "gbdt",
+    "nn",
     "optimize",
     "Apply",
     "Component",
