@@ -1,0 +1,17 @@
+[project]
+name = "polars-ml"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "gizmrkv", email = "gizmrkv@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "polars>=1.35.2",
+    "pyarrow>=22.0.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.13,<0.9.0"]
+build-backend = "uv_build"
