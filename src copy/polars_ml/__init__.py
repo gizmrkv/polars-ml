@@ -1,7 +1,6 @@
 from .base import Transformer
-from .pipeline import Pipeline
 
 __all__ = [
-    "Pipeline",
+    "Transformer",
     "Transformer",
 ]

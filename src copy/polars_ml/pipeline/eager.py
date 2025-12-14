@@ -2,7 +2,7 @@ from typing import Self
 
 from polars import DataFrame
 
-from polars_ml import LazyTransformer, Transformer
+from polars_ml import Transformer
 
 from .mixin import PipelineMixin
 
@@ -11,7 +11,7 @@ class Pipeline(PipelineMixin, Transformer):
     def __init__(self, *steps: Transformer):
         self.steps: list[Transformer] = list(*steps)
 
-    def pipe(self, step: Transformer | LazyTransformer) -> Self:
+    def pipe(self, step: Transformer | Transformer) -> Self:
         self.steps.append(step if isinstance(step, Transformer) else step.eager())
         return self
 

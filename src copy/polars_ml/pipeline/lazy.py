@@ -1,17 +1,17 @@
 from typing import Self
 
-from polars import DataFrame, LazyFrame
+from polars import DataFrame
 
-from polars_ml import LazyTransformer
+from polars_ml import Transformer
 
 from .mixin import PipelineMixin
 
 
-class LazyPipeline(PipelineMixin, LazyTransformer):
-    def __init__(self, *steps: LazyTransformer):
-        self.steps: list[LazyTransformer] = list(*steps)
+class LazyPipeline(PipelineMixin, Transformer):
+    def __init__(self, *steps: Transformer):
+        self.steps: list[Transformer] = list(*steps)
 
-    def pipe(self, step: LazyTransformer) -> Self:
+    def pipe(self, step: Transformer) -> Self:
         self.steps.append(step)
         return self
 
@@ -35,7 +35,7 @@ class LazyPipeline(PipelineMixin, LazyTransformer):
                 }
         return data
 
-    def transform(self, data: LazyFrame) -> LazyFrame:
+    def transform(self, data: DataFrame) -> DataFrame:
         for step in self.steps:
             data = step.transform(data)
         return data
