@@ -10,6 +10,7 @@ import inflection
 import polars as pl
 from polars import DataFrame
 
+from polars_ml.gbdt import LightGBM, LightGBMTuner, LightGBMTunerCV, XGBoost
 from polars_ml.pipeline.basic import Apply, Const, Echo, Parrot, Side
 from polars_ml.preprocessing import (
     BoxCoxTransform,
@@ -68,66 +69,6 @@ def format_call_args(func: Callable[..., Any]) -> list[str]:
     return [format_call_argument(p) for p in sig.parameters.values()]
 
 
-def format_pipe_getattr_method(name: str) -> str:
-    method = getattr(DataFrame, name)
-    sig = inspect.signature(method)
-    return """
-    def {name}({params}) -> Self:
-        return self.pipe(GetAttr({call_args}))
-    """.format(
-        name=name,
-        params=", ".join(
-            format_param(p).replace(": DataFrame", ": DataFrame | Transformer")
-            for p in sig.parameters.values()
-        ),
-        call_args=", ".join([f'"{name}"'] + format_call_args(method)[1:]),
-    )
-
-
-def format_pipe_transformer_method(transformer_cls: type) -> str:
-    method = getattr(transformer_cls, "__init__")
-    params = inspect.signature(method).parameters.values()
-    return """
-    def {method}({params}) -> Self:
-        return self.pipe({name}({call_args}))
-    """.format(
-        method=inflection.underscore(transformer_cls.__name__),
-        name=transformer_cls.__name__,
-        params=", ".join(format_param(p) for p in params),
-        call_args=", ".join(format_call_args(method)[1:]),
-    )
-
-
-def format_pipe_transform_method_with_inverse(
-    transformer_cls: type, inverse_cls: type
-) -> str:
-    method = getattr(transformer_cls, "__init__")
-    sig = inspect.signature(method)
-    name = transformer_cls.__name__
-    name_inv = inverse_cls.__name__
-    return """
-    @overload
-    def {method}({params}) -> Self: ...
-
-    @overload
-    def {method}({params}, inverse_mapping: Mapping[str, str] | None) -> {name_inv}Context: ...
-
-    def {method}({params}, inverse_mapping: Mapping[str, str] | None = None) -> Self | {name_inv}Context:
-        if inverse_mapping is None:
-            return self.pipe({name}({call_args}))
-        else:
-            return {name_inv}Context(
-                self, {name}({call_args}), inverse_mapping
-            )
-            """.format(
-        method=inflection.underscore(name),
-        name=name,
-        name_inv=name_inv,
-        params=", ".join(format_param(p) for p in sig.parameters.values()),
-        call_args=", ".join(format_call_args(method)[1:]),
-    )
-
-
 def update_methods(
     target_file: str | Path,
     class_name: str,
@@ -175,24 +116,105 @@ def get_dataframe_methods() -> list[str]:
 
 if __name__ == "__main__":
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
     target_file = PROJECT_ROOT / Path("src/polars_ml/pipeline/pipeline.py")
-    update_methods(
-        target_file,
-        "Pipeline",
-        "".join(format_pipe_getattr_method(m) for m in get_dataframe_methods())
-        + "".join(
-            format_pipe_transformer_method(t)
-            for t in [Apply, Const, Echo, Parrot, Side, Discretize]
+    template = """
+    def {name}({params}) -> Self:
+        return self.pipe(GetAttr({call_args}))
+    """
+    codes = []
+    for name in get_dataframe_methods():
+        method = getattr(DataFrame, name)
+        sig = inspect.signature(method)
+        codes.append(
+            template.format(
+                name=name,
+                params=", ".join(
+                    format_param(p).replace(": DataFrame", ": DataFrame | Transformer")
+                    for p in sig.parameters.values()
+                ),
+                call_args=", ".join([f'"{name}"'] + format_call_args(method)[1:]),
+            )
         )
-        + "".join(
-            format_pipe_transform_method_with_inverse(t, i)
-            for t, i in [
-                (MinMaxScale, ScaleInverse),
-                (StandardScale, ScaleInverse),
-                (RobustScale, ScaleInverse),
-                (BoxCoxTransform, PowerTransformInverse),
-                (YeoJohnsonTransform, PowerTransformInverse),
-                (LabelEncode, LabelEncodeInverse),
-            ]
-        ),
-    )
+
+    template = """
+    def {method}({params}) -> Self:
+        return self.pipe({name}({call_args}))
+    """
+    for transformer_cls in [Apply, Const, Echo, Parrot, Side, Discretize]:
+        method = getattr(transformer_cls, "__init__")
+        params = inspect.signature(method).parameters.values()
+        name = transformer_cls.__name__
+        method_name = inflection.underscore(name)
+        codes.append(
+            template.format(
+                method=method_name,
+                name=name,
+                params=", ".join(format_param(p) for p in params),
+                call_args=", ".join(format_call_args(method)[1:]),
+            )
+        )
+
+    template = """
+    @overload
+    def {method}({params}) -> Self: ...
+
+    @overload
+    def {method}({params}, inverse_mapping: Mapping[str, str] | None) -> {name_inv}Context: ...
+
+    def {method}({params}, inverse_mapping: Mapping[str, str] | None = None) -> Self | {name_inv}Context:
+        if inverse_mapping is None:
+            return self.pipe({name}({call_args}))
+        else:
+            return {name_inv}Context(
+                self, {name}({call_args}), inverse_mapping
+            )
+    """
+    for transformer_cls, inverse_cls in [
+        (MinMaxScale, ScaleInverse),
+        (StandardScale, ScaleInverse),
+        (RobustScale, ScaleInverse),
+        (BoxCoxTransform, PowerTransformInverse),
+        (YeoJohnsonTransform, PowerTransformInverse),
+        (LabelEncode, LabelEncodeInverse),
+    ]:
+        method = getattr(transformer_cls, "__init__")
+        sig = inspect.signature(method)
+        name = transformer_cls.__name__
+        name_inv = inverse_cls.__name__
+        codes.append(
+            template.format(
+                method=inflection.underscore(name),
+                name=name,
+                name_inv=name_inv,
+                params=", ".join(format_param(p) for p in sig.parameters.values()),
+                call_args=", ".join(format_call_args(method)[1:]),
+            )
+        )
+
+    update_methods(target_file, "Pipeline", "".join(codes))
+
+    target_file = PROJECT_ROOT / Path("src/polars_ml/gbdt/__init__.py")
+    codes = []
+    for transformer_cls, method_name in [
+        (LightGBM, "lightgbm"),
+        (XGBoost, "xgboost"),
+        (LightGBMTuner, "lightgbm_tuner"),
+        (LightGBMTunerCV, "lightgbm_tuner_cv"),
+    ]:
+        method = getattr(transformer_cls, "__init__")
+        params = inspect.signature(method).parameters.values()
+        name = transformer_cls.__name__
+        codes.append(
+            """
+    def {method}({params}) -> "Pipeline":
+        return self.pipeline.pipe({name}({call_args}))
+        """.format(
+                method=method_name,
+                name=name,
+                params=", ".join(format_param(p) for p in params),
+                call_args=", ".join(format_call_args(method)[1:]),
+            )
+        )
+
+    update_methods(target_file, "GBDTNameSpace", "".join(codes))

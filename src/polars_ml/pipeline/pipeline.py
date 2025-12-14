@@ -32,6 +32,7 @@ from polars._typing import (
 )
 
 from polars_ml.base import Transformer
+from polars_ml.gbdt import GBDTNameSpace
 from polars_ml.preprocessing import (
     BoxCoxTransform,
     Discretize,
@@ -77,6 +78,10 @@ class Pipeline(Transformer):
         for step in self.steps:
             data = step.transform(data)
         return data
+
+    @property
+    def gbdt(self) -> GBDTNameSpace:
+        return GBDTNameSpace(self)
 
     # --- BEGIN AUTO-GENERATED METHODS ---
 
