@@ -3,7 +3,7 @@ from typing import Any, Self
 import polars as pl
 from polars import DataFrame
 
-from polars_ml import Transformer
+from polars_ml.base import Transformer
 
 
 class GetAttr(Transformer):

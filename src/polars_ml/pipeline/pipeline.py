@@ -8,6 +8,7 @@ from typing import (
     Mapping,
     Self,
     Sequence,
+    overload,
 )
 
 import numpy as np
@@ -30,7 +31,19 @@ from polars._typing import (
     UnstackDirection,
 )
 
-from polars_ml import Transformer
+from polars_ml.base import Transformer
+from polars_ml.preprocessing import (
+    BoxCoxTransform,
+    Discretize,
+    LabelEncode,
+    LabelEncodeInverseContext,
+    MinMaxScale,
+    PowerTransformInverseContext,
+    RobustScale,
+    ScaleInverseContext,
+    StandardScale,
+    YeoJohnsonTransform,
+)
 
 from .basic import Apply, Const, Echo, Parrot, Side
 from .getattr import GetAttr
@@ -618,5 +631,283 @@ class Pipeline(Transformer):
 
     def side(self, transformer: Transformer) -> Self:
         return self.pipe(Side(transformer))
+
+    def discretize(
+        self,
+        exprs: IntoExpr | Iterable[IntoExpr],
+        *more_exprs: IntoExpr | Iterable[IntoExpr],
+        quantiles: Sequence[float] | int,
+        labels: Sequence[str] | None = None,
+        left_closed: bool = False,
+        allow_duplicates: bool = False,
+        suffix: str = "_discretized",
+    ) -> Self:
+        return self.pipe(
+            Discretize(
+                exprs,
+                *more_exprs,
+                quantiles=quantiles,
+                labels=labels,
+                left_closed=left_closed,
+                allow_duplicates=allow_duplicates,
+                suffix=suffix,
+            )
+        )
+
+    @overload
+    def min_max_scale(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        suffix: str = "",
+    ) -> Self: ...
+
+    @overload
+    def min_max_scale(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        suffix: str = "",
+        inverse_mapping: Mapping[str, str] | None,
+    ) -> ScaleInverseContext: ...
+
+    def min_max_scale(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        suffix: str = "",
+        inverse_mapping: Mapping[str, str] | None = None,
+    ) -> Self | ScaleInverseContext:
+        if inverse_mapping is None:
+            return self.pipe(MinMaxScale(columns, *more_columns, by=by, suffix=suffix))
+        else:
+            return ScaleInverseContext(
+                self,
+                MinMaxScale(columns, *more_columns, by=by, suffix=suffix),
+                inverse_mapping,
+            )
+
+    @overload
+    def standard_scale(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        suffix: str = "",
+    ) -> Self: ...
+
+    @overload
+    def standard_scale(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        suffix: str = "",
+        inverse_mapping: Mapping[str, str] | None,
+    ) -> ScaleInverseContext: ...
+
+    def standard_scale(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        suffix: str = "",
+        inverse_mapping: Mapping[str, str] | None = None,
+    ) -> Self | ScaleInverseContext:
+        if inverse_mapping is None:
+            return self.pipe(
+                StandardScale(columns, *more_columns, by=by, suffix=suffix)
+            )
+        else:
+            return ScaleInverseContext(
+                self,
+                StandardScale(columns, *more_columns, by=by, suffix=suffix),
+                inverse_mapping,
+            )
+
+    @overload
+    def robust_scale(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        quantile_range: tuple[float, float] = (0.25, 0.75),
+        suffix: str = "",
+    ) -> Self: ...
+
+    @overload
+    def robust_scale(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        quantile_range: tuple[float, float] = (0.25, 0.75),
+        suffix: str = "",
+        inverse_mapping: Mapping[str, str] | None,
+    ) -> ScaleInverseContext: ...
+
+    def robust_scale(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        quantile_range: tuple[float, float] = (0.25, 0.75),
+        suffix: str = "",
+        inverse_mapping: Mapping[str, str] | None = None,
+    ) -> Self | ScaleInverseContext:
+        if inverse_mapping is None:
+            return self.pipe(
+                RobustScale(
+                    columns,
+                    *more_columns,
+                    by=by,
+                    quantile_range=quantile_range,
+                    suffix=suffix,
+                )
+            )
+        else:
+            return ScaleInverseContext(
+                self,
+                RobustScale(
+                    columns,
+                    *more_columns,
+                    by=by,
+                    quantile_range=quantile_range,
+                    suffix=suffix,
+                ),
+                inverse_mapping,
+            )
+
+    @overload
+    def box_cox_transform(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        suffix: str = "",
+    ) -> Self: ...
+
+    @overload
+    def box_cox_transform(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        suffix: str = "",
+        inverse_mapping: Mapping[str, str] | None,
+    ) -> PowerTransformInverseContext: ...
+
+    def box_cox_transform(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        suffix: str = "",
+        inverse_mapping: Mapping[str, str] | None = None,
+    ) -> Self | PowerTransformInverseContext:
+        if inverse_mapping is None:
+            return self.pipe(
+                BoxCoxTransform(columns, *more_columns, by=by, suffix=suffix)
+            )
+        else:
+            return PowerTransformInverseContext(
+                self,
+                BoxCoxTransform(columns, *more_columns, by=by, suffix=suffix),
+                inverse_mapping,
+            )
+
+    @overload
+    def yeo_johnson_transform(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        suffix: str = "",
+    ) -> Self: ...
+
+    @overload
+    def yeo_johnson_transform(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        suffix: str = "",
+        inverse_mapping: Mapping[str, str] | None,
+    ) -> PowerTransformInverseContext: ...
+
+    def yeo_johnson_transform(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        suffix: str = "",
+        inverse_mapping: Mapping[str, str] | None = None,
+    ) -> Self | PowerTransformInverseContext:
+        if inverse_mapping is None:
+            return self.pipe(
+                YeoJohnsonTransform(columns, *more_columns, by=by, suffix=suffix)
+            )
+        else:
+            return PowerTransformInverseContext(
+                self,
+                YeoJohnsonTransform(columns, *more_columns, by=by, suffix=suffix),
+                inverse_mapping,
+            )
+
+    @overload
+    def label_encode(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        orders: Mapping[str, Sequence[Any]] | None = None,
+        maintain_order: bool = True,
+        suffix: str = "",
+    ) -> Self: ...
+
+    @overload
+    def label_encode(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        orders: Mapping[str, Sequence[Any]] | None = None,
+        maintain_order: bool = True,
+        suffix: str = "",
+        inverse_mapping: Mapping[str, str] | None,
+    ) -> LabelEncodeInverseContext: ...
+
+    def label_encode(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        orders: Mapping[str, Sequence[Any]] | None = None,
+        maintain_order: bool = True,
+        suffix: str = "",
+        inverse_mapping: Mapping[str, str] | None = None,
+    ) -> Self | LabelEncodeInverseContext:
+        if inverse_mapping is None:
+            return self.pipe(
+                LabelEncode(
+                    columns,
+                    *more_columns,
+                    orders=orders,
+                    maintain_order=maintain_order,
+                    suffix=suffix,
+                )
+            )
+        else:
+            return LabelEncodeInverseContext(
+                self,
+                LabelEncode(
+                    columns,
+                    *more_columns,
+                    orders=orders,
+                    maintain_order=maintain_order,
+                    suffix=suffix,
+                ),
+                inverse_mapping,
+            )
 
     # --- END AUTO-GENERATED METHODS ---
