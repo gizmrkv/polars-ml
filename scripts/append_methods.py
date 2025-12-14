@@ -11,6 +11,7 @@ import polars as pl
 from polars import DataFrame
 
 from polars_ml.gbdt import LightGBM, LightGBMTuner, LightGBMTunerCV, XGBoost
+from polars_ml.metrics import BinaryClassificationMetrics, RegressionMetrics
 from polars_ml.pipeline.basic import Apply, Const, Echo, Parrot, Side
 from polars_ml.preprocessing import (
     BoxCoxTransform,
@@ -218,3 +219,26 @@ if __name__ == "__main__":
         )
 
     update_methods(target_file, "GBDTNameSpace", "".join(codes))
+
+    target_file = PROJECT_ROOT / Path("src/polars_ml/metrics/__init__.py")
+    codes = []
+    for transformer_cls, method_name in [
+        (BinaryClassificationMetrics, "binary_classification"),
+        (RegressionMetrics, "regression"),
+    ]:
+        method = getattr(transformer_cls, "__init__")
+        params = inspect.signature(method).parameters.values()
+        name = transformer_cls.__name__
+        codes.append(
+            """
+    def {method}({params}) -> "Pipeline":
+        return self.pipeline.pipe({name}({call_args}))
+        """.format(
+                method=method_name,
+                name=name,
+                params=", ".join(format_param(p) for p in params),
+                call_args=", ".join(format_call_args(method)[1:]),
+            )
+        )
+
+    update_methods(target_file, "MetricsNameSpace", "".join(codes))
