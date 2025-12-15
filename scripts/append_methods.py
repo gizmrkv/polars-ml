@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Any, Callable
 
 import inflection
-import polars as pl
 from polars import DataFrame
+from polars.dataframe.group_by import DynamicGroupBy, GroupBy, RollingGroupBy
 
 from polars_ml.gbdt import LightGBM, LightGBMTuner, LightGBMTunerCV, XGBoost
 from polars_ml.metrics import BinaryClassificationMetrics, RegressionMetrics
@@ -70,32 +70,67 @@ def format_call_args(func: Callable[..., Any]) -> list[str]:
     return [format_call_argument(p) for p in sig.parameters.values()]
 
 
-def update_methods(
-    target_file: str | Path,
-    class_name: str,
-    code: str,
-    start_marker: str = "    # --- BEGIN AUTO-GENERATED METHODS ---",
-    end_marker: str = "    # --- END AUTO-GENERATED METHODS ---",
-):
-    target_file = Path(target_file)
-    content = target_file.read_text(encoding="utf-8")
-    generated_block = f"{start_marker}\n{code}\n{end_marker}"
-    pattern = re.compile(
-        f"{re.escape(start_marker)}.*?{re.escape(end_marker)}", re.DOTALL
-    )
-    if pattern.search(content):
-        print("Updating existing generated methods...")
-        new_content = pattern.sub(generated_block, content)
-    else:
-        print("Appending new generated methods...")
-        if f"class {class_name}" in content:
-            new_content = content.rstrip() + "\n\n" + generated_block + "\n"
-        else:
-            print("Error: Could not find Pipeline class definition.")
-            return
+def update_methods(target_file: str | Path, class_name: str, code: str) -> None:
+    import textwrap
+    from pathlib import Path
 
-    target_file.write_text(new_content, encoding="utf-8")
-    print("Done.")
+    path = Path(target_file)
+    content = path.read_text(encoding="utf-8")
+
+    lines = content.splitlines(True)  # keep line endings
+
+    class_re = re.compile(rf"^(\s*)class\s+{re.escape(class_name)}\b.*:\s*(#.*)?$")
+    cls_i = None
+    cls_indent = 0
+    for i, line in enumerate(lines):
+        m = class_re.match(line.rstrip("\r\n"))
+        if m:
+            cls_i = i
+            cls_indent = len(m.group(1))
+            break
+    if cls_i is None:
+        raise ValueError(f"class {class_name} not found in {path}")
+
+    body_indent = " " * (cls_indent + 4)
+    start = f"{body_indent}# --- BEGIN AUTO-GENERATED METHODS IN {class_name} ---"
+    end = f"{body_indent}# --- END AUTO-GENERATED METHODS IN {class_name} ---"
+
+    body = textwrap.dedent(code).strip("\n")
+    body_lines = [body_indent + ln if ln else "" for ln in body.splitlines()]
+    block = [start + "\n", *[ln + "\n" for ln in body_lines], end + "\n"]
+
+    def strip_nl(s: str) -> str:
+        return s.rstrip("\r\n")
+
+    s_i = None
+    for i, line in enumerate(lines):
+        if strip_nl(line) == start:
+            s_i = i
+            break
+    if s_i is not None:
+        e_i = None
+        for j in range(s_i + 1, len(lines)):
+            if strip_nl(lines[j]) == end:
+                e_i = j
+                break
+        if e_i is None:
+            raise ValueError(f"start marker found but end marker missing: {class_name}")
+        lines[s_i : e_i + 1] = block
+        path.write_text("".join(lines), encoding="utf-8")
+        return
+
+    insert_at = len(lines)
+    for k in range(cls_i + 1, len(lines)):
+        t = lines[k]
+        if t.strip() == "":
+            continue
+        indent = len(t) - len(t.lstrip(" "))
+        if indent <= cls_indent:
+            insert_at = k
+            break
+
+    lines[insert_at:insert_at] = block
+    path.write_text("".join(lines), encoding="utf-8")
 
 
 def get_dataframe_methods() -> list[str]:
@@ -110,6 +145,21 @@ def get_dataframe_methods() -> list[str]:
 
         ret = inspect.signature(obj).return_annotation
         if ret in {"DataFrame", "Self"}:
+            methods.append(name)
+
+    return sorted(set(methods))
+
+
+def get_group_by_methods(
+    group_by_type: type[GroupBy] | type[DynamicGroupBy] | type[RollingGroupBy],
+) -> list[str]:
+    methods: list[str] = []
+    for name, obj in inspect.getmembers(group_by_type):
+        if name.startswith("_") or not callable(obj):
+            continue
+
+        ret = inspect.signature(obj).return_annotation
+        if ret in {"DataFrame"}:
             methods.append(name)
 
     return sorted(set(methods))
@@ -137,6 +187,21 @@ if __name__ == "__main__":
                 call_args=", ".join([f'"{name}"'] + format_call_args(method)[1:]),
             )
         )
+
+    template = """
+    def {name}({params}) -> GroupByNameSpace:
+        return GroupByNameSpace(self, {call_args})
+    """
+    name = "group_by"
+    method = getattr(DataFrame, name)
+    sig = inspect.signature(method)
+    codes.append(
+        template.format(
+            name=name,
+            params=", ".join(format_param(p) for p in sig.parameters.values()),
+            call_args=", ".join([f'"{name}"'] + format_call_args(method)[1:]),
+        )
+    )
 
     template = """
     def {method}({params}) -> Self:
@@ -242,3 +307,29 @@ if __name__ == "__main__":
         )
 
     update_methods(target_file, "MetricsNameSpace", "".join(codes))
+
+    target_file = PROJECT_ROOT / Path("src/polars_ml/pipeline/group_by.py")
+    for group_by_type in [GroupBy, DynamicGroupBy, RollingGroupBy]:
+        group_by_name = group_by_type.__name__
+        codes = []
+        template = """
+    def {name}({params}) -> "Pipeline":
+        return self.pipeline.pipe(GroupByGetAttr(self.attr, "{name}", self.args, self.kwargs, {call_args}))
+        """
+        codes = []
+        for name in get_group_by_methods(group_by_type):
+            method = getattr(group_by_type, name)
+            sig = inspect.signature(method)
+            codes.append(
+                template.format(
+                    name=name,
+                    params=", ".join(format_param(p) for p in sig.parameters.values()),
+                    call_args=", ".join(format_call_args(method)[1:]),
+                )
+            )
+
+        update_methods(
+            target_file,
+            f"{group_by_name}NameSpace",
+            "".join(codes),
+        )

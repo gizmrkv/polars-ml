@@ -28,8 +28,7 @@ class GBDTNameSpace:
     def __init__(self, pipeline: "Pipeline"):
         self.pipeline = pipeline
 
-    # --- BEGIN AUTO-GENERATED METHODS ---
-
+    # --- BEGIN AUTO-GENERATED METHODS IN GBDTNameSpace ---
     def lightgbm(
         self,
         label: IntoExpr,
@@ -126,4 +125,4 @@ class GBDTNameSpace:
             )
         )
 
-    # --- END AUTO-GENERATED METHODS ---
+    # --- END AUTO-GENERATED METHODS IN GBDTNameSpace ---

@@ -13,8 +13,7 @@ class MetricsNameSpace:
     def __init__(self, pipeline: "Pipeline"):
         self.pipeline = pipeline
 
-    # --- BEGIN AUTO-GENERATED METHODS ---
-
+    # --- BEGIN AUTO-GENERATED METHODS IN MetricsNameSpace ---
     def binary_classification(
         self, y_true: str, y_pred: str, by: str | None = None
     ) -> "Pipeline":
@@ -23,4 +22,4 @@ class MetricsNameSpace:
     def regression(self, y_true: str, y_pred: str, by: str | None = None) -> "Pipeline":
         return self.pipeline.pipe(RegressionMetrics(y_true, y_pred, by=by))
 
-    # --- END AUTO-GENERATED METHODS ---
+    # --- END AUTO-GENERATED METHODS IN MetricsNameSpace ---

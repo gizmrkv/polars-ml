@@ -48,6 +48,7 @@ from polars_ml.preprocessing import (
 
 from .basic import Apply, Const, Echo, Parrot, Side
 from .getattr import GetAttr
+from .group_by import GroupByNameSpace
 
 
 class Pipeline(Transformer):
@@ -83,8 +84,7 @@ class Pipeline(Transformer):
     def gbdt(self) -> GBDTNameSpace:
         return GBDTNameSpace(self)
 
-    # --- BEGIN AUTO-GENERATED METHODS ---
-
+    # --- BEGIN AUTO-GENERATED METHODS IN Pipeline ---
     def approx_n_unique(self) -> Self:
         return self.pipe(GetAttr("approx_n_unique"))
 
@@ -622,6 +622,16 @@ class Pipeline(Transformer):
     def with_row_index(self, name: str = "index", offset: int = 0) -> Self:
         return self.pipe(GetAttr("with_row_index", name, offset))
 
+    def group_by(
+        self,
+        *by: IntoExpr | Iterable[IntoExpr],
+        maintain_order: bool = False,
+        **named_by: IntoExpr,
+    ) -> GroupByNameSpace:
+        return GroupByNameSpace(
+            self, "group_by", *by, maintain_order=maintain_order, **named_by
+        )
+
     def apply(self, func: Callable[[DataFrame], DataFrame]) -> Self:
         return self.pipe(Apply(func))
 
@@ -915,4 +925,4 @@ class Pipeline(Transformer):
                 inverse_mapping,
             )
 
-    # --- END AUTO-GENERATED METHODS ---
+    # --- END AUTO-GENERATED METHODS IN Pipeline ---
