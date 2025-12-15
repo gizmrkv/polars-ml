@@ -14,6 +14,7 @@ from polars_ml.gbdt import LightGBM, LightGBMTuner, LightGBMTunerCV, XGBoost
 from polars_ml.metrics import BinaryClassificationMetrics, RegressionMetrics
 from polars_ml.pipeline.basic import Apply, Concat, Const, Echo, Parrot, Side, ToDummies
 from polars_ml.preprocessing import (
+    ArithmeticSynthesis,
     BoxCoxTransform,
     Discretize,
     LabelEncode,
@@ -216,6 +217,7 @@ if __name__ == "__main__":
         Discretize,
         Concat,
         ToDummies,
+        ArithmeticSynthesis,
     ]:
         method = getattr(transformer_cls, "__init__")
         params = inspect.signature(method).parameters.values()

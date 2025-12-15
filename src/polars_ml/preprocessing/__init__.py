@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .arithmetic_features import ArithmeticSynthesis
+from .arithmetic_synthesis import ArithmeticSynthesis
 from .discretize import Discretize
 from .label_encode import LabelEncode, LabelEncodeInverse, LabelEncodeInverseContext
 from .power import (
@@ -18,6 +18,7 @@ from .scale import (
 )
 
 __all__ = [
+    "ArithmeticSynthesis",
     "Discretize",
     "BoxCoxTransform",
     "YeoJohnsonTransform",

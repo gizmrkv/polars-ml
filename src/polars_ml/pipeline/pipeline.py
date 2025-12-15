@@ -17,6 +17,7 @@ from polars._typing import (
     AsofJoinStrategy,
     ColumnNameOrSelector,
     ConcatMethod,
+    CorrelationMethod,
     FillNullStrategy,
     IntoExpr,
     IntoExprColumn,
@@ -35,6 +36,7 @@ from polars._typing import (
 from polars_ml.base import Transformer
 from polars_ml.gbdt import GBDTNameSpace
 from polars_ml.preprocessing import (
+    ArithmeticSynthesis,
     BoxCoxTransform,
     Discretize,
     LabelEncode,
@@ -669,6 +671,26 @@ class Pipeline(Transformer):
         drop_first: bool = False,
     ) -> Self:
         return self.pipe(ToDummies(columns, separator=separator, drop_first=drop_first))
+
+    def arithmetic_synthesis(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        order: int,
+        method: Literal["additive", "multiplicative"] = "additive",
+        drop_high_correlation_features_method: CorrelationMethod | None = None,
+        threshold: float = 0.9,
+        show_progress: bool = True,
+    ) -> Self:
+        return self.pipe(
+            ArithmeticSynthesis(
+                columns,
+                order=order,
+                method=method,
+                drop_high_correlation_features_method=drop_high_correlation_features_method,
+                threshold=threshold,
+                show_progress=show_progress,
+            )
+        )
 
     @overload
     def min_max_scale(
