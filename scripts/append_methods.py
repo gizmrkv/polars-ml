@@ -12,7 +12,7 @@ from polars.dataframe.group_by import DynamicGroupBy, GroupBy, RollingGroupBy
 
 from polars_ml.gbdt import LightGBM, LightGBMTuner, LightGBMTunerCV, XGBoost
 from polars_ml.metrics import BinaryClassificationMetrics, RegressionMetrics
-from polars_ml.pipeline.basic import Apply, Const, Echo, Parrot, Side
+from polars_ml.pipeline.basic import Apply, Concat, Const, Echo, Parrot, Side, ToDummies
 from polars_ml.preprocessing import (
     BoxCoxTransform,
     Discretize,
@@ -139,7 +139,7 @@ def get_dataframe_methods() -> list[str]:
         if (
             name.startswith("_")
             or not callable(obj)
-            or name in {"map_columns", "deserialize"}
+            or name in {"map_columns", "deserialize", "to_dummies"}
         ):
             continue
 
@@ -207,7 +207,16 @@ if __name__ == "__main__":
     def {method}({params}) -> Self:
         return self.pipe({name}({call_args}))
     """
-    for transformer_cls in [Apply, Const, Echo, Parrot, Side, Discretize]:
+    for transformer_cls in [
+        Apply,
+        Const,
+        Echo,
+        Parrot,
+        Side,
+        Discretize,
+        Concat,
+        ToDummies,
+    ]:
         method = getattr(transformer_cls, "__init__")
         params = inspect.signature(method).parameters.values()
         name = transformer_cls.__name__

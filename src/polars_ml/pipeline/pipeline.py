@@ -16,6 +16,7 @@ from polars import DataFrame, Expr, Schema, Series
 from polars._typing import (
     AsofJoinStrategy,
     ColumnNameOrSelector,
+    ConcatMethod,
     FillNullStrategy,
     IntoExpr,
     IntoExprColumn,
@@ -46,7 +47,7 @@ from polars_ml.preprocessing import (
     YeoJohnsonTransform,
 )
 
-from .basic import Apply, Const, Echo, Parrot, Side
+from .basic import Apply, Concat, Const, Echo, Parrot, Side, ToDummies
 from .getattr import GetAttr
 from .group_by import GroupByNameSpace
 
@@ -472,23 +473,6 @@ class Pipeline(Transformer):
     def tail(self, n: int = 5) -> Self:
         return self.pipe(GetAttr("tail", n))
 
-    def to_dummies(
-        self,
-        columns: ColumnNameOrSelector | Sequence[ColumnNameOrSelector] | None = None,
-        separator: str = "_",
-        drop_first: bool = False,
-        drop_nulls: bool = False,
-    ) -> Self:
-        return self.pipe(
-            GetAttr(
-                "to_dummies",
-                columns,
-                separator=separator,
-                drop_first=drop_first,
-                drop_nulls=drop_nulls,
-            )
-        )
-
     def top_k(
         self,
         k: int,
@@ -668,6 +652,23 @@ class Pipeline(Transformer):
                 suffix=suffix,
             )
         )
+
+    def concat(
+        self,
+        items: Sequence[Transformer],
+        how: ConcatMethod = "vertical",
+        rechunk: bool = False,
+        parallel: bool = True,
+    ) -> Self:
+        return self.pipe(Concat(items, how=how, rechunk=rechunk, parallel=parallel))
+
+    def to_dummies(
+        self,
+        columns: ColumnNameOrSelector | Sequence[ColumnNameOrSelector] | None = None,
+        separator: str = "_",
+        drop_first: bool = False,
+    ) -> Self:
+        return self.pipe(ToDummies(columns, separator=separator, drop_first=drop_first))
 
     @overload
     def min_max_scale(
