@@ -1,5 +1,9 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
+from io import IOBase
+from pathlib import Path
 from typing import (
+    IO,
+    TYPE_CHECKING,
     Any,
     Callable,
     Collection,
@@ -8,6 +12,7 @@ from typing import (
     Mapping,
     Self,
     Sequence,
+    Union,
     overload,
 )
 
@@ -15,23 +20,39 @@ import numpy as np
 from polars import DataFrame, Expr, Schema, Series
 from polars._typing import (
     AsofJoinStrategy,
+    AvroCompression,
     ColumnNameOrSelector,
     ConcatMethod,
+    ConnectionOrCursor,
     CorrelationMethod,
+    CsvEncoding,
+    CsvQuoteStyle,
+    DbReadEngine,
+    DbWriteEngine,
+    DbWriteMode,
+    FileSource,
     FillNullStrategy,
     IntoExpr,
     IntoExprColumn,
+    IpcCompression,
     JoinStrategy,
     JoinValidation,
     MaintainOrderJoin,
+    ParallelStrategy,
+    ParquetCompression,
+    ParquetMetadata,
     PivotAgg,
     PolarsDataType,
     PythonDataType,
     QuantileMethod,
+    SchemaDefinition,
     SchemaDict,
     UniqueKeepStrategy,
     UnstackDirection,
 )
+from polars.datatypes import N_INFER_DEFAULT
+from polars.interchange.protocol import CompatLevel
+from polars.io.cloud import CredentialProviderFunction
 
 from polars_ml.base import Transformer
 from polars_ml.gbdt import GBDTNameSpace
@@ -50,7 +71,7 @@ from polars_ml.preprocessing import (
 )
 
 from .basic import Apply, Concat, Const, Echo, Parrot, Side, ToDummies
-from .getattr import GetAttr
+from .getattr import GetAttr, GetAttrPolars
 from .group_by import GroupByNameSpace
 
 
@@ -607,6 +628,470 @@ class Pipeline(Transformer):
 
     def with_row_index(self, name: str = "index", offset: int = 0) -> Self:
         return self.pipe(GetAttr("with_row_index", name, offset))
+
+    def write_avro(
+        self,
+        file: str | Path | IO[bytes],
+        compression: AvroCompression = "uncompressed",
+        name: str = "",
+    ) -> Self:
+        return self.pipe(GetAttrPolars("write_avro", file, compression, name))
+
+    def write_clipboard(self, separator: str = "\t", **kwargs: Any) -> Self:
+        return self.pipe(
+            GetAttrPolars("write_clipboard", separator=separator, **kwargs)
+        )
+
+    def write_csv(
+        self,
+        file: str | Path | IO[str] | IO[bytes] | None = None,
+        include_bom: bool = False,
+        include_header: bool = True,
+        separator: str = ",",
+        line_terminator: str = "\n",
+        quote_char: str = '"',
+        batch_size: int = 1024,
+        datetime_format: str | None = None,
+        date_format: str | None = None,
+        time_format: str | None = None,
+        float_scientific: bool | None = None,
+        float_precision: int | None = None,
+        decimal_comma: bool = False,
+        null_value: str | None = None,
+        quote_style: CsvQuoteStyle | None = None,
+        storage_options: dict[str, Any] | None = None,
+        credential_provider: CredentialProviderFunction
+        | Literal["auto"]
+        | None = "auto",
+        retries: int = 2,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars(
+                "write_csv",
+                file,
+                include_bom=include_bom,
+                include_header=include_header,
+                separator=separator,
+                line_terminator=line_terminator,
+                quote_char=quote_char,
+                batch_size=batch_size,
+                datetime_format=datetime_format,
+                date_format=date_format,
+                time_format=time_format,
+                float_scientific=float_scientific,
+                float_precision=float_precision,
+                decimal_comma=decimal_comma,
+                null_value=null_value,
+                quote_style=quote_style,
+                storage_options=storage_options,
+                credential_provider=credential_provider,
+                retries=retries,
+            )
+        )
+
+    def write_database(
+        self,
+        table_name: str,
+        connection: ConnectionOrCursor | str,
+        if_table_exists: DbWriteMode = "fail",
+        engine: DbWriteEngine | None = None,
+        engine_options: dict[str, Any] | None = None,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars(
+                "write_database",
+                table_name,
+                connection,
+                if_table_exists=if_table_exists,
+                engine=engine,
+                engine_options=engine_options,
+            )
+        )
+
+    def write_ipc(
+        self,
+        file: str | Path | IO[bytes] | None,
+        compression: IpcCompression = "uncompressed",
+        compat_level: CompatLevel | None = None,
+        storage_options: dict[str, Any] | None = None,
+        credential_provider: CredentialProviderFunction
+        | Literal["auto"]
+        | None = "auto",
+        retries: int = 2,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars(
+                "write_ipc",
+                file,
+                compression=compression,
+                compat_level=compat_level,
+                storage_options=storage_options,
+                credential_provider=credential_provider,
+                retries=retries,
+            )
+        )
+
+    def write_ipc_stream(
+        self,
+        file: str | Path | IO[bytes] | None,
+        compression: IpcCompression = "uncompressed",
+        compat_level: CompatLevel | None = None,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars(
+                "write_ipc_stream",
+                file,
+                compression=compression,
+                compat_level=compat_level,
+            )
+        )
+
+    def write_json(self, file: IOBase | str | Path | None = None) -> Self:
+        return self.pipe(GetAttrPolars("write_json", file))
+
+    def write_ndjson(
+        self, file: str | Path | IO[bytes] | IO[str] | None = None
+    ) -> Self:
+        return self.pipe(GetAttrPolars("write_ndjson", file))
+
+    def write_parquet(
+        self,
+        file: str | Path | IO[bytes],
+        compression: ParquetCompression = "zstd",
+        compression_level: int | None = None,
+        statistics: bool | str | dict[str, bool] = True,
+        row_group_size: int | None = None,
+        data_page_size: int | None = None,
+        use_pyarrow: bool = False,
+        pyarrow_options: dict[str, Any] | None = None,
+        partition_by: str | Sequence[str] | None = None,
+        partition_chunk_size_bytes: int = 4294967296,
+        storage_options: dict[str, Any] | None = None,
+        credential_provider: CredentialProviderFunction
+        | Literal["auto"]
+        | None = "auto",
+        retries: int = 2,
+        metadata: ParquetMetadata | None = None,
+        mkdir: bool = False,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars(
+                "write_parquet",
+                file,
+                compression=compression,
+                compression_level=compression_level,
+                statistics=statistics,
+                row_group_size=row_group_size,
+                data_page_size=data_page_size,
+                use_pyarrow=use_pyarrow,
+                pyarrow_options=pyarrow_options,
+                partition_by=partition_by,
+                partition_chunk_size_bytes=partition_chunk_size_bytes,
+                storage_options=storage_options,
+                credential_provider=credential_provider,
+                retries=retries,
+                metadata=metadata,
+                mkdir=mkdir,
+            )
+        )
+
+    def read_avro(
+        self,
+        source: str | Path | IO[bytes] | bytes,
+        columns: list[int] | list[str] | None = None,
+        n_rows: int | None = None,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars("read_avro", source, columns=columns, n_rows=n_rows)
+        )
+
+    def read_clipboard(self, separator: str = "\t", **kwargs: Any) -> Self:
+        return self.pipe(GetAttrPolars("read_clipboard", separator, **kwargs))
+
+    def read_csv(
+        self,
+        source: str | Path | IO[str] | IO[bytes] | bytes,
+        has_header: bool = True,
+        columns: Sequence[int] | Sequence[str] | None = None,
+        new_columns: Sequence[str] | None = None,
+        separator: str = ",",
+        comment_prefix: str | None = None,
+        quote_char: str | None = '"',
+        skip_rows: int = 0,
+        skip_lines: int = 0,
+        schema: SchemaDict | None = None,
+        schema_overrides: Mapping[str, PolarsDataType]
+        | Sequence[PolarsDataType]
+        | None = None,
+        null_values: str | Sequence[str] | dict[str, str] | None = None,
+        missing_utf8_is_empty_string: bool = False,
+        ignore_errors: bool = False,
+        try_parse_dates: bool = False,
+        n_threads: int | None = None,
+        infer_schema: bool = True,
+        infer_schema_length: int | None = 100,
+        batch_size: int = 8192,
+        n_rows: int | None = None,
+        encoding: CsvEncoding | str = "utf8",
+        low_memory: bool = False,
+        rechunk: bool = False,
+        use_pyarrow: bool = False,
+        storage_options: dict[str, Any] | None = None,
+        skip_rows_after_header: int = 0,
+        row_index_name: str | None = None,
+        row_index_offset: int = 0,
+        sample_size: int = 1024,
+        eol_char: str = "\n",
+        raise_if_empty: bool = True,
+        truncate_ragged_lines: bool = False,
+        decimal_comma: bool = False,
+        glob: bool = True,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars(
+                "read_csv",
+                source,
+                has_header=has_header,
+                columns=columns,
+                new_columns=new_columns,
+                separator=separator,
+                comment_prefix=comment_prefix,
+                quote_char=quote_char,
+                skip_rows=skip_rows,
+                skip_lines=skip_lines,
+                schema=schema,
+                schema_overrides=schema_overrides,
+                null_values=null_values,
+                missing_utf8_is_empty_string=missing_utf8_is_empty_string,
+                ignore_errors=ignore_errors,
+                try_parse_dates=try_parse_dates,
+                n_threads=n_threads,
+                infer_schema=infer_schema,
+                infer_schema_length=infer_schema_length,
+                batch_size=batch_size,
+                n_rows=n_rows,
+                encoding=encoding,
+                low_memory=low_memory,
+                rechunk=rechunk,
+                use_pyarrow=use_pyarrow,
+                storage_options=storage_options,
+                skip_rows_after_header=skip_rows_after_header,
+                row_index_name=row_index_name,
+                row_index_offset=row_index_offset,
+                sample_size=sample_size,
+                eol_char=eol_char,
+                raise_if_empty=raise_if_empty,
+                truncate_ragged_lines=truncate_ragged_lines,
+                decimal_comma=decimal_comma,
+                glob=glob,
+            )
+        )
+
+    def read_database_uri(
+        self,
+        query: list[str] | str,
+        uri: str,
+        partition_on: str | None = None,
+        partition_range: tuple[int, int] | None = None,
+        partition_num: int | None = None,
+        protocol: str | None = None,
+        engine: DbReadEngine | None = None,
+        schema_overrides: SchemaDict | None = None,
+        execute_options: dict[str, Any] | None = None,
+        pre_execution_query: str | list[str] | None = None,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars(
+                "read_database_uri",
+                query,
+                uri,
+                partition_on=partition_on,
+                partition_range=partition_range,
+                partition_num=partition_num,
+                protocol=protocol,
+                engine=engine,
+                schema_overrides=schema_overrides,
+                execute_options=execute_options,
+                pre_execution_query=pre_execution_query,
+            )
+        )
+
+    def read_ipc(
+        self,
+        source: str | Path | IO[bytes] | bytes,
+        columns: list[int] | list[str] | None = None,
+        n_rows: int | None = None,
+        use_pyarrow: bool = False,
+        memory_map: bool = True,
+        storage_options: dict[str, Any] | None = None,
+        row_index_name: str | None = None,
+        row_index_offset: int = 0,
+        rechunk: bool = True,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars(
+                "read_ipc",
+                source,
+                columns=columns,
+                n_rows=n_rows,
+                use_pyarrow=use_pyarrow,
+                memory_map=memory_map,
+                storage_options=storage_options,
+                row_index_name=row_index_name,
+                row_index_offset=row_index_offset,
+                rechunk=rechunk,
+            )
+        )
+
+    def read_ipc_stream(
+        self,
+        source: str | Path | IO[bytes] | bytes,
+        columns: list[int] | list[str] | None = None,
+        n_rows: int | None = None,
+        use_pyarrow: bool = False,
+        storage_options: dict[str, Any] | None = None,
+        row_index_name: str | None = None,
+        row_index_offset: int = 0,
+        rechunk: bool = True,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars(
+                "read_ipc_stream",
+                source,
+                columns=columns,
+                n_rows=n_rows,
+                use_pyarrow=use_pyarrow,
+                storage_options=storage_options,
+                row_index_name=row_index_name,
+                row_index_offset=row_index_offset,
+                rechunk=rechunk,
+            )
+        )
+
+    def read_json(
+        self,
+        source: str | Path | IOBase | bytes,
+        schema: SchemaDefinition | None = None,
+        schema_overrides: SchemaDefinition | None = None,
+        infer_schema_length: int | None = 100,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars(
+                "read_json",
+                source,
+                schema=schema,
+                schema_overrides=schema_overrides,
+                infer_schema_length=infer_schema_length,
+            )
+        )
+
+    def read_ndjson(
+        self,
+        source: str
+        | Path
+        | IO[str]
+        | IO[bytes]
+        | bytes
+        | list[str]
+        | list[Path]
+        | list[IO[str]]
+        | list[IO[bytes]],
+        schema: SchemaDefinition | None = None,
+        schema_overrides: SchemaDefinition | None = None,
+        infer_schema_length: int | None = 100,
+        batch_size: int | None = 1024,
+        n_rows: int | None = None,
+        low_memory: bool = False,
+        rechunk: bool = False,
+        row_index_name: str | None = None,
+        row_index_offset: int = 0,
+        ignore_errors: bool = False,
+        storage_options: dict[str, Any] | None = None,
+        credential_provider: CredentialProviderFunction
+        | Literal["auto"]
+        | None = "auto",
+        retries: int = 2,
+        file_cache_ttl: int | None = None,
+        include_file_paths: str | None = None,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars(
+                "read_ndjson",
+                source,
+                schema=schema,
+                schema_overrides=schema_overrides,
+                infer_schema_length=infer_schema_length,
+                batch_size=batch_size,
+                n_rows=n_rows,
+                low_memory=low_memory,
+                rechunk=rechunk,
+                row_index_name=row_index_name,
+                row_index_offset=row_index_offset,
+                ignore_errors=ignore_errors,
+                storage_options=storage_options,
+                credential_provider=credential_provider,
+                retries=retries,
+                file_cache_ttl=file_cache_ttl,
+                include_file_paths=include_file_paths,
+            )
+        )
+
+    def read_parquet(
+        self,
+        source: FileSource,
+        columns: list[int] | list[str] | None = None,
+        n_rows: int | None = None,
+        row_index_name: str | None = None,
+        row_index_offset: int = 0,
+        parallel: ParallelStrategy = "auto",
+        use_statistics: bool = True,
+        hive_partitioning: bool | None = None,
+        glob: bool = True,
+        schema: SchemaDict | None = None,
+        hive_schema: SchemaDict | None = None,
+        try_parse_hive_dates: bool = True,
+        rechunk: bool = False,
+        low_memory: bool = False,
+        storage_options: dict[str, Any] | None = None,
+        credential_provider: CredentialProviderFunction
+        | Literal["auto"]
+        | None = "auto",
+        retries: int = 2,
+        use_pyarrow: bool = False,
+        pyarrow_options: dict[str, Any] | None = None,
+        memory_map: bool = True,
+        include_file_paths: str | None = None,
+        missing_columns: Literal["insert", "raise"] = "raise",
+        allow_missing_columns: bool | None = None,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars(
+                "read_parquet",
+                source,
+                columns=columns,
+                n_rows=n_rows,
+                row_index_name=row_index_name,
+                row_index_offset=row_index_offset,
+                parallel=parallel,
+                use_statistics=use_statistics,
+                hive_partitioning=hive_partitioning,
+                glob=glob,
+                schema=schema,
+                hive_schema=hive_schema,
+                try_parse_hive_dates=try_parse_hive_dates,
+                rechunk=rechunk,
+                low_memory=low_memory,
+                storage_options=storage_options,
+                credential_provider=credential_provider,
+                retries=retries,
+                use_pyarrow=use_pyarrow,
+                pyarrow_options=pyarrow_options,
+                memory_map=memory_map,
+                include_file_paths=include_file_paths,
+                missing_columns=missing_columns,
+                allow_missing_columns=allow_missing_columns,
+            )
+        )
 
     def group_by(
         self,

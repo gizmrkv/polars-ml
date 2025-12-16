@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 import inflection
+import polars as pl
 from polars import DataFrame
 from polars.dataframe.group_by import DynamicGroupBy, GroupBy, RollingGroupBy
 
@@ -188,6 +189,52 @@ if __name__ == "__main__":
                 call_args=", ".join([f'"{name}"'] + format_call_args(method)[1:]),
             )
         )
+    template = """
+    def {name}({params}) -> Self:
+        return self.pipe(GetAttrPolars({call_args}))
+    """
+    for name, obj in inspect.getmembers(DataFrame):
+        if (
+            name.startswith("write_")
+            and callable(obj)
+            and name not in {"write_delta", "write_excel", "write_iceberg"}
+        ):
+            sig = inspect.signature(obj)
+            ret = sig.return_annotation
+            codes.append(
+                template.format(
+                    name=name,
+                    params=", ".join(
+                        format_param(p).replace(
+                            ": DataFrame", ": DataFrame | Transformer"
+                        )
+                        for p in sig.parameters.values()
+                    ),
+                    call_args=", ".join([f'"{name}"'] + format_call_args(obj)[1:]),
+                )
+            )
+
+    template = """
+    def {name}(self, {params}) -> Self:
+        return self.pipe(GetAttrPolars({call_args}))
+                    """
+    for name, obj in inspect.getmembers(pl):
+        if name.startswith("read_") and callable(obj) and name not in {"read_delta"}:
+            sig = inspect.signature(obj)
+            ret = sig.return_annotation
+            if ret in {"DataFrame"}:
+                codes.append(
+                    template.format(
+                        name=name,
+                        params=", ".join(
+                            format_param(p).replace(
+                                ": DataFrame", ": DataFrame | Transformer"
+                            )
+                            for p in sig.parameters.values()
+                        ),
+                        call_args=", ".join([f'"{name}"'] + format_call_args(obj)),
+                    )
+                )
 
     template = """
     def {name}({params}) -> GroupByNameSpace:
