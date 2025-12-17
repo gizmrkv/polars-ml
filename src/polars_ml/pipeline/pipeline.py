@@ -21,6 +21,7 @@ from polars import DataFrame, Expr, Schema, Series
 from polars._typing import (
     AsofJoinStrategy,
     AvroCompression,
+    ClosedInterval,
     ColumnNameOrSelector,
     ConcatMethod,
     ConnectionOrCursor,
@@ -37,6 +38,7 @@ from polars._typing import (
     IpcCompression,
     JoinStrategy,
     JoinValidation,
+    Label,
     MaintainOrderJoin,
     ParallelStrategy,
     ParquetCompression,
@@ -47,9 +49,12 @@ from polars._typing import (
     QuantileMethod,
     SchemaDefinition,
     SchemaDict,
+    SizeUnit,
+    StartBy,
     UniqueKeepStrategy,
     UnstackDirection,
 )
+from polars._utils.various import NoDefault
 from polars.datatypes import N_INFER_DEFAULT
 from polars.interchange.protocol import CompatLevel
 from polars.io.cloud import CredentialProviderFunction
@@ -72,7 +77,7 @@ from polars_ml.preprocessing import (
 
 from .basic import Apply, Concat, Const, Echo, Parrot, Side, ToDummies
 from .getattr import GetAttr, GetAttrPolars
-from .group_by import GroupByNameSpace
+from .group_by import DynamicGroupByNameSpace, GroupByNameSpace, RollingGroupByNameSpace
 
 
 class Pipeline(Transformer):
@@ -1101,6 +1106,50 @@ class Pipeline(Transformer):
     ) -> GroupByNameSpace:
         return GroupByNameSpace(
             self, "group_by", *by, maintain_order=maintain_order, **named_by
+        )
+
+    def group_by_dynamic(
+        self,
+        index_column: IntoExpr,
+        every: str | timedelta,
+        period: str | timedelta | None = None,
+        offset: str | timedelta | None = None,
+        include_boundaries: bool = False,
+        closed: ClosedInterval = "left",
+        label: Label = "left",
+        group_by: IntoExpr | Iterable[IntoExpr] | None = None,
+        start_by: StartBy = "window",
+    ) -> DynamicGroupByNameSpace:
+        return DynamicGroupByNameSpace(
+            self,
+            "group_by_dynamic",
+            index_column,
+            every=every,
+            period=period,
+            offset=offset,
+            include_boundaries=include_boundaries,
+            closed=closed,
+            label=label,
+            group_by=group_by,
+            start_by=start_by,
+        )
+
+    def rolling(
+        self,
+        index_column: IntoExpr,
+        period: str | timedelta,
+        offset: str | timedelta | None = None,
+        closed: ClosedInterval = "right",
+        group_by: IntoExpr | Iterable[IntoExpr] | None = None,
+    ) -> RollingGroupByNameSpace:
+        return RollingGroupByNameSpace(
+            self,
+            "rolling",
+            index_column,
+            period=period,
+            offset=offset,
+            closed=closed,
+            group_by=group_by,
         )
 
     def apply(self, func: Callable[[DataFrame], DataFrame]) -> Self:

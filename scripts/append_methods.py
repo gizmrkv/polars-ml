@@ -135,48 +135,24 @@ def update_methods(target_file: str | Path, class_name: str, code: str) -> None:
     path.write_text("".join(lines), encoding="utf-8")
 
 
-def get_dataframe_methods() -> list[str]:
-    methods: list[str] = []
-    for name, obj in inspect.getmembers(DataFrame):
-        if (
-            name.startswith("_")
-            or not callable(obj)
-            or name in {"map_columns", "deserialize", "to_dummies"}
-        ):
-            continue
-
-        ret = inspect.signature(obj).return_annotation
-        if ret in {"DataFrame", "Self"}:
-            methods.append(name)
-
-    return sorted(set(methods))
-
-
-def get_group_by_methods(
-    group_by_type: type[GroupBy] | type[DynamicGroupBy] | type[RollingGroupBy],
-) -> list[str]:
-    methods: list[str] = []
-    for name, obj in inspect.getmembers(group_by_type):
-        if name.startswith("_") or not callable(obj):
-            continue
-
-        ret = inspect.signature(obj).return_annotation
-        if ret in {"DataFrame"}:
-            methods.append(name)
-
-    return sorted(set(methods))
-
-
-if __name__ == "__main__":
-    PROJECT_ROOT = Path(__file__).resolve().parents[1]
-
-    target_file = PROJECT_ROOT / Path("src/polars_ml/pipeline/pipeline.py")
+def render_dataframe_builtin_methods() -> list[str]:
     template = """
     def {name}({params}) -> Self:
         return self.pipe(GetAttr({call_args}))
-    """
+"""
     codes = []
-    for name in get_dataframe_methods():
+    for name in sorted(
+        set(
+            name
+            for name, obj in inspect.getmembers(DataFrame)
+            if (
+                not name.startswith("_")
+                and callable(obj)
+                and name not in {"map_columns", "deserialize", "to_dummies"}
+                and inspect.signature(obj).return_annotation in {"DataFrame", "Self"}
+            )
+        )
+    ):
         method = getattr(DataFrame, name)
         sig = inspect.signature(method)
         codes.append(
@@ -189,10 +165,15 @@ if __name__ == "__main__":
                 call_args=", ".join([f'"{name}"'] + format_call_args(method)[1:]),
             )
         )
+    return codes
+
+
+def render_write_dataframe_methods() -> list[str]:
     template = """
     def {name}({params}) -> Self:
         return self.pipe(GetAttrPolars({call_args}))
-    """
+"""
+    codes = []
     for name, obj in inspect.getmembers(DataFrame):
         if (
             name.startswith("write_")
@@ -200,7 +181,6 @@ if __name__ == "__main__":
             and name not in {"write_delta", "write_excel", "write_iceberg"}
         ):
             sig = inspect.signature(obj)
-            ret = sig.return_annotation
             codes.append(
                 template.format(
                     name=name,
@@ -214,10 +194,15 @@ if __name__ == "__main__":
                 )
             )
 
+    return codes
+
+
+def render_read_dataframe_methods() -> list[str]:
     template = """
     def {name}(self, {params}) -> Self:
         return self.pipe(GetAttrPolars({call_args}))
-                    """
+"""
+    codes = []
     for name, obj in inspect.getmembers(pl):
         if name.startswith("read_") and callable(obj) and name not in {"read_delta"}:
             sig = inspect.signature(obj)
@@ -235,26 +220,39 @@ if __name__ == "__main__":
                         call_args=", ".join([f'"{name}"'] + format_call_args(obj)),
                     )
                 )
+    return codes
 
+
+def render_group_by_methods() -> list[str]:
     template = """
-    def {name}({params}) -> GroupByNameSpace:
-        return GroupByNameSpace(self, {call_args})
-    """
-    name = "group_by"
-    method = getattr(DataFrame, name)
-    sig = inspect.signature(method)
-    codes.append(
-        template.format(
-            name=name,
-            params=", ".join(format_param(p) for p in sig.parameters.values()),
-            call_args=", ".join([f'"{name}"'] + format_call_args(method)[1:]),
+    def {name}({params}) -> {namespace}:
+        return {namespace}(self, {call_args})
+"""
+    codes = []
+    for name, namespace in [
+        ("group_by", "GroupByNameSpace"),
+        ("group_by_dynamic", "DynamicGroupByNameSpace"),
+        ("rolling", "RollingGroupByNameSpace"),
+    ]:
+        method = getattr(DataFrame, name)
+        sig = inspect.signature(method)
+        codes.append(
+            template.format(
+                name=name,
+                namespace=namespace,
+                params=", ".join(format_param(p) for p in sig.parameters.values()),
+                call_args=", ".join([f'"{name}"'] + format_call_args(method)[1:]),
+            )
         )
-    )
+    return codes
 
+
+def render_basic_transform_methods() -> list[str]:
     template = """
     def {method}({params}) -> Self:
         return self.pipe({name}({call_args}))
-    """
+"""
+    codes = []
     for transformer_cls in [
         Apply,
         Const,
@@ -278,7 +276,10 @@ if __name__ == "__main__":
                 call_args=", ".join(format_call_args(method)[1:]),
             )
         )
+    return codes
 
+
+def render_basic_transform_with_inverse_methods() -> list[str]:
     template = """
     @overload
     def {method}({params}) -> Self: ...
@@ -293,7 +294,8 @@ if __name__ == "__main__":
             return {name_inv}Context(
                 self, {name}({call_args}), inverse_mapping
             )
-    """
+"""
+    codes = []
     for transformer_cls, inverse_cls in [
         (MinMaxScale, ScaleInverse),
         (StandardScale, ScaleInverse),
@@ -316,9 +318,14 @@ if __name__ == "__main__":
             )
         )
 
-    update_methods(target_file, "Pipeline", "".join(codes))
+    return codes
 
-    target_file = PROJECT_ROOT / Path("src/polars_ml/gbdt/__init__.py")
+
+def render_gbdt_namespace_methods() -> list[str]:
+    template = """
+    def {method}({params}) -> "Pipeline":
+        return self.pipeline.pipe({name}({call_args}))
+"""
     codes = []
     for transformer_cls, method_name in [
         (LightGBM, "lightgbm"),
@@ -330,20 +337,21 @@ if __name__ == "__main__":
         params = inspect.signature(method).parameters.values()
         name = transformer_cls.__name__
         codes.append(
-            """
-    def {method}({params}) -> "Pipeline":
-        return self.pipeline.pipe({name}({call_args}))
-        """.format(
+            template.format(
                 method=method_name,
                 name=name,
                 params=", ".join(format_param(p) for p in params),
                 call_args=", ".join(format_call_args(method)[1:]),
             )
         )
+    return codes
 
-    update_methods(target_file, "GBDTNameSpace", "".join(codes))
 
-    target_file = PROJECT_ROOT / Path("src/polars_ml/metrics/__init__.py")
+def render_metrics_namespace_methods() -> list[str]:
+    template = """
+    def {method}({params}) -> "Pipeline":
+        return self.pipeline.pipe({name}({call_args}))
+"""
     codes = []
     for transformer_cls, method_name in [
         (BinaryClassificationMetrics, "binary_classification"),
@@ -353,41 +361,73 @@ if __name__ == "__main__":
         params = inspect.signature(method).parameters.values()
         name = transformer_cls.__name__
         codes.append(
-            """
-    def {method}({params}) -> "Pipeline":
-        return self.pipeline.pipe({name}({call_args}))
-        """.format(
+            template.format(
                 method=method_name,
                 name=name,
                 params=", ".join(format_param(p) for p in params),
                 call_args=", ".join(format_call_args(method)[1:]),
             )
         )
+    return codes
 
+
+def render_group_by_namespace_methods(
+    group_by_type: type[GroupBy] | type[DynamicGroupBy] | type[RollingGroupBy],
+) -> list[str]:
+    template = """
+    def {name}({params}) -> "Pipeline":
+        return self.pipeline.pipe(GroupByGetAttr(self.attr, "{name}", self.args, self.kwargs, {call_args}))
+"""
+    codes = []
+    for name in sorted(
+        set(
+            name
+            for name, obj in inspect.getmembers(group_by_type)
+            if not name.startswith("_")
+            and callable(obj)
+            and inspect.signature(obj).return_annotation in {"DataFrame"}
+        )
+    ):
+        method = getattr(group_by_type, name)
+        sig = inspect.signature(method)
+        codes.append(
+            template.format(
+                name=name,
+                params=", ".join(format_param(p) for p in sig.parameters.values()),
+                call_args=", ".join(format_call_args(method)[1:]),
+            )
+        )
+
+    return codes
+
+
+if __name__ == "__main__":
+    PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+    target_file = PROJECT_ROOT / Path("src/polars_ml/pipeline/pipeline.py")
+    codes = (
+        render_dataframe_builtin_methods()
+        + render_write_dataframe_methods()
+        + render_read_dataframe_methods()
+        + render_group_by_methods()
+        + render_basic_transform_methods()
+        + render_basic_transform_with_inverse_methods()
+    )
+    update_methods(target_file, "Pipeline", "".join(codes))
+
+    target_file = PROJECT_ROOT / Path("src/polars_ml/gbdt/__init__.py")
+    codes = render_gbdt_namespace_methods()
+    update_methods(target_file, "GBDTNameSpace", "".join(codes))
+
+    target_file = PROJECT_ROOT / Path("src/polars_ml/metrics/__init__.py")
+    codes = render_metrics_namespace_methods()
     update_methods(target_file, "MetricsNameSpace", "".join(codes))
 
     target_file = PROJECT_ROOT / Path("src/polars_ml/pipeline/group_by.py")
     for group_by_type in [GroupBy, DynamicGroupBy, RollingGroupBy]:
-        group_by_name = group_by_type.__name__
-        codes = []
-        template = """
-    def {name}({params}) -> "Pipeline":
-        return self.pipeline.pipe(GroupByGetAttr(self.attr, "{name}", self.args, self.kwargs, {call_args}))
-        """
-        codes = []
-        for name in get_group_by_methods(group_by_type):
-            method = getattr(group_by_type, name)
-            sig = inspect.signature(method)
-            codes.append(
-                template.format(
-                    name=name,
-                    params=", ".join(format_param(p) for p in sig.parameters.values()),
-                    call_args=", ".join(format_call_args(method)[1:]),
-                )
-            )
-
+        codes = render_group_by_namespace_methods(group_by_type)
         update_methods(
             target_file,
-            f"{group_by_name}NameSpace",
+            f"{group_by_type.__name__}NameSpace",
             "".join(codes),
         )
