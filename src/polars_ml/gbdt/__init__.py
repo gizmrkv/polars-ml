@@ -25,10 +25,11 @@ __all__ = ["LightGBM", "LightGBMTuner", "LightGBMTunerCV"]
 
 
 class GBDTNameSpace:
-    def __init__(self, pipeline: "Pipeline"):
+    def __init__(self, pipeline: Pipeline):
         self.pipeline = pipeline
 
-    # --- BEGIN AUTO-GENERATED METHODS IN GBDTNameSpace ---
+    # --- START INSERTION MARKER IN GBDTNameSpace
+
     def lightgbm(
         self,
         label: IntoExpr,
@@ -39,7 +40,7 @@ class GBDTNameSpace:
         predict_params: LGBPredictParams | None = None,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
-    ) -> "Pipeline":
+    ) -> Pipeline:
         return self.pipeline.pipe(
             LightGBM(
                 label,
@@ -63,7 +64,7 @@ class GBDTNameSpace:
         predict_params: XGBPredictParams | None = None,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
-    ) -> "Pipeline":
+    ) -> Pipeline:
         return self.pipeline.pipe(
             XGBoost(
                 label,
@@ -87,7 +88,7 @@ class GBDTNameSpace:
         predict_params: LGBPredictParams | None = None,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
-    ) -> "Pipeline":
+    ) -> Pipeline:
         return self.pipeline.pipe(
             LightGBMTuner(
                 label,
@@ -111,7 +112,7 @@ class GBDTNameSpace:
         predict_params: LGBPredictParams | None = None,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
-    ) -> "Pipeline":
+    ) -> Pipeline:
         return self.pipeline.pipe(
             LightGBMTunerCV(
                 label,
@@ -125,4 +126,4 @@ class GBDTNameSpace:
             )
         )
 
-    # --- END AUTO-GENERATED METHODS IN GBDTNameSpace ---
+    # --- END INSERTION MARKER IN GBDTNameSpace

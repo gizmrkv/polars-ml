@@ -103,7 +103,7 @@ class LabelEncodeInverse(Transformer):
 class LabelEncodeInverseContext:
     def __init__(
         self,
-        pipeline: "Pipeline",
+        pipeline: Pipeline,
         label_encode: LabelEncode,
         mapping: Mapping[str, str] | None = None,
     ):

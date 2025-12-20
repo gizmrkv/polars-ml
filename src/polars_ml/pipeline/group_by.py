@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -44,23 +46,24 @@ class GroupByGetAttr(Transformer):
 
 
 class GroupByNameSpace:
-    def __init__(self, pipeline: "Pipeline", attr: str, *args: Any, **kwargs: Any):
+    def __init__(self, pipeline: Pipeline, attr: str, *args: Any, **kwargs: Any):
         self.pipeline = pipeline
         self.attr = attr
         self.args = args
         self.kwargs = kwargs
 
-    # --- BEGIN AUTO-GENERATED METHODS IN GroupByNameSpace ---
+    # --- START INSERTION MARKER IN GroupByNameSpace
+
     def agg(
         self, *aggs: IntoExpr | Iterable[IntoExpr], **named_aggs: IntoExpr
-    ) -> "Pipeline":
+    ) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr, "agg", self.args, self.kwargs, *aggs, **named_aggs
             )
         )
 
-    def all(self) -> "Pipeline":
+    def all(self) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr,
@@ -70,7 +73,7 @@ class GroupByNameSpace:
             )
         )
 
-    def count(self) -> "Pipeline":
+    def count(self) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr,
@@ -80,7 +83,7 @@ class GroupByNameSpace:
             )
         )
 
-    def first(self) -> "Pipeline":
+    def first(self) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr,
@@ -90,12 +93,12 @@ class GroupByNameSpace:
             )
         )
 
-    def head(self, n: int = 5) -> "Pipeline":
+    def head(self, n: int = 5) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(self.attr, "head", self.args, self.kwargs, n)
         )
 
-    def last(self) -> "Pipeline":
+    def last(self) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr,
@@ -105,17 +108,17 @@ class GroupByNameSpace:
             )
         )
 
-    def len(self, name: str | None = None) -> "Pipeline":
+    def len(self, name: str | None = None) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(self.attr, "len", self.args, self.kwargs, name)
         )
 
-    def map_groups(self, function: Callable[[DataFrame], DataFrame]) -> "Pipeline":
+    def map_groups(self, function: Callable[[DataFrame], DataFrame]) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(self.attr, "map_groups", self.args, self.kwargs, function)
         )
 
-    def max(self) -> "Pipeline":
+    def max(self) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr,
@@ -125,7 +128,7 @@ class GroupByNameSpace:
             )
         )
 
-    def mean(self) -> "Pipeline":
+    def mean(self) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr,
@@ -135,7 +138,7 @@ class GroupByNameSpace:
             )
         )
 
-    def median(self) -> "Pipeline":
+    def median(self) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr,
@@ -145,7 +148,7 @@ class GroupByNameSpace:
             )
         )
 
-    def min(self) -> "Pipeline":
+    def min(self) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr,
@@ -155,7 +158,7 @@ class GroupByNameSpace:
             )
         )
 
-    def n_unique(self) -> "Pipeline":
+    def n_unique(self) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr,
@@ -167,14 +170,14 @@ class GroupByNameSpace:
 
     def quantile(
         self, quantile: float, interpolation: QuantileMethod = "nearest"
-    ) -> "Pipeline":
+    ) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr, "quantile", self.args, self.kwargs, quantile, interpolation
             )
         )
 
-    def sum(self) -> "Pipeline":
+    def sum(self) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr,
@@ -184,25 +187,26 @@ class GroupByNameSpace:
             )
         )
 
-    def tail(self, n: int = 5) -> "Pipeline":
+    def tail(self, n: int = 5) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(self.attr, "tail", self.args, self.kwargs, n)
         )
 
-    # --- END AUTO-GENERATED METHODS IN GroupByNameSpace ---
+    # --- END INSERTION MARKER IN GroupByNameSpace
 
 
 class DynamicGroupByNameSpace:
-    def __init__(self, pipeline: "Pipeline", attr: str, *args: Any, **kwargs: Any):
+    def __init__(self, pipeline: Pipeline, attr: str, *args: Any, **kwargs: Any):
         self.pipeline = pipeline
         self.attr = attr
         self.args = args
         self.kwargs = kwargs
 
-    # --- BEGIN AUTO-GENERATED METHODS IN DynamicGroupByNameSpace ---
+    # --- START INSERTION MARKER IN DynamicGroupByNameSpace
+
     def agg(
         self, *aggs: IntoExpr | Iterable[IntoExpr], **named_aggs: IntoExpr
-    ) -> "Pipeline":
+    ) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr, "agg", self.args, self.kwargs, *aggs, **named_aggs
@@ -211,27 +215,28 @@ class DynamicGroupByNameSpace:
 
     def map_groups(
         self, function: Callable[[DataFrame], DataFrame], schema: SchemaDict | None
-    ) -> "Pipeline":
+    ) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr, "map_groups", self.args, self.kwargs, function, schema
             )
         )
 
-    # --- END AUTO-GENERATED METHODS IN DynamicGroupByNameSpace ---
+    # --- END INSERTION MARKER IN DynamicGroupByNameSpace
 
 
 class RollingGroupByNameSpace:
-    def __init__(self, pipeline: "Pipeline", attr: str, *args: Any, **kwargs: Any):
+    def __init__(self, pipeline: Pipeline, attr: str, *args: Any, **kwargs: Any):
         self.pipeline = pipeline
         self.attr = attr
         self.args = args
         self.kwargs = kwargs
 
-    # --- BEGIN AUTO-GENERATED METHODS IN RollingGroupByNameSpace ---
+    # --- START INSERTION MARKER IN RollingGroupByNameSpace
+
     def agg(
         self, *aggs: IntoExpr | Iterable[IntoExpr], **named_aggs: IntoExpr
-    ) -> "Pipeline":
+    ) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr, "agg", self.args, self.kwargs, *aggs, **named_aggs
@@ -240,11 +245,11 @@ class RollingGroupByNameSpace:
 
     def map_groups(
         self, function: Callable[[DataFrame], DataFrame], schema: SchemaDict | None
-    ) -> "Pipeline":
+    ) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
                 self.attr, "map_groups", self.args, self.kwargs, function, schema
             )
         )
 
-    # --- END AUTO-GENERATED METHODS IN RollingGroupByNameSpace ---
+    # --- END INSERTION MARKER IN RollingGroupByNameSpace

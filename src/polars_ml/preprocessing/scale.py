@@ -179,7 +179,7 @@ class ScaleInverse(Transformer):
 class ScaleInverseContext:
     def __init__(
         self,
-        pipeline: "Pipeline",
+        pipeline: Pipeline,
         scale: BaseScale,
         mapping: Mapping[str, str] | None = None,
     ):

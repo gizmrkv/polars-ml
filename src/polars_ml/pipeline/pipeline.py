@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime, timedelta
 from io import IOBase
 from pathlib import Path
@@ -113,7 +115,8 @@ class Pipeline(Transformer):
     def gbdt(self) -> GBDTNameSpace:
         return GBDTNameSpace(self)
 
-    # --- BEGIN AUTO-GENERATED METHODS IN Pipeline ---
+    # --- START INSERTION MARKER IN Pipeline
+
     def approx_n_unique(self) -> Self:
         return self.pipe(GetAttr("approx_n_unique"))
 
@@ -640,12 +643,10 @@ class Pipeline(Transformer):
         compression: AvroCompression = "uncompressed",
         name: str = "",
     ) -> Self:
-        return self.pipe(GetAttrPolars("write_avro", file, compression, name))
+        return self.pipe(GetAttr("write_avro", file, compression, name))
 
     def write_clipboard(self, separator: str = "\t", **kwargs: Any) -> Self:
-        return self.pipe(
-            GetAttrPolars("write_clipboard", separator=separator, **kwargs)
-        )
+        return self.pipe(GetAttr("write_clipboard", separator=separator, **kwargs))
 
     def write_csv(
         self,
@@ -671,7 +672,7 @@ class Pipeline(Transformer):
         retries: int = 2,
     ) -> Self:
         return self.pipe(
-            GetAttrPolars(
+            GetAttr(
                 "write_csv",
                 file,
                 include_bom=include_bom,
@@ -703,7 +704,7 @@ class Pipeline(Transformer):
         engine_options: dict[str, Any] | None = None,
     ) -> Self:
         return self.pipe(
-            GetAttrPolars(
+            GetAttr(
                 "write_database",
                 table_name,
                 connection,
@@ -725,7 +726,7 @@ class Pipeline(Transformer):
         retries: int = 2,
     ) -> Self:
         return self.pipe(
-            GetAttrPolars(
+            GetAttr(
                 "write_ipc",
                 file,
                 compression=compression,
@@ -743,7 +744,7 @@ class Pipeline(Transformer):
         compat_level: CompatLevel | None = None,
     ) -> Self:
         return self.pipe(
-            GetAttrPolars(
+            GetAttr(
                 "write_ipc_stream",
                 file,
                 compression=compression,
@@ -752,12 +753,12 @@ class Pipeline(Transformer):
         )
 
     def write_json(self, file: IOBase | str | Path | None = None) -> Self:
-        return self.pipe(GetAttrPolars("write_json", file))
+        return self.pipe(GetAttr("write_json", file))
 
     def write_ndjson(
         self, file: str | Path | IO[bytes] | IO[str] | None = None
     ) -> Self:
-        return self.pipe(GetAttrPolars("write_ndjson", file))
+        return self.pipe(GetAttr("write_ndjson", file))
 
     def write_parquet(
         self,
@@ -780,7 +781,7 @@ class Pipeline(Transformer):
         mkdir: bool = False,
     ) -> Self:
         return self.pipe(
-            GetAttrPolars(
+            GetAttr(
                 "write_parquet",
                 file,
                 compression=compression,
@@ -892,6 +893,75 @@ class Pipeline(Transformer):
             )
         )
 
+    def read_csv_batched(
+        self,
+        source: str | Path,
+        has_header: bool = True,
+        columns: Sequence[int] | Sequence[str] | None = None,
+        new_columns: Sequence[str] | None = None,
+        separator: str = ",",
+        comment_prefix: str | None = None,
+        quote_char: str | None = '"',
+        skip_rows: int = 0,
+        skip_lines: int = 0,
+        schema_overrides: Mapping[str, PolarsDataType]
+        | Sequence[PolarsDataType]
+        | None = None,
+        null_values: str | Sequence[str] | dict[str, str] | None = None,
+        missing_utf8_is_empty_string: bool = False,
+        ignore_errors: bool = False,
+        try_parse_dates: bool = False,
+        n_threads: int | None = None,
+        infer_schema_length: int | None = 100,
+        batch_size: int = 50000,
+        n_rows: int | None = None,
+        encoding: CsvEncoding | str = "utf8",
+        low_memory: bool = False,
+        rechunk: bool = False,
+        skip_rows_after_header: int = 0,
+        row_index_name: str | None = None,
+        row_index_offset: int = 0,
+        sample_size: int = 1024,
+        eol_char: str = "\n",
+        raise_if_empty: bool = True,
+        truncate_ragged_lines: bool = False,
+        decimal_comma: bool = False,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars(
+                "read_csv_batched",
+                source,
+                has_header=has_header,
+                columns=columns,
+                new_columns=new_columns,
+                separator=separator,
+                comment_prefix=comment_prefix,
+                quote_char=quote_char,
+                skip_rows=skip_rows,
+                skip_lines=skip_lines,
+                schema_overrides=schema_overrides,
+                null_values=null_values,
+                missing_utf8_is_empty_string=missing_utf8_is_empty_string,
+                ignore_errors=ignore_errors,
+                try_parse_dates=try_parse_dates,
+                n_threads=n_threads,
+                infer_schema_length=infer_schema_length,
+                batch_size=batch_size,
+                n_rows=n_rows,
+                encoding=encoding,
+                low_memory=low_memory,
+                rechunk=rechunk,
+                skip_rows_after_header=skip_rows_after_header,
+                row_index_name=row_index_name,
+                row_index_offset=row_index_offset,
+                sample_size=sample_size,
+                eol_char=eol_char,
+                raise_if_empty=raise_if_empty,
+                truncate_ragged_lines=truncate_ragged_lines,
+                decimal_comma=decimal_comma,
+            )
+        )
+
     def read_database_uri(
         self,
         query: list[str] | str,
@@ -947,6 +1017,9 @@ class Pipeline(Transformer):
                 rechunk=rechunk,
             )
         )
+
+    def read_ipc_schema(self, source: str | Path | IO[bytes] | bytes) -> Self:
+        return self.pipe(GetAttrPolars("read_ipc_schema", source))
 
     def read_ipc_stream(
         self,
@@ -1041,6 +1114,37 @@ class Pipeline(Transformer):
             )
         )
 
+    def read_ods(
+        self,
+        source: FileSource,
+        sheet_id: int | Sequence[int] | None = None,
+        sheet_name: str | list[str] | tuple[str] | None = None,
+        has_header: bool = True,
+        columns: Sequence[int] | Sequence[str] | None = None,
+        schema_overrides: SchemaDict | None = None,
+        infer_schema_length: int | None = 100,
+        include_file_paths: str | None = None,
+        drop_empty_rows: bool = True,
+        drop_empty_cols: bool = True,
+        raise_if_empty: bool = True,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars(
+                "read_ods",
+                source,
+                sheet_id=sheet_id,
+                sheet_name=sheet_name,
+                has_header=has_header,
+                columns=columns,
+                schema_overrides=schema_overrides,
+                infer_schema_length=infer_schema_length,
+                include_file_paths=include_file_paths,
+                drop_empty_rows=drop_empty_rows,
+                drop_empty_cols=drop_empty_cols,
+                raise_if_empty=raise_if_empty,
+            )
+        )
+
     def read_parquet(
         self,
         source: FileSource,
@@ -1097,6 +1201,28 @@ class Pipeline(Transformer):
                 allow_missing_columns=allow_missing_columns,
             )
         )
+
+    def read_parquet_metadata(
+        self,
+        source: str | Path | IO[bytes] | bytes,
+        storage_options: dict[str, Any] | None = None,
+        credential_provider: CredentialProviderFunction
+        | Literal["auto"]
+        | None = "auto",
+        retries: int = 2,
+    ) -> Self:
+        return self.pipe(
+            GetAttrPolars(
+                "read_parquet_metadata",
+                source,
+                storage_options,
+                credential_provider,
+                retries,
+            )
+        )
+
+    def read_parquet_schema(self, source: str | Path | IO[bytes] | bytes) -> Self:
+        return self.pipe(GetAttrPolars("read_parquet_schema", source))
 
     def group_by(
         self,
@@ -1482,4 +1608,4 @@ class Pipeline(Transformer):
                 inverse_mapping,
             )
 
-    # --- END AUTO-GENERATED METHODS IN Pipeline ---
+    # --- END INSERTION MARKER IN Pipeline

@@ -165,7 +165,7 @@ class PowerTransformInverse(Transformer):
 class PowerTransformInverseContext:
     def __init__(
         self,
-        pipeline: "Pipeline",
+        pipeline: Pipeline,
         power_transform: BasePowerTransform,
         mapping: Mapping[str, str] | None = None,
     ):
