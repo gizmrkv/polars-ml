@@ -62,8 +62,14 @@ class BaseScale(Transformer, ABC):
             data.join(
                 self.stats.select(
                     *self.by,
-                    *[f"{t}_loc_{tmp_suf}" for t in scale_columns],
-                    *[f"{t}_scale_{tmp_suf}" for t in scale_columns],
+                    *[
+                        pl.col(f"{t}_loc").name.suffix(f"_{tmp_suf}")
+                        for t in scale_columns
+                    ],
+                    *[
+                        pl.col(f"{t}_scale").name.suffix(f"_{tmp_suf}")
+                        for t in scale_columns
+                    ],
                 ),
                 how="left",
                 **on_args,
@@ -76,8 +82,8 @@ class BaseScale(Transformer, ABC):
                 for c in scale_columns
             )
             .drop(
-                *[f"{c}_loc_{tmp_suf}" for c in scale_columns],
-                *[f"{c}_scale_{tmp_suf}" for c in scale_columns],
+                *[pl.col(f"{c}_loc_{tmp_suf}") for c in scale_columns],
+                *[pl.col(f"{c}_scale_{tmp_suf}") for c in scale_columns],
             )
         )
 

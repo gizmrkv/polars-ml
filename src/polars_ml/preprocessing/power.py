@@ -72,7 +72,11 @@ class BasePowerTransform(Transformer, ABC):
         return (
             data.join(
                 self.maxlog.select(
-                    *self.by, *[f"{c}_maxlog_{tmp_suf}" for c in power_columns]
+                    *self.by,
+                    *[
+                        pl.col(f"{c}_maxlog").name.suffix(f"_{tmp_suf}")
+                        for c in power_columns
+                    ],
                 ),
                 how="left",
                 **on_args,
