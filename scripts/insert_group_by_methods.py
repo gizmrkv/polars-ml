@@ -38,7 +38,7 @@ def render_methods(
     return codes
 
 
-def insert_in_group_by():
+def insert_group_by_methods():
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
     target_file = PROJECT_ROOT / Path("src/polars_ml/pipeline/group_by.py")
@@ -59,4 +59,4 @@ def insert_in_group_by():
 
 
 if __name__ == "__main__":
-    insert_in_group_by()
+    insert_group_by_methods()

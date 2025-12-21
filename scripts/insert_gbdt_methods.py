@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from const import END_INSERTION_MARKER, METRICS_TRANSFORMERS, START_INSERTION_MARKER
+from const import END_INSERTION_MARKER, GBDT_TRANSFORMERS, START_INSERTION_MARKER
 from utils import insert_between_markers, render_call_args, render_params_sig
 
 
@@ -12,7 +12,7 @@ def render_methods() -> list[str]:
     def {name}({params}) -> Pipeline:
         return self.pipeline.pipe({cls_name}({call_args}))
 """
-    for method_name, transformer_cls in METRICS_TRANSFORMERS:
+    for method_name, transformer_cls in GBDT_TRANSFORMERS:
         obj = getattr(transformer_cls, "__init__")
         cls_name = transformer_cls.__name__
         params = ", ".join(["self"] + render_params_sig(obj))
@@ -26,18 +26,18 @@ def render_methods() -> list[str]:
     return codes
 
 
-def insert_in_metrics():
+def insert_gbdt_methods():
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-    target_file = PROJECT_ROOT / Path("src/polars_ml/metrics/__init__.py")
+    target_file = PROJECT_ROOT / Path("src/polars_ml/gbdt/__init__.py")
     codes = render_methods()
     insert_between_markers(
         target_file,
         "".join(codes),
-        START_INSERTION_MARKER.format(prefix=" " * 4, suffix=" IN MetricsNameSpace"),
-        END_INSERTION_MARKER.format(prefix=" " * 4, suffix=" IN MetricsNameSpace"),
+        START_INSERTION_MARKER.format(prefix=" " * 4, suffix=" IN GBDTNameSpace"),
+        END_INSERTION_MARKER.format(prefix=" " * 4, suffix=" IN GBDTNameSpace"),
     )
 
 
 if __name__ == "__main__":
-    insert_in_metrics()
+    insert_gbdt_methods()

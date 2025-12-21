@@ -152,7 +152,7 @@ def render_methods() -> list[str]:
     return codes
 
 
-def insert_in_pipeline():
+def insert_pipeline_methods():
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
     target_file = PROJECT_ROOT / Path("src/polars_ml/pipeline/pipeline.py")
@@ -166,4 +166,4 @@ def insert_in_pipeline():
 
 
 if __name__ == "__main__":
-    insert_in_pipeline()
+    insert_pipeline_methods()
