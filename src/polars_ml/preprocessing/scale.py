@@ -151,11 +151,16 @@ class RobustScale(BaseScale):
 class ScaleInverse(Transformer):
     def __init__(self, scale: BaseScale, mapping: Mapping[str, str] | None = None):
         self.scale = scale
-        self.mapping = mapping or {col: col for col in scale.columns}
+        self._mapping = mapping
+
+    @property
+    def mapping(self) -> Mapping[str, str]:
+        if self._mapping is not None:
+            return self._mapping
+        return {col: col for col in self.scale.columns}
 
     def transform(self, data: DataFrame) -> DataFrame:
         input_columns = data.collect_schema().names()
-        targets = set(input_columns) & set(self.mapping.keys())
         sources = set(self.scale.columns) & set(self.mapping.values())
         on_args: dict[str, Any] = (
             {"on": self.scale.by}
@@ -167,18 +172,32 @@ class ScaleInverse(Transformer):
             data.join(
                 self.scale.stats.select(
                     *self.scale.by,
-                    *[pl.col(f"{col}_loc_{tmp_suf}") for col in sources],
-                    *[pl.col(f"{col}_scale_{tmp_suf}") for col in sources],
+                    *[
+                        pl.col(f"{col}_loc").alias(f"{col}_loc_{tmp_suf}")
+                        for col in sources
+                    ],
+                    *[
+                        pl.col(f"{col}_scale").alias(f"{col}_scale_{tmp_suf}")
+                        for col in sources
+                    ],
                 ),
                 how="left",
                 **on_args,
             )
             .with_columns(
-                (pl.col(t) * pl.col(f"{s}_scale_{tmp_suf}"))
-                + pl.col(f"{s}_loc_{tmp_suf}")
-                for t, s in [(t, s) for t, s in self.mapping.items() if t in targets]
+                (
+                    (pl.col(t) * pl.col(f"{s}_scale_{tmp_suf}"))
+                    + pl.col(f"{s}_loc_{tmp_suf}")
+                ).alias(t)
+                for t, s in self.mapping.items()
+                if t in input_columns
             )
-            .select(input_columns)
+            .drop(
+                *(
+                    [f"{s}_loc_{tmp_suf}" for s in sources]
+                    + [f"{s}_scale_{tmp_suf}" for s in sources]
+                )
+            )
         )
 
 
@@ -196,5 +215,5 @@ class ScaleInverseContext:
     def __enter__(self) -> Pipeline:
         return self.pipeline.pipe(self.scale)
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.pipeline.pipe(ScaleInverse(self.scale, mapping=self.mapping))

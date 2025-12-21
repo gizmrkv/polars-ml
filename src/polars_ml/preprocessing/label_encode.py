@@ -71,7 +71,13 @@ class LabelEncodeInverse(Transformer):
         self, label_encode: LabelEncode, mapping: Mapping[str, str] | None = None
     ):
         self.label_encode = label_encode
-        self.mapping = mapping or {col: col for col in label_encode.mappings.keys()}
+        self._mapping = mapping
+
+    @property
+    def mapping(self) -> Mapping[str, str]:
+        if self._mapping is not None:
+            return self._mapping
+        return {col: col for col in self.label_encode.mappings.keys()}
 
     def transform(self, data: DataFrame) -> DataFrame:
         import shortuuid
@@ -114,5 +120,5 @@ class LabelEncodeInverseContext:
     def __enter__(self) -> Pipeline:
         return self.pipeline.pipe(self.label_encode)
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.pipeline.pipe(LabelEncodeInverse(self.label_encode, mapping=self.mapping))

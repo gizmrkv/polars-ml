@@ -136,11 +136,16 @@ class PowerTransformInverse(Transformer):
         mapping: Mapping[str, str] | None = None,
     ):
         self.power_transform = power_transform
-        self.mapping = mapping or {col: col for col in self.power_transform.columns}
+        self._mapping = mapping
+
+    @property
+    def mapping(self) -> Mapping[str, str]:
+        if self._mapping is not None:
+            return self._mapping
+        return {col: col for col in self.power_transform.columns}
 
     def transform(self, data: DataFrame) -> DataFrame:
         input_columns = data.collect_schema().names()
-        targets = set(input_columns) & set(self.mapping.keys())
         sources = set(self.power_transform.columns) & set(self.mapping.values())
         on_args: dict[str, Any] = (
             {"on": self.power_transform.by}
@@ -151,19 +156,19 @@ class PowerTransformInverse(Transformer):
         data = data.join(
             self.power_transform.maxlog.select(
                 *self.power_transform.by,
-                *targets,
-                *[f"{c}_maxlog_{tmp_suf}" for c in sources],
+                *[
+                    pl.col(f"{c}_maxlog").alias(f"{c}_maxlog_{tmp_suf}")
+                    for c in sources
+                ],
             ),
             how="left",
             **on_args,
-            suffix=self.power_transform.suffix,
         )
         return data.with_columns(
             self.power_transform.power_inv_expr(t, f"{s}_maxlog_{tmp_suf}").alias(t)
-            for t, s in [(t, s) for t, s in self.mapping.items() if t in targets]
-        ).drop(
-            *[f"{s}_maxlog_{tmp_suf}" for s in sources],
-        )
+            for t, s in self.mapping.items()
+            if t in input_columns
+        ).drop(*(f"{s}_maxlog_{tmp_suf}" for s in sources))
 
 
 class PowerTransformInverseContext:
@@ -180,7 +185,7 @@ class PowerTransformInverseContext:
     def __enter__(self) -> Pipeline:
         return self.pipeline.pipe(self.power_transform)
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.pipeline.pipe(
             PowerTransformInverse(self.power_transform, mapping=self.mapping),
         )
