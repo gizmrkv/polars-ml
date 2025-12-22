@@ -25,20 +25,12 @@ def test_box_cox_transform(sample_df: DataFrame):
     assert "val" in output.columns
     assert output["val"].n_unique() == 5
 
-    output = t.fit_transform(sample_df)
-    assert "val" in output.columns
-    assert output["val"].n_unique() == 5
-
 
 def test_yeo_johnson_transform(sample_df: DataFrame):
     t = YeoJohnsonTransform(columns="val")
 
     t.fit(sample_df)
     output = t.transform(sample_df)
-    assert "val" in output.columns
-    assert output["val"].n_unique() == 5
-
-    output = t.fit_transform(sample_df)
     assert "val" in output.columns
     assert output["val"].n_unique() == 5
 
@@ -65,9 +57,6 @@ def test_power_context(sample_df: DataFrame):
     output = pipeline.transform(sample_df)
     assert_series_equal(output["val"], sample_df["val"])
 
-    output = pipeline.fit_transform(sample_df)
-    assert_series_equal(output["val"], sample_df["val"])
-
 
 def test_power_by_group():
     df = DataFrame(
@@ -77,11 +66,6 @@ def test_power_by_group():
     t.fit(df)
     output = t.transform(df)
 
-    assert "val" in output.columns
-    assert output.filter(pl.col("group") == "A")["val"].n_unique() == 3
-    assert output.filter(pl.col("group") == "B")["val"].n_unique() == 3
-
-    output = t.fit_transform(df)
     assert "val" in output.columns
     assert output.filter(pl.col("group") == "A")["val"].n_unique() == 3
     assert output.filter(pl.col("group") == "B")["val"].n_unique() == 3

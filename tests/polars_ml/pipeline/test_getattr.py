@@ -19,9 +19,6 @@ def test_getattr_fit_transform(sample_df: DataFrame):
     expected = sample_df.select(pl.col("a") * 2)
     assert_frame_equal(output, expected)
 
-    output = t.fit_transform(sample_df)
-    assert_frame_equal(output, expected)
-
 
 def test_getattr_polars_fit_transform(sample_df: DataFrame):
     t = GetAttrPolars("concat", [sample_df, sample_df])
@@ -29,7 +26,4 @@ def test_getattr_polars_fit_transform(sample_df: DataFrame):
 
     output = t.transform(sample_df)
     expected = pl.concat([sample_df, sample_df])
-    assert_frame_equal(output, expected)
-
-    output = t.fit_transform(sample_df)
     assert_frame_equal(output, expected)

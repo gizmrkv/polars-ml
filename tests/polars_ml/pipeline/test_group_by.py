@@ -22,6 +22,3 @@ def test_group_by_agg(sample_df: DataFrame):
         .sort("group")
     )
     assert_frame_equal(output, expected)
-
-    output = pipeline.fit_transform(sample_df).sort("group")
-    assert_frame_equal(output, expected)

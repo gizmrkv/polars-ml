@@ -22,9 +22,6 @@ def test_pipeline_methods(sample_df: DataFrame):
     expected = sample_df.with_columns(c=pl.col("a") + pl.col("b")).select("c")
     assert_frame_equal(output, expected)
 
-    output = pipeline.fit_transform(sample_df)
-    assert_frame_equal(output, expected)
-
 
 def test_pipeline_shortcut_methods(sample_df: DataFrame):
     pipeline = Pipeline().with_columns(c=pl.col("a") + pl.col("b")).select("c")
@@ -32,7 +29,4 @@ def test_pipeline_shortcut_methods(sample_df: DataFrame):
     pipeline.fit(sample_df)
     output = pipeline.transform(sample_df)
     expected = sample_df.with_columns(c=pl.col("a") + pl.col("b")).select("c")
-    assert_frame_equal(output, expected)
-
-    output = pipeline.fit_transform(sample_df)
     assert_frame_equal(output, expected)

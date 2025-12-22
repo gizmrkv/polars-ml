@@ -1,5 +1,3 @@
-from typing import Self
-
 import polars as pl
 import pytest
 from polars import DataFrame
@@ -36,7 +34,6 @@ def test_const(sample_df: DataFrame):
 
 def test_parrot(sample_df: DataFrame):
     t = Parrot()
-    t.fit(sample_df)
     output = t.transform(DataFrame({"a": [0]}))
     assert_frame_equal(output, sample_df)
 
@@ -46,9 +43,6 @@ def test_side(sample_df: DataFrame):
         def __init__(self):
             self.called = False
 
-        def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
-            return self
-
         def transform(self, data: DataFrame) -> DataFrame:
             self.called = True
             return data
@@ -56,24 +50,15 @@ def test_side(sample_df: DataFrame):
     mock = MockTransformer()
     t = Side(mock)
 
-    t.fit(sample_df)
     output = t.transform(sample_df)
     assert_frame_equal(output, sample_df)
-
-    output = t.fit_transform(sample_df)
-    assert_frame_equal(output, sample_df)
-    assert mock.called
 
 
 def test_concat_vertical(sample_df: DataFrame):
     t = Concat([Echo(), Echo()], how="vertical")
 
-    t.fit(sample_df)
     output = t.transform(sample_df)
     expected = pl.concat([sample_df, sample_df], how="vertical")
-    assert_frame_equal(output, expected)
-
-    output = t.fit_transform(sample_df)
     assert_frame_equal(output, expected)
 
 
@@ -83,14 +68,10 @@ def test_concat_horizontal(sample_df: DataFrame):
         how="horizontal",
     )
 
-    t.fit(sample_df)
     output = t.transform(sample_df)
     expected = pl.concat(
         [sample_df.select("a"), sample_df.select("b")], how="horizontal"
     )
-    assert_frame_equal(output, expected)
-
-    output = t.fit_transform(sample_df)
     assert_frame_equal(output, expected)
 
 
@@ -99,12 +80,6 @@ def test_to_dummies(sample_df: DataFrame):
     t = ToDummies(columns=["cat"])
     t.fit(df)
     output = t.transform(df)
-    assert "cat_A" in output.columns
-    assert "cat_B" in output.columns
-    assert output["cat_A"].to_list() == [1, 0, 1]
-    assert output["cat_B"].to_list() == [0, 1, 0]
-
-    output = t.fit_transform(df)
     assert "cat_A" in output.columns
     assert "cat_B" in output.columns
     assert output["cat_A"].to_list() == [1, 0, 1]

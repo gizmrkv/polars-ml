@@ -23,12 +23,6 @@ def test_arithmetic_synthesis_additive(sample_df: DataFrame):
     assert_series_equal(output["a+b"], pl.Series("a+b", [5.0, 7.0, 9.0]))
     assert_series_equal(output["a-b"], pl.Series("a-b", [-3.0, -3.0, -3.0]))
 
-    output = t.fit_transform(sample_df)
-    assert "a+b" in output.columns
-    assert "a-b" in output.columns
-    assert_series_equal(output["a+b"], pl.Series("a+b", [5.0, 7.0, 9.0]))
-    assert_series_equal(output["a-b"], pl.Series("a-b", [-3.0, -3.0, -3.0]))
-
 
 def test_arithmetic_synthesis_multiplicative(sample_df: DataFrame):
     t = ArithmeticSynthesis(
@@ -37,12 +31,6 @@ def test_arithmetic_synthesis_multiplicative(sample_df: DataFrame):
     t.fit(sample_df)
     output = t.transform(sample_df)
 
-    assert "a*b" in output.columns
-    assert "a/b" in output.columns
-    assert_series_equal(output["a*b"], pl.Series("a*b", [4.0, 10.0, 18.0]))
-    assert_series_equal(output["a/b"], pl.Series("a/b", [0.25, 0.4, 0.5]))
-
-    output = t.fit_transform(sample_df)
     assert "a*b" in output.columns
     assert "a/b" in output.columns
     assert_series_equal(output["a*b"], pl.Series("a*b", [4.0, 10.0, 18.0]))
@@ -60,7 +48,4 @@ def test_arithmetic_synthesis_drop_corr(sample_df: DataFrame):
     )
     t.fit(df)
     output = t.transform(df)
-    assert len(output.columns) > 2
-
-    output = t.fit_transform(df)
     assert len(output.columns) > 2

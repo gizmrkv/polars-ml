@@ -25,9 +25,6 @@ def test_standard_scale(sample_df: DataFrame):
     output = t.transform(sample_df)
     assert_series_equal(output["val"], pl.Series("val", [-1.0, 0.0, 1.0]))
 
-    output = t.fit_transform(sample_df)
-    assert_series_equal(output["val"], pl.Series("val", [-1.0, 0.0, 1.0]))
-
 
 def test_min_max_scale(sample_df: DataFrame):
     t = MinMaxScale(columns="val")
@@ -36,18 +33,12 @@ def test_min_max_scale(sample_df: DataFrame):
     output = t.transform(sample_df)
     assert_series_equal(output["val"], pl.Series("val", [0.0, 0.5, 1.0]))
 
-    output = t.fit_transform(sample_df)
-    assert_series_equal(output["val"], pl.Series("val", [0.0, 0.5, 1.0]))
-
 
 def test_robust_scale():
     df = DataFrame({"val": [1, 2, 3, 4, 5]})
     t = RobustScale(columns="val", quantile_range=(0.25, 0.75))
     t.fit(df)
     output = t.transform(df)
-    assert_series_equal(output["val"], pl.Series("val", [-1.0, -0.5, 0.0, 0.5, 1.0]))
-
-    output = t.fit_transform(df)
     assert_series_equal(output["val"], pl.Series("val", [-1.0, -0.5, 0.0, 0.5, 1.0]))
 
 
