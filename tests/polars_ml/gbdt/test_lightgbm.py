@@ -1,0 +1,83 @@
+from __future__ import annotations
+
+from typing import Any, Union
+
+import lightgbm as lgb
+import numpy as np
+import polars as pl
+import pytest
+from numpy.typing import NDArray
+
+from polars_ml.gbdt.lightgbm_ import BaseLightGBM, LightGBM
+
+
+def test_lightgbm_default_flow():
+    df = pl.DataFrame(
+        {"f1": [1, 2, 3, 4, 5], "f2": [10, 20, 30, 40, 50], "target": [0, 1, 0, 1, 0]}
+    )
+
+    class MyLGB(LightGBM):
+        def get_train_params(self) -> dict[str, Any]:
+            return {"num_boost_round": 10}
+
+    params = {
+        "objective": "binary",
+        "metric": "binary_logloss",
+        "verbosity": -1,
+        "boosting_type": "gbdt",
+    }
+
+    model = MyLGB(label="target", **params)
+
+    model.fit(df)
+    result = model.transform(df)
+
+    assert "prediction" in result.columns
+    assert len(result) == 5
+
+
+def test_base_lightgbm_override():
+    class CustomLGB(BaseLightGBM):
+        def fit(self, data: pl.DataFrame) -> CustomLGB:
+            train_dataset, _, _ = self.make_train_valid_sets(data)
+            self.booster = lgb.train(self.params, train_dataset, num_boost_round=5)
+            return self
+
+        def get_booster(self) -> lgb.Booster:
+            return self.booster
+
+        def create_train(self, data: pl.DataFrame) -> lgb.Dataset:
+            # Add some custom logic here if needed
+            ds = super().create_train(data)
+            ds.custom_attr = "custom"
+            return ds
+
+        def predict(self, data: pl.DataFrame) -> NDArray:
+            # Custom prediction logic (e.g. constant prediction for testing)
+            return np.zeros(len(data))
+
+    df = pl.DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
+
+    model = CustomLGB({"verbosity": -1}, "target")
+    model.fit(df)
+    result = model.transform(df)
+
+    assert "prediction" in result.columns
+    assert (result["prediction"] == 0).all()
+
+
+def test_feature_consistency():
+    df_train = pl.DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
+    df_test = pl.DataFrame(
+        {"f1": [1, 2, 3], "extra": [10, 20, 30], "target": [0, 1, 0]}
+    )
+
+    model = LightGBM(label="target", verbosity=-1)
+    model.fit(df_train)
+
+    # Should not raise error even with 'extra' column
+    result = model.transform(df_test)
+
+    assert "prediction" in result.columns
+    assert len(result.columns) == 4  # f1, extra, target, prediction
+    assert "extra" in result.columns

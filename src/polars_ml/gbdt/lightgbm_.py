@@ -9,8 +9,9 @@ from typing import (
     Generator,
     Iterable,
     Iterator,
+    Mapping,
     Self,
-    TypedDict,
+    Sequence,
     Union,
 )
 
@@ -28,141 +29,71 @@ if TYPE_CHECKING:
     from sklearn.model_selection import BaseCrossValidator
 
 
-class LGBDatasetParams(TypedDict, total=False):
-    weight: Callable[[DataFrame], NDArray[Any]]
-    group: Callable[[DataFrame], NDArray[Any]]
-    init_score: Callable[[DataFrame], NDArray[Any]]
-    categorical_feature: list[str]
-    params: dict[str, Any]
-    position: Callable[[DataFrame], NDArray[Any]]
-
-
-class LGBTrainParams(TypedDict, total=False):
-    num_boost_round: int
-    feval: Callable[..., Any]
-    init_model: Union[str, Path, "lgb.Booster"]
-    keep_training_booster: bool
-    callbacks: list[Callable[..., Any]]
-
-
-class LGBPredictParams(TypedDict, total=False):
-    start_iteration: int
-    num_iteration: int
-    raw_score: bool
-    pred_leaf: bool
-    pred_contrib: bool
-    data_has_header: bool
-    validate_features: bool
-
-
-class LGBTunerParams(TypedDict, total=False):
-    num_boost_round: int
-    feval: Callable[..., Any]
-    categorical_feature: str
-    keep_training_booster: bool
-    callbacks: list[Callable[..., Any]]
-    time_budget: int
-    sample_size: int
-    study: "optuna.study.Study"
-    optuna_callbacks: list[
-        Callable[["optuna.study.Study", "optuna.trial.FrozenTrial"], None]
-    ]
-    model_dir: str
-    show_progress_bar: bool
-    optuna_seed: int
-
-
-class LGBTunerCVParams(TypedDict, total=False):
-    num_boost_round: int
-    folds: (
-        Generator[tuple[int, int], None, None]
-        | Iterator[tuple[int, int]]
-        | "BaseCrossValidator"
-    )
-    nfold: int
-    stratified: bool
-    shuffle: bool
-    feval: Callable[..., Any]
-    categorical_feature: str
-    fpreproc: Callable[..., Any]
-    seed: int
-    callbacks: list[Callable[..., Any]]
-    time_budget: int
-    sample_size: int
-    study: "optuna.study.Study"
-    optuna_callbacks: list[
-        Callable[["optuna.study.Study", "optuna.trial.FrozenTrial"], None]
-    ]
-    show_progress_bar: bool
-    model_dir: str
-    optuna_seed: int
-
-
 class BaseLightGBM(Transformer, ABC):
     def __init__(
         self,
+        params: Mapping[str, Any],
         label: IntoExpr,
-        params: dict[str, Any],
-        *,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
-        dataset_params: LGBDatasetParams | None = None,
-        predict_params: LGBPredictParams | None = None,
+        *,
         prediction_name: str = "prediction",
     ):
         self.label = label
         self.params = params
         self.features_selector = features
-        self.dataset_params = dataset_params or {}
-        self.predict_params = predict_params or {}
         self.prediction_name = prediction_name
 
     @abstractmethod
-    def get_booster(self) -> Union["lgb.Booster", dict[str, "lgb.Booster"]]: ...
+    def get_booster(self) -> lgb.Booster | dict[str, lgb.Booster]:
+        """Return the trained booster(s)."""
+        ...
 
-    def make_dataset_params(self, data: DataFrame) -> dict[str, Any]:
-        train_label = data.select(self.label)
-        if self.features_selector is None:
-            self.features_selector = cs.exclude(*train_label.columns)
-
-        train_features = data.select(self.features_selector)
-
-        params: dict[str, Any] = {
-            "data": train_features.to_pandas(),
-            "label": train_label.to_pandas(),
-        }
-        if weight := self.dataset_params.get("weight"):
-            params["weight"] = weight(data)
-        if group := self.dataset_params.get("group"):
-            params["group"] = group(data)
-        if init_score := self.dataset_params.get("init_score"):
-            params["init_score"] = init_score(data)
-        if categorical_feature := self.dataset_params.get("categorical_feature"):
-            params["categorical_feature"] = categorical_feature
-        if position := self.dataset_params.get("position"):
-            params["position"] = position(data)
-
-        return params
-
-    def make_train_valid_sets(
-        self, data: DataFrame, **more_data: DataFrame
-    ) -> tuple["lgb.Dataset", list["lgb.Dataset"], list[str]]:
+    def create_train(self, data: DataFrame) -> lgb.Dataset:
+        """Create a LightGBM Dataset for training."""
         import lightgbm as lgb
 
-        self.feature_names = (
-            data.lazy().select(self.features_selector).collect_schema().names()
-        )
+        if self.features_selector is None:
+            # Determine features lazily if not specified
+            label_cols = data.lazy().select(self.label).collect_schema().names()
+            self.features_selector = cs.exclude(*label_cols)
 
-        dataset_params = self.make_dataset_params(data)
-        train_dataset = lgb.Dataset(
-            **dataset_params,
+        features = data.select(self.features_selector)
+        label = data.select(self.label)
+        self.feature_names = features.columns
+
+        params: dict[str, Any] = {
+            "data": features.to_pandas(),
+            "label": label.to_pandas(),
+        }
+
+        return lgb.Dataset(
+            **params,
             feature_name=self.feature_names,
             free_raw_data=True,
         )
+
+    def create_valid(self, data: DataFrame, reference: lgb.Dataset) -> lgb.Dataset:
+        """Create a LightGBM Dataset for validation based on a reference training dataset."""
+        # Use stored feature_names to ensure consistency
+        features = data.select(self.feature_names)
+        label = data.select(self.label)
+
+        params: dict[str, Any] = {
+            "data": features.to_pandas(),
+            "label": label.to_pandas(),
+        }
+
+        return reference.create_valid(**params)
+
+    def make_train_valid_sets(
+        self, data: DataFrame, **more_data: DataFrame
+    ) -> tuple[lgb.Dataset, list[lgb.Dataset], list[str]]:
+        """Prepare training and validation datasets."""
+        train_dataset = self.create_train(data)
         valid_sets = []
         valid_names = []
         for name, valid_data in more_data.items():
-            dataset_params = self.make_dataset_params(valid_data)
-            valid_dataset = train_dataset.create_valid(**dataset_params)
+            valid_dataset = self.create_valid(valid_data, train_dataset)
             valid_sets.append(valid_dataset)
             valid_names.append(name)
 
@@ -171,52 +102,71 @@ class BaseLightGBM(Transformer, ABC):
 
         return train_dataset, valid_sets, valid_names
 
+    def predict(self, data: DataFrame) -> NDArray:
+        """Generate raw predictions using the booster(s). Matches LightGBM.Booster.predict annotation."""
+        import lightgbm as lgb
+        import numpy as np
+
+        # Use stored feature_names to ensure consistency with training
+        input_data = data.select(self.feature_names).to_numpy()
+        boosters = self.get_booster()
+
+        if isinstance(boosters, lgb.Booster):
+            return boosters.predict(input_data)
+
+        # Ensemble (average) predictions if multiple boosters exist
+        preds = [b.predict(input_data) for b in boosters.values()]
+        return np.mean(preds, axis=0)
+
     def transform(self, data: DataFrame) -> DataFrame:
+        """Transform the data by adding prediction columns."""
+        pred = self.predict(data)
+        name = self.prediction_name
+
+        prediction_df = pl.from_numpy(
+            pred,
+            schema=[name]
+            if pred.ndim == 1
+            else [f"{name}_{i}" for i in range(pred.shape[1])],
+        )
+
+        return pl.concat([data, prediction_df], how="horizontal")
+
+    def save(self, out_dir: str | Path) -> None:
+        """Save the booster(s) and relevant metadata."""
         import lightgbm as lgb
 
-        input = data.select(self.features_selector)
         boosters = self.get_booster()
+        out_dir = Path(out_dir)
+
         if isinstance(boosters, lgb.Booster):
-            boosters = {self.prediction_name: boosters}
-
-        predictions = []
-        for name, b in boosters.items():
-            pred: NDArray[Any] = b.predict(input.to_numpy(), **self.predict_params)  # type: ignore
-            predictions.append(
-                pl.from_numpy(
-                    pred,
-                    schema=[name]
-                    if pred.ndim == 1
-                    else [f"{name}_{i}" for i in range(pred.shape[1])],
-                )
-            )
-
-        return pl.concat([data, *predictions], how="horizontal")
+            save_lightgbm_booster(boosters, out_dir)
+        else:
+            for name, booster in boosters.items():
+                save_lightgbm_booster(booster, out_dir / name)
 
 
 class LightGBM(BaseLightGBM):
     def __init__(
         self,
         label: IntoExpr,
-        params: dict[str, Any],
-        *,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
-        dataset_params: LGBDatasetParams | None = None,
-        train_params: LGBTrainParams | None = None,
-        predict_params: LGBPredictParams | None = None,
+        *,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
+        **params: Any,
     ):
         super().__init__(
-            label=label,
-            params=params,
-            features=features,
-            dataset_params=dataset_params,
-            predict_params=predict_params,
+            params,
+            label,
+            features,
             prediction_name=prediction_name,
         )
-        self.train_params = train_params or {}
         self.out_dir = Path(out_dir) if out_dir else None
+
+    def get_train_params(self) -> Mapping[str, Any]:
+        """Return parameters for LightGBM training. Override this for customization."""
+        return {}
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import lightgbm as lgb
@@ -230,11 +180,11 @@ class LightGBM(BaseLightGBM):
             train_dataset,
             valid_sets=valid_sets,
             valid_names=valid_names,
-            **self.train_params,
+            **self.get_train_params(),
         )
 
         if self.out_dir:
-            save_lightgbm_booster(self.booster, self.out_dir)
+            self.save(self.out_dir)
 
         return self
 
@@ -246,25 +196,23 @@ class LightGBMTuner(BaseLightGBM):
     def __init__(
         self,
         label: IntoExpr,
-        params: dict[str, Any],
-        *,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
-        dataset_params: LGBDatasetParams | None = None,
-        tuner_params: LGBTunerParams | None = None,
-        predict_params: LGBPredictParams | None = None,
+        *,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
+        **params: Any,
     ):
         super().__init__(
-            label=label,
-            params=params,
-            features=features,
-            dataset_params=dataset_params,
-            predict_params=predict_params,
+            params,
+            label,
+            features,
             prediction_name=prediction_name,
         )
-        self.tuner_params = tuner_params or {}
         self.out_dir = Path(out_dir) if out_dir else None
+
+    def get_tuner_params(self) -> Mapping[str, Any]:
+        """Return parameters for Optuna LightGBMTuner. Override this for customization."""
+        return {}
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         from optuna_integration.lightgbm import LightGBMTuner
@@ -278,13 +226,13 @@ class LightGBMTuner(BaseLightGBM):
             train_dataset,
             valid_sets=valid_sets,
             valid_names=valid_names,
-            **self.tuner_params,
+            **self.get_tuner_params(),
         )
         self.tuner.run()
         self.best_booster = self.tuner.get_best_booster()
 
         if self.out_dir:
-            save_lightgbm_booster(self.best_booster, self.out_dir)
+            self.save(self.out_dir)
 
         return self
 
@@ -296,26 +244,24 @@ class LightGBMTunerCV(BaseLightGBM):
     def __init__(
         self,
         label: IntoExpr,
-        params: dict[str, Any],
-        *,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
-        dataset_params: LGBDatasetParams | None = None,
-        tuner_params: LGBTunerCVParams | None = None,
-        predict_params: LGBPredictParams | None = None,
+        *,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
+        **params: Any,
     ):
         super().__init__(
-            label=label,
-            params=params,
-            features=features,
-            dataset_params=dataset_params,
-            predict_params=predict_params,
+            params,
+            label,
+            features,
             prediction_name=prediction_name,
         )
-        self.tuner_params = tuner_params or {}
         self.prediction_name = prediction_name
         self.out_dir = Path(out_dir) if out_dir else None
+
+    def get_tuner_params(self) -> Mapping[str, Any]:
+        """Return parameters for Optuna LightGBMTunerCV. Override this for customization."""
+        return {}
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import lightgbm as lgb
@@ -326,14 +272,13 @@ class LightGBMTunerCV(BaseLightGBM):
             self.params,
             train_dataset,
             return_cvbooster=True,
-            **self.tuner_params,
+            **self.get_tuner_params(),
         )
         self.tuner.run()
         self.boosters = self.tuner.get_best_booster().boosters
 
         if self.out_dir:
-            for i, booster in enumerate(self.boosters):
-                save_lightgbm_booster(booster, self.out_dir / f"cv{i}")
+            self.save(self.out_dir)
 
         return self
 

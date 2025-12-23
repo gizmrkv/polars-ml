@@ -34,7 +34,8 @@ def test_const(sample_df: DataFrame):
 
 def test_parrot(sample_df: DataFrame):
     t = Parrot()
-    output = t.transform(DataFrame({"a": [0]}))
+    t.fit(sample_df)
+    output = t.transform(sample_df)
     assert_frame_equal(output, sample_df)
 
 
