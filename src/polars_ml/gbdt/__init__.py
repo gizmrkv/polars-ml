@@ -10,7 +10,7 @@ from .lightgbm_ import (
     LightGBMTuner,
     LightGBMTunerCV,
 )
-from .xgboost_ import XGBDatasetParams, XGBoost, XGBPredictParams, XGBTrainParams
+from .xgboost_ import XGBoost
 
 if TYPE_CHECKING:
     from polars_ml import Pipeline
@@ -46,24 +46,18 @@ class GBDTNameSpace:
     def xgboost(
         self,
         label: IntoExpr,
-        params: dict[str, Any],
         features: IntoExpr | Iterable[IntoExpr] | None = None,
-        dataset_params: XGBDatasetParams | None = None,
-        train_params: XGBTrainParams | None = None,
-        predict_params: XGBPredictParams | None = None,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
+        **params: Any,
     ) -> Pipeline:
         return self.pipeline.pipe(
             XGBoost(
                 label,
-                params,
-                features=features,
-                dataset_params=dataset_params,
-                train_params=train_params,
-                predict_params=predict_params,
+                features,
                 prediction_name=prediction_name,
                 out_dir=out_dir,
+                **params,
             )
         )
 
