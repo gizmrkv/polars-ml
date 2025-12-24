@@ -44,16 +44,12 @@ class BaseLightGBM(Transformer, ABC):
         self.prediction_name = prediction_name
 
     @abstractmethod
-    def get_booster(self) -> lgb.Booster | dict[str, lgb.Booster]:
-        """Return the trained booster(s)."""
-        ...
+    def get_booster(self) -> lgb.Booster | dict[str, lgb.Booster]: ...
 
     def create_train(self, data: DataFrame) -> lgb.Dataset:
-        """Create a LightGBM Dataset for training."""
         import lightgbm as lgb
 
         if self.features_selector is None:
-            # Determine features lazily if not specified
             label_cols = data.lazy().select(self.label).collect_schema().names()
             self.features_selector = cs.exclude(*label_cols)
 
@@ -73,8 +69,6 @@ class BaseLightGBM(Transformer, ABC):
         )
 
     def create_valid(self, data: DataFrame, reference: lgb.Dataset) -> lgb.Dataset:
-        """Create a LightGBM Dataset for validation based on a reference training dataset."""
-        # Use stored feature_names to ensure consistency
         features = data.select(self.feature_names)
         label = data.select(self.label)
 
@@ -88,7 +82,6 @@ class BaseLightGBM(Transformer, ABC):
     def make_train_valid_sets(
         self, data: DataFrame, **more_data: DataFrame
     ) -> tuple[lgb.Dataset, list[lgb.Dataset], list[str]]:
-        """Prepare training and validation datasets."""
         train_dataset = self.create_train(data)
         valid_sets = []
         valid_names = []
@@ -103,23 +96,19 @@ class BaseLightGBM(Transformer, ABC):
         return train_dataset, valid_sets, valid_names
 
     def predict(self, data: DataFrame) -> NDArray:
-        """Generate raw predictions using the booster(s). Matches LightGBM.Booster.predict annotation."""
         import lightgbm as lgb
         import numpy as np
 
-        # Use stored feature_names to ensure consistency with training
         input_data = data.select(self.feature_names).to_numpy()
         boosters = self.get_booster()
 
         if isinstance(boosters, lgb.Booster):
             return boosters.predict(input_data)
 
-        # Ensemble (average) predictions if multiple boosters exist
         preds = [b.predict(input_data) for b in boosters.values()]
         return np.mean(preds, axis=0)
 
     def transform(self, data: DataFrame) -> DataFrame:
-        """Transform the data by adding prediction columns."""
         pred = self.predict(data)
         name = self.prediction_name
 
@@ -133,7 +122,6 @@ class BaseLightGBM(Transformer, ABC):
         return pl.concat([data, prediction_df], how="horizontal")
 
     def save(self, out_dir: str | Path) -> None:
-        """Save the booster(s) and relevant metadata."""
         import lightgbm as lgb
 
         boosters = self.get_booster()

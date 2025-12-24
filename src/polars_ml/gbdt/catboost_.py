@@ -39,15 +39,12 @@ class CatBoost(Transformer):
         self.out_dir = Path(out_dir) if out_dir else None
 
     def get_booster(self) -> catboost.CatBoost:
-        """Return the trained booster."""
         return self.model
 
     def create_pool(self, data: DataFrame) -> catboost.Pool:
-        """Create a CatBoost Pool for training or inference."""
         import catboost
 
         if self.features_selector is None:
-            # Determine features lazily if not specified
             label_cols = data.lazy().select(self.label).collect_schema().names()
             self.features_selector = cs.exclude(*label_cols)
 
@@ -62,10 +59,8 @@ class CatBoost(Transformer):
         )
 
     def create_valid_pool(self, data: DataFrame) -> catboost.Pool:
-        """Create a CatBoost Pool for validation."""
         import catboost
 
-        # Use stored feature_names to ensure consistency
         features = data.select(self.feature_names)
         label = data.select(self.label)
 
@@ -76,15 +71,12 @@ class CatBoost(Transformer):
         )
 
     def predict(self, data: DataFrame) -> NDArray:
-        """Generate raw predictions using the booster."""
-        # Use stored feature_names to ensure consistency with training
         input_data = data.select(self.feature_names).to_pandas()
         booster = self.get_booster()
 
         return booster.predict(input_data)
 
     def transform(self, data: DataFrame) -> DataFrame:
-        """Transform the data by adding prediction columns."""
         pred = self.predict(data)
         name = self.prediction_name
 
@@ -98,7 +90,6 @@ class CatBoost(Transformer):
         return pl.concat([data, prediction_df], how="horizontal")
 
     def save(self, out_dir: str | Path) -> None:
-        """Save the booster and relevant metadata."""
         booster = self.get_booster()
         out_dir = Path(out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)

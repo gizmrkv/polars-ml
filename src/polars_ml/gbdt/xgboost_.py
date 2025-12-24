@@ -39,15 +39,12 @@ class XGBoost(Transformer):
         self.out_dir = Path(out_dir) if out_dir else None
 
     def get_booster(self) -> xgb.Booster:
-        """Return the trained booster."""
         return self.booster
 
     def create_train(self, data: DataFrame) -> xgb.DMatrix:
-        """Create an XGBoost DMatrix for training."""
         import xgboost as xgb
 
         if self.features_selector is None:
-            # Determine features lazily if not specified
             label_cols = data.lazy().select(self.label).collect_schema().names()
             self.features_selector = cs.exclude(*label_cols)
 
@@ -62,10 +59,8 @@ class XGBoost(Transformer):
         )
 
     def create_valid(self, data: DataFrame, reference: xgb.DMatrix) -> xgb.DMatrix:
-        """Create an XGBoost DMatrix for validation."""
         import xgboost as xgb
 
-        # Use stored feature_names to ensure consistency
         features = data.select(self.feature_names)
         label = data.select(self.label)
 
@@ -78,7 +73,6 @@ class XGBoost(Transformer):
     def make_train_valid_sets(
         self, data: DataFrame, **more_data: DataFrame
     ) -> tuple[xgb.DMatrix, list[tuple[xgb.DMatrix, str]]]:
-        """Prepare training and validation DMatrices."""
         dtrain = self.create_train(data)
         evals = []
         for name, valid_data in more_data.items():
@@ -89,10 +83,8 @@ class XGBoost(Transformer):
         return dtrain, evals
 
     def predict(self, data: DataFrame) -> NDArray:
-        """Generate raw predictions using the booster."""
         import xgboost as xgb
 
-        # Use stored feature_names to ensure consistency with training
         input_data = xgb.DMatrix(
             data.select(self.feature_names).to_pandas(),
             feature_names=self.feature_names,
@@ -102,7 +94,6 @@ class XGBoost(Transformer):
         return booster.predict(input_data)
 
     def transform(self, data: DataFrame) -> DataFrame:
-        """Transform the data by adding prediction columns."""
         pred = self.predict(data)
         name = self.prediction_name
 
@@ -116,7 +107,6 @@ class XGBoost(Transformer):
         return pl.concat([data, prediction_df], how="horizontal")
 
     def save(self, out_dir: str | Path) -> None:
-        """Save the booster and relevant metadata."""
         booster = self.get_booster()
         out_dir = Path(out_dir)
         save_xgboost_booster(booster, out_dir)

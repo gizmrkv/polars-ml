@@ -43,13 +43,11 @@ def test_base_lightgbm_override():
             return self.booster
 
         def create_train(self, data: pl.DataFrame) -> lgb.Dataset:
-            # Add some custom logic here if needed
             ds = super().create_train(data)
             ds.custom_attr = "custom"
             return ds
 
         def predict(self, data: pl.DataFrame) -> NDArray:
-            # Custom prediction logic (e.g. constant prediction for testing)
             return np.zeros(len(data))
 
     df = pl.DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
@@ -71,9 +69,8 @@ def test_feature_consistency():
     model = LightGBM({"verbosity": -1}, label="target")
     model.fit(df_train)
 
-    # Should not raise error even with 'extra' column
     result = model.transform(df_test)
 
     assert "prediction" in result.columns
-    assert len(result.columns) == 4  # f1, extra, target, prediction
+    assert len(result.columns) == 4
     assert "extra" in result.columns

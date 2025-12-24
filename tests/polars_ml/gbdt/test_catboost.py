@@ -10,12 +10,15 @@ from numpy.typing import NDArray
 from polars_ml.gbdt.catboost_ import CatBoost
 
 
-def test_catboost_default_flow():
+def test_catboost_default_flow(catboost_tmpdir):
     df = pl.DataFrame(
         {"f1": [1, 2, 3, 4, 5], "f2": [10, 20, 30, 40, 50], "target": [0, 1, 0, 1, 0]}
     )
 
-    model = CatBoost({"iterations": 10, "verbose": False}, label="target")
+    model = CatBoost(
+        {"iterations": 10, "verbose": False, "train_dir": catboost_tmpdir},
+        label="target",
+    )
 
     model.fit(df)
     result = model.transform(df)
@@ -24,7 +27,7 @@ def test_catboost_default_flow():
     assert len(result) == 5
 
 
-def test_base_catboost_override():
+def test_base_catboost_override(catboost_tmpdir):
     class CustomCatBoost(CatBoost):
         def fit(self, data: pl.DataFrame) -> CustomCatBoost:
             import catboost
@@ -41,12 +44,11 @@ def test_base_catboost_override():
             return self.model
 
         def predict(self, data: pl.DataFrame) -> NDArray:
-            # Custom prediction logic
             return np.zeros(len(data))
 
     df = pl.DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
 
-    model = CustomCatBoost({"depth": 2}, "target")
+    model = CustomCatBoost({"depth": 2, "train_dir": catboost_tmpdir}, "target")
     model.fit(df)
     result = model.transform(df)
 
@@ -54,18 +56,20 @@ def test_base_catboost_override():
     assert (result["prediction"] == 0).all()
 
 
-def test_catboost_feature_consistency():
+def test_catboost_feature_consistency(catboost_tmpdir):
     df_train = pl.DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
     df_test = pl.DataFrame(
         {"f1": [1, 2, 3], "extra": [10, 20, 30], "target": [0, 1, 0]}
     )
 
-    model = CatBoost({"depth": 2, "iterations": 5, "verbose": False}, label="target")
+    model = CatBoost(
+        {"depth": 2, "iterations": 5, "verbose": False, "train_dir": catboost_tmpdir},
+        label="target",
+    )
     model.fit(df_train)
 
-    # Should not raise error even with 'extra' column
     result = model.transform(df_test)
 
     assert "prediction" in result.columns
-    assert len(result.columns) == 4  # f1, extra, target, prediction
+    assert len(result.columns) == 4
     assert "extra" in result.columns

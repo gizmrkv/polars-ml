@@ -46,7 +46,6 @@ def test_base_xgboost_override():
             return dm
 
         def predict(self, data: pl.DataFrame) -> NDArray:
-            # Custom prediction logic
             return np.zeros(len(data))
 
     df = pl.DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
@@ -68,9 +67,8 @@ def test_xgboost_feature_consistency():
     model = XGBoost({"max_depth": 2}, label="target")
     model.fit(df_train)
 
-    # Should not raise error even with 'extra' column
     result = model.transform(df_test)
 
     assert "prediction" in result.columns
-    assert len(result.columns) == 4  # f1, extra, target, prediction
+    assert len(result.columns) == 4
     assert "extra" in result.columns
