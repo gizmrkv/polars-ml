@@ -33,6 +33,14 @@ def test_xgboost_default_flow():
 def test_base_xgboost_override():
     class CustomXGB(XGBoost):
         def fit(self, data: pl.DataFrame) -> CustomXGB:
+            import polars.selectors as cs
+
+            if self.features_selector is None:
+                label_cols = data.lazy().select(self.label).collect_schema().names()
+                self.features_selector = cs.exclude(*label_cols)
+
+            self.feature_names = data.select(self.features_selector).columns
+
             dtrain, _ = self.make_train_valid_sets(data)
             self.booster = xgb.train(self.params, dtrain, num_boost_round=5)
             return self
@@ -40,8 +48,8 @@ def test_base_xgboost_override():
         def get_booster(self) -> xgb.Booster:
             return self.booster
 
-        def create_train(self, data: pl.DataFrame) -> xgb.DMatrix:
-            dm = super().create_train(data)
+        def create_dmatrix(self, data: pl.DataFrame) -> xgb.DMatrix:
+            dm = super().create_dmatrix(data)
             dm.set_info(base_margin=np.zeros(len(data)))
             return dm
 

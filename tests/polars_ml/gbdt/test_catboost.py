@@ -31,6 +31,13 @@ def test_base_catboost_override(catboost_tmpdir):
     class CustomCatBoost(CatBoost):
         def fit(self, data: pl.DataFrame) -> CustomCatBoost:
             import catboost
+            import polars.selectors as cs
+
+            if self.features_selector is None:
+                label_cols = data.lazy().select(self.label).collect_schema().names()
+                self.features_selector = cs.exclude(*label_cols)
+
+            self.feature_names = data.select(self.features_selector).columns
 
             pool = self.create_pool(data)
             params = dict(self.params)

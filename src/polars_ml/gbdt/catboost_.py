@@ -44,23 +44,6 @@ class CatBoost(Transformer):
     def create_pool(self, data: DataFrame) -> catboost.Pool:
         import catboost
 
-        if self.features_selector is None:
-            label_cols = data.lazy().select(self.label).collect_schema().names()
-            self.features_selector = cs.exclude(*label_cols)
-
-        features = data.select(self.features_selector)
-        label = data.select(self.label)
-        self.feature_names = features.columns
-
-        return catboost.Pool(
-            data=features.to_pandas(),
-            label=label.to_pandas(),
-            feature_names=self.feature_names,
-        )
-
-    def create_valid_pool(self, data: DataFrame) -> catboost.Pool:
-        import catboost
-
         features = data.select(self.feature_names)
         label = data.select(self.label)
 
@@ -98,10 +81,16 @@ class CatBoost(Transformer):
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import catboost
 
+        if self.features_selector is None:
+            label_cols = data.lazy().select(self.label).collect_schema().names()
+            self.features_selector = cs.exclude(*label_cols)
+
+        self.feature_names = data.select(self.features_selector).columns
+
         train_pool = self.create_pool(data)
         eval_sets = []
         for valid_data in more_data.values():
-            eval_sets.append(self.create_valid_pool(valid_data))
+            eval_sets.append(self.create_pool(valid_data))
 
         self.model = catboost.CatBoost(dict(self.params))
         self.model.fit(

@@ -41,24 +41,7 @@ class XGBoost(Transformer):
     def get_booster(self) -> xgb.Booster:
         return self.booster
 
-    def create_train(self, data: DataFrame) -> xgb.DMatrix:
-        import xgboost as xgb
-
-        if self.features_selector is None:
-            label_cols = data.lazy().select(self.label).collect_schema().names()
-            self.features_selector = cs.exclude(*label_cols)
-
-        features = data.select(self.features_selector)
-        label = data.select(self.label)
-        self.feature_names = features.columns
-
-        return xgb.DMatrix(
-            features.to_pandas(),
-            label=label.to_pandas(),
-            feature_names=self.feature_names,
-        )
-
-    def create_valid(self, data: DataFrame, reference: xgb.DMatrix) -> xgb.DMatrix:
+    def create_dmatrix(self, data: DataFrame) -> xgb.DMatrix:
         import xgboost as xgb
 
         features = data.select(self.feature_names)
@@ -73,10 +56,10 @@ class XGBoost(Transformer):
     def make_train_valid_sets(
         self, data: DataFrame, **more_data: DataFrame
     ) -> tuple[xgb.DMatrix, list[tuple[xgb.DMatrix, str]]]:
-        dtrain = self.create_train(data)
+        dtrain = self.create_dmatrix(data)
         evals = []
         for name, valid_data in more_data.items():
-            dvalid = self.create_valid(valid_data, dtrain)
+            dvalid = self.create_dmatrix(valid_data)
             evals.append((dvalid, name))
 
         evals.append((dtrain, "train"))
@@ -113,6 +96,12 @@ class XGBoost(Transformer):
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import xgboost as xgb
+
+        if self.features_selector is None:
+            label_cols = data.lazy().select(self.label).collect_schema().names()
+            self.features_selector = cs.exclude(*label_cols)
+
+        self.feature_names = data.select(self.features_selector).columns
 
         dtrain, evals = self.make_train_valid_sets(data, **more_data)
 
