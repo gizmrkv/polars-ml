@@ -149,12 +149,12 @@ class BaseLightGBM(Transformer, ABC):
 class LightGBM(BaseLightGBM):
     def __init__(
         self,
+        params: Mapping[str, Any],
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
-        **params: Any,
     ):
         super().__init__(
             params,
@@ -163,10 +163,6 @@ class LightGBM(BaseLightGBM):
             prediction_name=prediction_name,
         )
         self.out_dir = Path(out_dir) if out_dir else None
-
-    def get_train_params(self) -> Mapping[str, Any]:
-        """Return parameters for LightGBM training. Override this for customization."""
-        return {}
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import lightgbm as lgb
@@ -180,7 +176,6 @@ class LightGBM(BaseLightGBM):
             train_dataset,
             valid_sets=valid_sets,
             valid_names=valid_names,
-            **self.get_train_params(),
         )
 
         if self.out_dir:
@@ -195,12 +190,12 @@ class LightGBM(BaseLightGBM):
 class LightGBMTuner(BaseLightGBM):
     def __init__(
         self,
+        params: Mapping[str, Any],
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
-        **params: Any,
     ):
         super().__init__(
             params,
@@ -209,10 +204,6 @@ class LightGBMTuner(BaseLightGBM):
             prediction_name=prediction_name,
         )
         self.out_dir = Path(out_dir) if out_dir else None
-
-    def get_tuner_params(self) -> Mapping[str, Any]:
-        """Return parameters for Optuna LightGBMTuner. Override this for customization."""
-        return {}
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         from optuna_integration.lightgbm import LightGBMTuner
@@ -226,7 +217,6 @@ class LightGBMTuner(BaseLightGBM):
             train_dataset,
             valid_sets=valid_sets,
             valid_names=valid_names,
-            **self.get_tuner_params(),
         )
         self.tuner.run()
         self.best_booster = self.tuner.get_best_booster()
@@ -243,12 +233,12 @@ class LightGBMTuner(BaseLightGBM):
 class LightGBMTunerCV(BaseLightGBM):
     def __init__(
         self,
+        params: Mapping[str, Any],
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
-        **params: Any,
     ):
         super().__init__(
             params,
@@ -259,10 +249,6 @@ class LightGBMTunerCV(BaseLightGBM):
         self.prediction_name = prediction_name
         self.out_dir = Path(out_dir) if out_dir else None
 
-    def get_tuner_params(self) -> Mapping[str, Any]:
-        """Return parameters for Optuna LightGBMTunerCV. Override this for customization."""
-        return {}
-
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import lightgbm as lgb
         from optuna_integration.lightgbm import LightGBMTunerCV
@@ -272,7 +258,6 @@ class LightGBMTunerCV(BaseLightGBM):
             self.params,
             train_dataset,
             return_cvbooster=True,
-            **self.get_tuner_params(),
         )
         self.tuner.run()
         self.boosters = self.tuner.get_best_booster().boosters

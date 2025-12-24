@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Iterable, Mapping
 
 from polars._typing import IntoExpr
 
+from .catboost_ import CatBoost
 from .lightgbm_ import (
     LightGBM,
     LightGBMTuner,
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     from polars_ml import Pipeline
 
 
-__all__ = ["LightGBM", "LightGBMTuner", "LightGBMTunerCV"]
+__all__ = ["LightGBM", "LightGBMTuner", "LightGBMTunerCV", "XGBoost", "CatBoost"]
 
 
 class GBDTNameSpace:
@@ -89,6 +90,24 @@ class GBDTNameSpace:
     ) -> Pipeline:
         return self.pipeline.pipe(
             LightGBMTunerCV(
+                label,
+                features,
+                prediction_name=prediction_name,
+                out_dir=out_dir,
+                **params,
+            )
+        )
+
+    def catboost(
+        self,
+        label: IntoExpr,
+        features: IntoExpr | Iterable[IntoExpr] | None = None,
+        prediction_name: str = "prediction",
+        out_dir: str | Path | None = None,
+        **params: Any,
+    ) -> Pipeline:
+        return self.pipeline.pipe(
+            CatBoost(
                 label,
                 features,
                 prediction_name=prediction_name,

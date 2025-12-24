@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from polars_ml.gbdt import LightGBM, LightGBMTuner, LightGBMTunerCV, XGBoost
+from polars_ml.gbdt import CatBoost, LightGBM, LightGBMTuner, LightGBMTunerCV, XGBoost
 from polars_ml.metrics import BinaryClassificationMetrics, RegressionMetrics
 from polars_ml.pipeline.basic import Apply, Concat, Const, Echo, Parrot, Side, ToDummies
 from polars_ml.pipeline.group_by import (
@@ -66,6 +66,7 @@ GBDT_TRANSFORMERS: list[tuple[str, type]] = [
     ("xgboost", XGBoost),
     ("lightgbm_tuner", LightGBMTuner),
     ("lightgbm_tuner_cv", LightGBMTunerCV),
+    ("catboost", CatBoost),
 ]
 METRICS_TRANSFORMERS: list[tuple[str, type]] = [
     ("binary_classification", BinaryClassificationMetrics),

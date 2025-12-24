@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -8,7 +7,6 @@ from typing import (
     Iterable,
     Mapping,
     Self,
-    Union,
 )
 
 import numpy as np
@@ -24,7 +22,7 @@ if TYPE_CHECKING:
     import xgboost as xgb
 
 
-class BaseXGBoost(Transformer, ABC):
+class XGBoost(Transformer):
     def __init__(
         self,
         params: Mapping[str, Any],
@@ -32,16 +30,17 @@ class BaseXGBoost(Transformer, ABC):
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
         prediction_name: str = "prediction",
+        out_dir: str | Path | None = None,
     ):
-        self.label = label
         self.params = params
+        self.label = label
         self.features_selector = features
         self.prediction_name = prediction_name
+        self.out_dir = Path(out_dir) if out_dir else None
 
-    @abstractmethod
-    def get_booster(self) -> Union["xgb.Booster", dict[str, "xgb.Booster"]]:
-        """Return the trained booster(s)."""
-        ...
+    def get_booster(self) -> xgb.Booster:
+        """Return the trained booster."""
+        return self.booster
 
     def create_train(self, data: DataFrame) -> xgb.DMatrix:
         """Create an XGBoost DMatrix for training."""
@@ -90,7 +89,7 @@ class BaseXGBoost(Transformer, ABC):
         return dtrain, evals
 
     def predict(self, data: DataFrame) -> NDArray:
-        """Generate raw predictions using the booster(s)."""
+        """Generate raw predictions using the booster."""
         import xgboost as xgb
 
         # Use stored feature_names to ensure consistency with training
@@ -98,14 +97,9 @@ class BaseXGBoost(Transformer, ABC):
             data.select(self.feature_names).to_pandas(),
             feature_names=self.feature_names,
         )
-        boosters = self.get_booster()
+        booster = self.get_booster()
 
-        if isinstance(boosters, xgb.Booster):
-            return boosters.predict(input_data)
-
-        # Ensemble (average) predictions if multiple boosters exist
-        preds = [b.predict(input_data) for b in boosters.values()]
-        return np.mean(preds, axis=0)
+        return booster.predict(input_data)
 
     def transform(self, data: DataFrame) -> DataFrame:
         """Transform the data by adding prediction columns."""
@@ -122,40 +116,10 @@ class BaseXGBoost(Transformer, ABC):
         return pl.concat([data, prediction_df], how="horizontal")
 
     def save(self, out_dir: str | Path) -> None:
-        """Save the booster(s) and relevant metadata."""
-        import xgboost as xgb
-
-        boosters = self.get_booster()
+        """Save the booster and relevant metadata."""
+        booster = self.get_booster()
         out_dir = Path(out_dir)
-
-        if isinstance(boosters, xgb.Booster):
-            save_xgboost_booster(boosters, out_dir)
-        else:
-            for name, booster in boosters.items():
-                save_xgboost_booster(booster, out_dir / name)
-
-
-class XGBoost(BaseXGBoost):
-    def __init__(
-        self,
-        label: IntoExpr,
-        features: IntoExpr | Iterable[IntoExpr] | None = None,
-        *,
-        prediction_name: str = "prediction",
-        out_dir: str | Path | None = None,
-        **params: Any,
-    ):
-        super().__init__(
-            params,
-            label,
-            features,
-            prediction_name=prediction_name,
-        )
-        self.out_dir = Path(out_dir) if out_dir else None
-
-    def get_train_params(self) -> Mapping[str, Any]:
-        """Return parameters for XGBoost training. Override this for customization."""
-        return {}
+        save_xgboost_booster(booster, out_dir)
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import xgboost as xgb
@@ -166,16 +130,12 @@ class XGBoost(BaseXGBoost):
             self.params,
             dtrain,
             evals=evals,
-            **self.get_train_params(),
         )
 
         if self.out_dir:
             self.save(self.out_dir)
 
         return self
-
-    def get_booster(self) -> xgb.Booster:
-        return self.booster
 
 
 def save_xgboost_booster(booster: xgb.Booster, out_dir: str | Path):

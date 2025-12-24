@@ -1,0 +1,124 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Iterable,
+    Mapping,
+    Self,
+)
+
+import numpy as np
+import polars as pl
+import polars.selectors as cs
+from numpy.typing import NDArray
+from polars import DataFrame
+from polars._typing import IntoExpr
+
+from polars_ml.base import Transformer
+
+if TYPE_CHECKING:
+    import catboost
+
+
+class CatBoost(Transformer):
+    def __init__(
+        self,
+        params: Mapping[str, Any],
+        label: IntoExpr,
+        features: IntoExpr | Iterable[IntoExpr] | None = None,
+        *,
+        prediction_name: str = "prediction",
+        out_dir: str | Path | None = None,
+    ):
+        self.params = params
+        self.label = label
+        self.features_selector = features
+        self.prediction_name = prediction_name
+        self.out_dir = Path(out_dir) if out_dir else None
+
+    def get_booster(self) -> catboost.CatBoost:
+        """Return the trained booster."""
+        return self.model
+
+    def create_pool(self, data: DataFrame) -> catboost.Pool:
+        """Create a CatBoost Pool for training or inference."""
+        import catboost
+
+        if self.features_selector is None:
+            # Determine features lazily if not specified
+            label_cols = data.lazy().select(self.label).collect_schema().names()
+            self.features_selector = cs.exclude(*label_cols)
+
+        features = data.select(self.features_selector)
+        label = data.select(self.label)
+        self.feature_names = features.columns
+
+        return catboost.Pool(
+            data=features.to_pandas(),
+            label=label.to_pandas(),
+            feature_names=self.feature_names,
+        )
+
+    def create_valid_pool(self, data: DataFrame) -> catboost.Pool:
+        """Create a CatBoost Pool for validation."""
+        import catboost
+
+        # Use stored feature_names to ensure consistency
+        features = data.select(self.feature_names)
+        label = data.select(self.label)
+
+        return catboost.Pool(
+            data=features.to_pandas(),
+            label=label.to_pandas(),
+            feature_names=self.feature_names,
+        )
+
+    def predict(self, data: DataFrame) -> NDArray:
+        """Generate raw predictions using the booster."""
+        # Use stored feature_names to ensure consistency with training
+        input_data = data.select(self.feature_names).to_pandas()
+        booster = self.get_booster()
+
+        return booster.predict(input_data)
+
+    def transform(self, data: DataFrame) -> DataFrame:
+        """Transform the data by adding prediction columns."""
+        pred = self.predict(data)
+        name = self.prediction_name
+
+        prediction_df = pl.from_numpy(
+            pred,
+            schema=[name]
+            if pred.ndim == 1
+            else [f"{name}_{i}" for i in range(pred.shape[1])],
+        )
+
+        return pl.concat([data, prediction_df], how="horizontal")
+
+    def save(self, out_dir: str | Path) -> None:
+        """Save the booster and relevant metadata."""
+        booster = self.get_booster()
+        out_dir = Path(out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        booster.save_model(str(out_dir / "model.cbm"))
+
+    def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
+        import catboost
+
+        train_pool = self.create_pool(data)
+        eval_sets = []
+        for valid_data in more_data.values():
+            eval_sets.append(self.create_valid_pool(valid_data))
+
+        self.model = catboost.CatBoost(dict(self.params))
+        self.model.fit(
+            train_pool,
+            eval_set=eval_sets if eval_sets else None,
+        )
+
+        if self.out_dir:
+            self.save(self.out_dir)
+
+        return self

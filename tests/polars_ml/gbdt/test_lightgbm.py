@@ -16,10 +16,6 @@ def test_lightgbm_default_flow():
         {"f1": [1, 2, 3, 4, 5], "f2": [10, 20, 30, 40, 50], "target": [0, 1, 0, 1, 0]}
     )
 
-    class MyLGB(LightGBM):
-        def get_train_params(self) -> dict[str, Any]:
-            return {"num_boost_round": 10}
-
     params = {
         "objective": "binary",
         "metric": "binary_logloss",
@@ -27,7 +23,7 @@ def test_lightgbm_default_flow():
         "boosting_type": "gbdt",
     }
 
-    model = MyLGB(label="target", **params)
+    model = LightGBM(params, label="target")
 
     model.fit(df)
     result = model.transform(df)
@@ -72,7 +68,7 @@ def test_feature_consistency():
         {"f1": [1, 2, 3], "extra": [10, 20, 30], "target": [0, 1, 0]}
     )
 
-    model = LightGBM(label="target", verbosity=-1)
+    model = LightGBM({"verbosity": -1}, label="target")
     model.fit(df_train)
 
     # Should not raise error even with 'extra' column
