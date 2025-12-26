@@ -5,7 +5,6 @@ from io import IOBase
 from pathlib import Path
 from typing import (
     IO,
-    TYPE_CHECKING,
     Any,
     Callable,
     Collection,
@@ -14,7 +13,6 @@ from typing import (
     Mapping,
     Self,
     Sequence,
-    Union,
     overload,
 )
 
@@ -56,13 +54,12 @@ from polars._typing import (
     UniqueKeepStrategy,
     UnstackDirection,
 )
-from polars._utils.various import NoDefault
-from polars.datatypes import N_INFER_DEFAULT
 from polars.interchange.protocol import CompatLevel
 from polars.io.cloud import CredentialProviderFunction
 
 from polars_ml.base import Transformer
 from polars_ml.gbdt import GBDTNameSpace
+from polars_ml.metrics import MetricsNameSpace
 from polars_ml.preprocessing import (
     ArithmeticSynthesis,
     BoxCoxTransform,
@@ -114,6 +111,10 @@ class Pipeline(Transformer):
     @property
     def gbdt(self) -> GBDTNameSpace:
         return GBDTNameSpace(self)
+
+    @property
+    def metrics(self) -> MetricsNameSpace:
+        return MetricsNameSpace(self)
 
     # --- START INSERTION MARKER IN Pipeline
 

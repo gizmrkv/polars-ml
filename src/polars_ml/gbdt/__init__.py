@@ -28,91 +28,91 @@ class GBDTNameSpace:
 
     def lightgbm(
         self,
+        params: Mapping[str, Any],
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
-        **params: Any,
     ) -> Pipeline:
         return self.pipeline.pipe(
             LightGBM(
+                params,
                 label,
                 features,
                 prediction_name=prediction_name,
                 out_dir=out_dir,
-                **params,
             )
         )
 
     def xgboost(
         self,
+        params: Mapping[str, Any],
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
-        **params: Any,
     ) -> Pipeline:
         return self.pipeline.pipe(
             XGBoost(
+                params,
                 label,
                 features,
                 prediction_name=prediction_name,
                 out_dir=out_dir,
-                **params,
             )
         )
 
     def lightgbm_tuner(
         self,
+        params: Mapping[str, Any],
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
-        **params: Any,
     ) -> Pipeline:
         return self.pipeline.pipe(
             LightGBMTuner(
+                params,
                 label,
                 features,
                 prediction_name=prediction_name,
                 out_dir=out_dir,
-                **params,
             )
         )
 
     def lightgbm_tuner_cv(
         self,
+        params: Mapping[str, Any],
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
-        **params: Any,
     ) -> Pipeline:
         return self.pipeline.pipe(
             LightGBMTunerCV(
+                params,
                 label,
                 features,
                 prediction_name=prediction_name,
                 out_dir=out_dir,
-                **params,
             )
         )
 
     def catboost(
         self,
+        params: Mapping[str, Any],
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         prediction_name: str = "prediction",
         out_dir: str | Path | None = None,
-        **params: Any,
     ) -> Pipeline:
         return self.pipeline.pipe(
             CatBoost(
+                params,
                 label,
                 features,
                 prediction_name=prediction_name,
                 out_dir=out_dir,
-                **params,
             )
         )
 
