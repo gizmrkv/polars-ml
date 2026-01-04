@@ -30,13 +30,13 @@ class CatBoost(Transformer):
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
         prediction_name: str = "prediction",
-        out_dir: str | Path | None = None,
+        save_dir: str | Path | None = None,
     ):
         self.params = params
         self.label = label
         self.features_selector = features
         self.prediction_name = prediction_name
-        self.out_dir = Path(out_dir) if out_dir else None
+        self.save_dir = Path(save_dir) if save_dir else None
 
     def get_booster(self) -> catboost.CatBoost:
         return self.model
@@ -72,11 +72,11 @@ class CatBoost(Transformer):
 
         return pl.concat([data, prediction_df], how="horizontal")
 
-    def save(self, out_dir: str | Path) -> None:
+    def save(self, save_dir: str | Path) -> None:
         booster = self.get_booster()
-        out_dir = Path(out_dir)
-        out_dir.mkdir(parents=True, exist_ok=True)
-        booster.save_model(str(out_dir / "model.cbm"))
+        save_dir = Path(save_dir)
+        save_dir.mkdir(parents=True, exist_ok=True)
+        booster.save_model(str(save_dir / "model.cbm"))
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import catboost
@@ -98,7 +98,7 @@ class CatBoost(Transformer):
             eval_set=eval_sets if eval_sets else None,
         )
 
-        if self.out_dir:
-            self.save(self.out_dir)
+        if self.save_dir:
+            self.save(self.save_dir)
 
         return self

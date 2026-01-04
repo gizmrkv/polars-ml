@@ -121,17 +121,17 @@ class BaseLightGBM(Transformer, ABC):
 
         return pl.concat([data, prediction_df], how="horizontal")
 
-    def save(self, out_dir: str | Path) -> None:
+    def save(self, save_dir: str | Path) -> None:
         import lightgbm as lgb
 
         boosters = self.get_booster()
-        out_dir = Path(out_dir)
+        save_dir = Path(save_dir)
 
         if isinstance(boosters, lgb.Booster):
-            save_lightgbm_booster(boosters, out_dir)
+            save_lightgbm_booster(boosters, save_dir)
         else:
             for name, booster in boosters.items():
-                save_lightgbm_booster(booster, out_dir / name)
+                save_lightgbm_booster(booster, save_dir / name)
 
 
 class LightGBM(BaseLightGBM):
@@ -142,7 +142,7 @@ class LightGBM(BaseLightGBM):
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
         prediction_name: str = "prediction",
-        out_dir: str | Path | None = None,
+        save_dir: str | Path | None = None,
     ):
         super().__init__(
             params,
@@ -150,7 +150,7 @@ class LightGBM(BaseLightGBM):
             features,
             prediction_name=prediction_name,
         )
-        self.out_dir = Path(out_dir) if out_dir else None
+        self.save_dir = Path(save_dir) if save_dir else None
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import lightgbm as lgb
@@ -166,8 +166,8 @@ class LightGBM(BaseLightGBM):
             valid_names=valid_names,
         )
 
-        if self.out_dir:
-            self.save(self.out_dir)
+        if self.save_dir:
+            self.save(self.save_dir)
 
         return self
 
@@ -183,7 +183,7 @@ class LightGBMTuner(BaseLightGBM):
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
         prediction_name: str = "prediction",
-        out_dir: str | Path | None = None,
+        save_dir: str | Path | None = None,
     ):
         super().__init__(
             params,
@@ -191,7 +191,7 @@ class LightGBMTuner(BaseLightGBM):
             features,
             prediction_name=prediction_name,
         )
-        self.out_dir = Path(out_dir) if out_dir else None
+        self.save_dir = Path(save_dir) if save_dir else None
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         from optuna_integration.lightgbm import LightGBMTuner
@@ -209,8 +209,8 @@ class LightGBMTuner(BaseLightGBM):
         self.tuner.run()
         self.best_booster = self.tuner.get_best_booster()
 
-        if self.out_dir:
-            self.save(self.out_dir)
+        if self.save_dir:
+            self.save(self.save_dir)
 
         return self
 
@@ -226,7 +226,7 @@ class LightGBMTunerCV(BaseLightGBM):
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
         prediction_name: str = "prediction",
-        out_dir: str | Path | None = None,
+        save_dir: str | Path | None = None,
     ):
         super().__init__(
             params,
@@ -235,7 +235,7 @@ class LightGBMTunerCV(BaseLightGBM):
             prediction_name=prediction_name,
         )
         self.prediction_name = prediction_name
-        self.out_dir = Path(out_dir) if out_dir else None
+        self.save_dir = Path(save_dir) if save_dir else None
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import lightgbm as lgb
@@ -250,8 +250,8 @@ class LightGBMTunerCV(BaseLightGBM):
         self.tuner.run()
         self.boosters = self.tuner.get_best_booster().boosters
 
-        if self.out_dir:
-            self.save(self.out_dir)
+        if self.save_dir:
+            self.save(self.save_dir)
 
         return self
 
@@ -259,18 +259,18 @@ class LightGBMTunerCV(BaseLightGBM):
         return {f"cv{i}": booster for i, booster in enumerate(self.boosters)}
 
 
-def save_lightgbm_booster(booster: "lgb.Booster", out_dir: str | Path):
+def save_lightgbm_booster(booster: "lgb.Booster", save_dir: str | Path):
     import json
 
     import lightgbm as lgb
     import matplotlib.pyplot as plt
 
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    booster.save_model(out_dir / "model.txt")
+    save_dir = Path(save_dir)
+    save_dir.mkdir(parents=True, exist_ok=True)
+    booster.save_model(save_dir / "model.txt")
 
     params = booster.params
-    with open(out_dir / "params.json", "w") as f:
+    with open(save_dir / "params.json", "w") as f:
         json.dump(params, f, indent=4)
 
     DataFrame(
@@ -283,14 +283,14 @@ def save_lightgbm_booster(booster: "lgb.Booster", out_dir: str | Path):
                 for importance_type in ["gain", "split"]
             },
         }
-    ).write_csv(out_dir / "feature_importance.csv")
+    ).write_csv(save_dir / "feature_importance.csv")
 
     lgb.plot_importance(booster, importance_type="gain")
-    plt.savefig(out_dir / "importance_gain.png")
+    plt.savefig(save_dir / "importance_gain.png")
     plt.tight_layout()
     plt.close()
 
     lgb.plot_importance(booster, importance_type="split")
-    plt.savefig(out_dir / "importance_split.png")
+    plt.savefig(save_dir / "importance_split.png")
     plt.tight_layout()
     plt.close()

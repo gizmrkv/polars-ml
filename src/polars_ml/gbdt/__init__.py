@@ -32,7 +32,7 @@ class GBDTNameSpace:
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         prediction_name: str = "prediction",
-        out_dir: str | Path | None = None,
+        save_dir: str | Path | None = None,
     ) -> Pipeline:
         return self.pipeline.pipe(
             LightGBM(
@@ -40,7 +40,7 @@ class GBDTNameSpace:
                 label,
                 features,
                 prediction_name=prediction_name,
-                out_dir=out_dir,
+                save_dir=save_dir,
             )
         )
 
@@ -50,7 +50,7 @@ class GBDTNameSpace:
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         prediction_name: str = "prediction",
-        out_dir: str | Path | None = None,
+        save_dir: str | Path | None = None,
     ) -> Pipeline:
         return self.pipeline.pipe(
             XGBoost(
@@ -58,7 +58,7 @@ class GBDTNameSpace:
                 label,
                 features,
                 prediction_name=prediction_name,
-                out_dir=out_dir,
+                save_dir=save_dir,
             )
         )
 
@@ -68,7 +68,7 @@ class GBDTNameSpace:
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         prediction_name: str = "prediction",
-        out_dir: str | Path | None = None,
+        save_dir: str | Path | None = None,
     ) -> Pipeline:
         return self.pipeline.pipe(
             LightGBMTuner(
@@ -76,7 +76,7 @@ class GBDTNameSpace:
                 label,
                 features,
                 prediction_name=prediction_name,
-                out_dir=out_dir,
+                save_dir=save_dir,
             )
         )
 
@@ -86,7 +86,7 @@ class GBDTNameSpace:
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         prediction_name: str = "prediction",
-        out_dir: str | Path | None = None,
+        save_dir: str | Path | None = None,
     ) -> Pipeline:
         return self.pipeline.pipe(
             LightGBMTunerCV(
@@ -94,7 +94,7 @@ class GBDTNameSpace:
                 label,
                 features,
                 prediction_name=prediction_name,
-                out_dir=out_dir,
+                save_dir=save_dir,
             )
         )
 
@@ -104,7 +104,7 @@ class GBDTNameSpace:
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         prediction_name: str = "prediction",
-        out_dir: str | Path | None = None,
+        save_dir: str | Path | None = None,
     ) -> Pipeline:
         return self.pipeline.pipe(
             CatBoost(
@@ -112,7 +112,7 @@ class GBDTNameSpace:
                 label,
                 features,
                 prediction_name=prediction_name,
-                out_dir=out_dir,
+                save_dir=save_dir,
             )
         )
 

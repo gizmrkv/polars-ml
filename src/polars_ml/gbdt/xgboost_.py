@@ -30,13 +30,13 @@ class XGBoost(Transformer):
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
         prediction_name: str = "prediction",
-        out_dir: str | Path | None = None,
+        save_dir: str | Path | None = None,
     ):
         self.params = params
         self.label = label
         self.features_selector = features
         self.prediction_name = prediction_name
-        self.out_dir = Path(out_dir) if out_dir else None
+        self.save_dir = Path(save_dir) if save_dir else None
 
     def get_booster(self) -> xgb.Booster:
         return self.booster
@@ -89,10 +89,10 @@ class XGBoost(Transformer):
 
         return pl.concat([data, prediction_df], how="horizontal")
 
-    def save(self, out_dir: str | Path) -> None:
+    def save(self, save_dir: str | Path) -> None:
         booster = self.get_booster()
-        out_dir = Path(out_dir)
-        save_xgboost_booster(booster, out_dir)
+        save_dir = Path(save_dir)
+        save_xgboost_booster(booster, save_dir)
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import xgboost as xgb
@@ -111,23 +111,23 @@ class XGBoost(Transformer):
             evals=evals,
         )
 
-        if self.out_dir:
-            self.save(self.out_dir)
+        if self.save_dir:
+            self.save(self.save_dir)
 
         return self
 
 
-def save_xgboost_booster(booster: xgb.Booster, out_dir: str | Path):
+def save_xgboost_booster(booster: xgb.Booster, save_dir: str | Path):
     import json
 
     import matplotlib.pyplot as plt
 
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    booster.save_model(out_dir / "model.json")
+    save_dir = Path(save_dir)
+    save_dir.mkdir(parents=True, exist_ok=True)
+    booster.save_model(save_dir / "model.json")
 
     config = json.loads(booster.save_config())
-    with open(out_dir / "params.json", "w") as f:
+    with open(save_dir / "params.json", "w") as f:
         json.dump(config, f, indent=4)
 
     if feature_names := booster.feature_names:
@@ -148,16 +148,16 @@ def save_xgboost_booster(booster: xgb.Booster, out_dir: str | Path):
                     ]
                 },
             }
-        ).write_csv(out_dir / "feature_importance.csv")
+        ).write_csv(save_dir / "feature_importance.csv")
 
     import xgboost as xgb
 
     xgb.plot_importance(booster, importance_type="gain")
-    plt.savefig(out_dir / "importance_gain.png")
+    plt.savefig(save_dir / "importance_gain.png")
     plt.tight_layout()
     plt.close()
 
     xgb.plot_importance(booster, importance_type="weight")
-    plt.savefig(out_dir / "importance_weight.png")
+    plt.savefig(save_dir / "importance_weight.png")
     plt.tight_layout()
     plt.close()
