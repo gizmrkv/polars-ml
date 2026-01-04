@@ -1623,3 +1623,378 @@ class Pipeline(Transformer):
             )
 
     # --- END INSERTION MARKER IN Pipeline
+
+    # --- START INSERTION MARKER IN Unified IO Pipeline
+
+    @overload
+    def write(
+        self,
+        format: Literal["avro"],
+        file: str | Path | IO[bytes],
+        compression: AvroCompression = "uncompressed",
+        name: str = "",
+    ) -> Self: ...
+
+    @overload
+    def write(
+        self, format: Literal["clipboard"], separator: str = "\t", **kwargs: Any
+    ) -> Self: ...
+
+    @overload
+    def write(
+        self,
+        format: Literal["csv"],
+        file: str | Path | IO[str] | IO[bytes] | None = None,
+        include_bom: bool = False,
+        include_header: bool = True,
+        separator: str = ",",
+        line_terminator: str = "\n",
+        quote_char: str = '"',
+        batch_size: int = 1024,
+        datetime_format: str | None = None,
+        date_format: str | None = None,
+        time_format: str | None = None,
+        float_scientific: bool | None = None,
+        float_precision: int | None = None,
+        decimal_comma: bool = False,
+        null_value: str | None = None,
+        quote_style: CsvQuoteStyle | None = None,
+        storage_options: dict[str, Any] | None = None,
+        credential_provider: CredentialProviderFunction
+        | Literal["auto"]
+        | None = "auto",
+        retries: int = 2,
+    ) -> Self: ...
+
+    @overload
+    def write(
+        self,
+        format: Literal["database"],
+        table_name: str,
+        connection: ConnectionOrCursor | str,
+        if_table_exists: DbWriteMode = "fail",
+        engine: DbWriteEngine | None = None,
+        engine_options: dict[str, Any] | None = None,
+    ) -> Self: ...
+
+    @overload
+    def write(
+        self,
+        format: Literal["ipc"],
+        file: str | Path | IO[bytes] | None,
+        compression: IpcCompression = "uncompressed",
+        compat_level: CompatLevel | None = None,
+        storage_options: dict[str, Any] | None = None,
+        credential_provider: CredentialProviderFunction
+        | Literal["auto"]
+        | None = "auto",
+        retries: int = 2,
+    ) -> Self: ...
+
+    @overload
+    def write(
+        self,
+        format: Literal["ipc_stream"],
+        file: str | Path | IO[bytes] | None,
+        compression: IpcCompression = "uncompressed",
+        compat_level: CompatLevel | None = None,
+    ) -> Self: ...
+
+    @overload
+    def write(
+        self, format: Literal["json"], file: IOBase | str | Path | None = None
+    ) -> Self: ...
+
+    @overload
+    def write(
+        self,
+        format: Literal["ndjson"],
+        file: str | Path | IO[bytes] | IO[str] | None = None,
+    ) -> Self: ...
+
+    @overload
+    def write(
+        self,
+        format: Literal["parquet"],
+        file: str | Path | IO[bytes],
+        compression: ParquetCompression = "zstd",
+        compression_level: int | None = None,
+        statistics: bool | str | dict[str, bool] = True,
+        row_group_size: int | None = None,
+        data_page_size: int | None = None,
+        use_pyarrow: bool = False,
+        pyarrow_options: dict[str, Any] | None = None,
+        partition_by: str | Sequence[str] | None = None,
+        partition_chunk_size_bytes: int = 4294967296,
+        storage_options: dict[str, Any] | None = None,
+        credential_provider: CredentialProviderFunction
+        | Literal["auto"]
+        | None = "auto",
+        retries: int = 2,
+        metadata: ParquetMetadata | None = None,
+        mkdir: bool = False,
+    ) -> Self: ...
+
+    def write(self, format: str, *args: Any, **kwargs: Any) -> Self:
+        method_name = f"write_{format}"
+        if not hasattr(self, method_name):
+            raise ValueError(f"Unknown format: {format}")
+        return getattr(self, method_name)(*args, **kwargs)
+
+    @overload
+    def read(
+        self,
+        format: Literal["avro"],
+        source: str | Path | IO[bytes] | bytes,
+        columns: list[int] | list[str] | None = None,
+        n_rows: int | None = None,
+    ) -> Self: ...
+
+    @overload
+    def read(
+        self, format: Literal["clipboard"], separator: str = "\t", **kwargs: Any
+    ) -> Self: ...
+
+    @overload
+    def read(
+        self,
+        format: Literal["csv"],
+        source: str | Path | IO[str] | IO[bytes] | bytes,
+        has_header: bool = True,
+        columns: Sequence[int] | Sequence[str] | None = None,
+        new_columns: Sequence[str] | None = None,
+        separator: str = ",",
+        comment_prefix: str | None = None,
+        quote_char: str | None = '"',
+        skip_rows: int = 0,
+        skip_lines: int = 0,
+        schema: SchemaDict | None = None,
+        schema_overrides: Mapping[str, PolarsDataType]
+        | Sequence[PolarsDataType]
+        | None = None,
+        null_values: str | Sequence[str] | dict[str, str] | None = None,
+        missing_utf8_is_empty_string: bool = False,
+        ignore_errors: bool = False,
+        try_parse_dates: bool = False,
+        n_threads: int | None = None,
+        infer_schema: bool = True,
+        infer_schema_length: int | None = 100,
+        batch_size: int = 8192,
+        n_rows: int | None = None,
+        encoding: CsvEncoding | str = "utf8",
+        low_memory: bool = False,
+        rechunk: bool = False,
+        use_pyarrow: bool = False,
+        storage_options: dict[str, Any] | None = None,
+        skip_rows_after_header: int = 0,
+        row_index_name: str | None = None,
+        row_index_offset: int = 0,
+        sample_size: int = 1024,
+        eol_char: str = "\n",
+        raise_if_empty: bool = True,
+        truncate_ragged_lines: bool = False,
+        decimal_comma: bool = False,
+        glob: bool = True,
+    ) -> Self: ...
+
+    @overload
+    def read(
+        self,
+        format: Literal["csv_batched"],
+        source: str | Path,
+        has_header: bool = True,
+        columns: Sequence[int] | Sequence[str] | None = None,
+        new_columns: Sequence[str] | None = None,
+        separator: str = ",",
+        comment_prefix: str | None = None,
+        quote_char: str | None = '"',
+        skip_rows: int = 0,
+        skip_lines: int = 0,
+        schema_overrides: Mapping[str, PolarsDataType]
+        | Sequence[PolarsDataType]
+        | None = None,
+        null_values: str | Sequence[str] | dict[str, str] | None = None,
+        missing_utf8_is_empty_string: bool = False,
+        ignore_errors: bool = False,
+        try_parse_dates: bool = False,
+        n_threads: int | None = None,
+        infer_schema_length: int | None = 100,
+        batch_size: int = 50000,
+        n_rows: int | None = None,
+        encoding: CsvEncoding | str = "utf8",
+        low_memory: bool = False,
+        rechunk: bool = False,
+        skip_rows_after_header: int = 0,
+        row_index_name: str | None = None,
+        row_index_offset: int = 0,
+        sample_size: int = 1024,
+        eol_char: str = "\n",
+        raise_if_empty: bool = True,
+        truncate_ragged_lines: bool = False,
+        decimal_comma: bool = False,
+    ) -> Self: ...
+
+    @overload
+    def read(
+        self,
+        format: Literal["database_uri"],
+        query: list[str] | str,
+        uri: str,
+        partition_on: str | None = None,
+        partition_range: tuple[int, int] | None = None,
+        partition_num: int | None = None,
+        protocol: str | None = None,
+        engine: DbReadEngine | None = None,
+        schema_overrides: SchemaDict | None = None,
+        execute_options: dict[str, Any] | None = None,
+        pre_execution_query: str | list[str] | None = None,
+    ) -> Self: ...
+
+    @overload
+    def read(
+        self,
+        format: Literal["ipc"],
+        source: str | Path | IO[bytes] | bytes,
+        columns: list[int] | list[str] | None = None,
+        n_rows: int | None = None,
+        use_pyarrow: bool = False,
+        memory_map: bool = True,
+        storage_options: dict[str, Any] | None = None,
+        row_index_name: str | None = None,
+        row_index_offset: int = 0,
+        rechunk: bool = True,
+    ) -> Self: ...
+
+    @overload
+    def read(
+        self, format: Literal["ipc_schema"], source: str | Path | IO[bytes] | bytes
+    ) -> Self: ...
+
+    @overload
+    def read(
+        self,
+        format: Literal["ipc_stream"],
+        source: str | Path | IO[bytes] | bytes,
+        columns: list[int] | list[str] | None = None,
+        n_rows: int | None = None,
+        use_pyarrow: bool = False,
+        storage_options: dict[str, Any] | None = None,
+        row_index_name: str | None = None,
+        row_index_offset: int = 0,
+        rechunk: bool = True,
+    ) -> Self: ...
+
+    @overload
+    def read(
+        self,
+        format: Literal["json"],
+        source: str | Path | IOBase | bytes,
+        schema: SchemaDefinition | None = None,
+        schema_overrides: SchemaDefinition | None = None,
+        infer_schema_length: int | None = 100,
+    ) -> Self: ...
+
+    @overload
+    def read(
+        self,
+        format: Literal["ndjson"],
+        source: str
+        | Path
+        | IO[str]
+        | IO[bytes]
+        | bytes
+        | list[str]
+        | list[Path]
+        | list[IO[str]]
+        | list[IO[bytes]],
+        schema: SchemaDefinition | None = None,
+        schema_overrides: SchemaDefinition | None = None,
+        infer_schema_length: int | None = 100,
+        batch_size: int | None = 1024,
+        n_rows: int | None = None,
+        low_memory: bool = False,
+        rechunk: bool = False,
+        row_index_name: str | None = None,
+        row_index_offset: int = 0,
+        ignore_errors: bool = False,
+        storage_options: dict[str, Any] | None = None,
+        credential_provider: CredentialProviderFunction
+        | Literal["auto"]
+        | None = "auto",
+        retries: int = 2,
+        file_cache_ttl: int | None = None,
+        include_file_paths: str | None = None,
+    ) -> Self: ...
+
+    @overload
+    def read(
+        self,
+        format: Literal["ods"],
+        source: FileSource,
+        sheet_id: int | Sequence[int] | None = None,
+        sheet_name: str | list[str] | tuple[str] | None = None,
+        has_header: bool = True,
+        columns: Sequence[int] | Sequence[str] | None = None,
+        schema_overrides: SchemaDict | None = None,
+        infer_schema_length: int | None = 100,
+        include_file_paths: str | None = None,
+        drop_empty_rows: bool = True,
+        drop_empty_cols: bool = True,
+        raise_if_empty: bool = True,
+    ) -> Self: ...
+
+    @overload
+    def read(
+        self,
+        format: Literal["parquet"],
+        source: FileSource,
+        columns: list[int] | list[str] | None = None,
+        n_rows: int | None = None,
+        row_index_name: str | None = None,
+        row_index_offset: int = 0,
+        parallel: ParallelStrategy = "auto",
+        use_statistics: bool = True,
+        hive_partitioning: bool | None = None,
+        glob: bool = True,
+        schema: SchemaDict | None = None,
+        hive_schema: SchemaDict | None = None,
+        try_parse_hive_dates: bool = True,
+        rechunk: bool = False,
+        low_memory: bool = False,
+        storage_options: dict[str, Any] | None = None,
+        credential_provider: CredentialProviderFunction
+        | Literal["auto"]
+        | None = "auto",
+        retries: int = 2,
+        use_pyarrow: bool = False,
+        pyarrow_options: dict[str, Any] | None = None,
+        memory_map: bool = True,
+        include_file_paths: str | None = None,
+        missing_columns: Literal["insert", "raise"] = "raise",
+        allow_missing_columns: bool | None = None,
+    ) -> Self: ...
+
+    @overload
+    def read(
+        self,
+        format: Literal["parquet_metadata"],
+        source: str | Path | IO[bytes] | bytes,
+        storage_options: dict[str, Any] | None = None,
+        credential_provider: CredentialProviderFunction
+        | Literal["auto"]
+        | None = "auto",
+        retries: int = 2,
+    ) -> Self: ...
+
+    @overload
+    def read(
+        self, format: Literal["parquet_schema"], source: str | Path | IO[bytes] | bytes
+    ) -> Self: ...
+
+    def read(self, format: str, *args: Any, **kwargs: Any) -> Self:
+        method_name = f"read_{format}"
+        if not hasattr(self, method_name):
+            raise ValueError(f"Unknown format: {format}")
+        return getattr(self, method_name)(*args, **kwargs)
+
+    # --- END INSERTION MARKER IN Unified IO Pipeline
