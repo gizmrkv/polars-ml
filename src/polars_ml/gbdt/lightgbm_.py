@@ -131,7 +131,7 @@ class BaseLightGBM(Transformer, ABC):
             schema=schema,
         )
 
-        return pl.concat([data, prediction_df], how="horizontal")
+        return prediction_df
 
     def save(self, save_dir: str | Path) -> None:
         import lightgbm as lgb

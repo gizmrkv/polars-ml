@@ -78,5 +78,5 @@ def test_catboost_feature_consistency(catboost_tmpdir):
     result = model.transform(df_test)
 
     assert "prediction" in result.columns
-    assert len(result.columns) == 4
-    assert "extra" in result.columns
+    assert len(result.columns) == 1
+    assert "extra" not in result.columns

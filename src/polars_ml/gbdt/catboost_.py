@@ -83,7 +83,7 @@ class CatBoost(Transformer):
             schema=schema,
         )
 
-        return pl.concat([data, prediction_df], how="horizontal")
+        return prediction_df
 
     def save(self, save_dir: str | Path) -> None:
         booster = self.get_booster()
