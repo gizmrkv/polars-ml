@@ -17,6 +17,7 @@ from typing import (
 )
 
 import numpy as np
+import polars as pl
 from polars import DataFrame, Expr, Schema, Series
 from polars._typing import (
     AsofJoinStrategy,
@@ -181,8 +182,18 @@ class Pipeline(Transformer):
         self,
         columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         *more_columns: ColumnNameOrSelector,
+        empty_as_null: bool = True,
+        keep_nulls: bool = True,
     ) -> Self:
-        return self.pipe(GetAttr("explode", columns, *more_columns))
+        return self.pipe(
+            GetAttr(
+                "explode",
+                columns,
+                *more_columns,
+                empty_as_null=empty_as_null,
+                keep_nulls=keep_nulls,
+            )
+        )
 
     def extend(self, other: DataFrame | Transformer) -> Self:
         return self.pipe(GetAttr("extend", other))
@@ -378,6 +389,7 @@ class Pipeline(Transformer):
     def pivot(
         self,
         on: ColumnNameOrSelector | Sequence[ColumnNameOrSelector],
+        on_columns: Sequence[Any] | pl.Series | pl.DataFrame | None = None,
         index: ColumnNameOrSelector | Sequence[ColumnNameOrSelector] | None = None,
         values: ColumnNameOrSelector | Sequence[ColumnNameOrSelector] | None = None,
         aggregate_function: PivotAgg | Expr | None = None,
@@ -389,6 +401,7 @@ class Pipeline(Transformer):
             GetAttr(
                 "pivot",
                 on,
+                on_columns,
                 index=index,
                 values=values,
                 aggregate_function=aggregate_function,
@@ -530,7 +543,7 @@ class Pipeline(Transformer):
 
     def unique(
         self,
-        subset: ColumnNameOrSelector | Collection[ColumnNameOrSelector] | None = None,
+        subset: IntoExpr | Collection[IntoExpr] | None = None,
         keep: UniqueKeepStrategy = "any",
         maintain_order: bool = False,
     ) -> Self:

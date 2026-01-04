@@ -83,13 +83,10 @@ class GroupByNameSpace:
             )
         )
 
-    def first(self) -> Pipeline:
+    def first(self, ignore_nulls: bool = False) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
-                self.attr,
-                "first",
-                self.args,
-                self.kwargs,
+                self.attr, "first", self.args, self.kwargs, ignore_nulls=ignore_nulls
             )
         )
 
@@ -98,13 +95,10 @@ class GroupByNameSpace:
             GroupByGetAttr(self.attr, "head", self.args, self.kwargs, n)
         )
 
-    def last(self) -> Pipeline:
+    def last(self, ignore_nulls: bool = False) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
-                self.attr,
-                "last",
-                self.args,
-                self.kwargs,
+                self.attr, "last", self.args, self.kwargs, ignore_nulls=ignore_nulls
             )
         )
 

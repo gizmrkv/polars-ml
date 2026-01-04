@@ -7,6 +7,7 @@ from typing import (
     Iterable,
     Mapping,
     Self,
+    Sequence,
 )
 
 import numpy as np
@@ -29,7 +30,7 @@ class XGBoost(Transformer):
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
-        prediction_name: str = "prediction",
+        prediction_name: str | Sequence[str] = "prediction",
         save_dir: str | Path | None = None,
     ):
         self.params = params
@@ -80,11 +81,23 @@ class XGBoost(Transformer):
         pred = self.predict(data)
         name = self.prediction_name
 
+        if isinstance(name, str):
+            schema = (
+                [name]
+                if pred.ndim == 1
+                else [f"{name}_{i}" for i in range(pred.shape[1])]
+            )
+        else:
+            n_cols = 1 if pred.ndim == 1 else pred.shape[1]
+            if len(name) != n_cols:
+                raise ValueError(
+                    f"prediction_name length ({len(name)}) does not match prediction shape ({n_cols})"
+                )
+            schema = list(name)
+
         prediction_df = pl.from_numpy(
             pred,
-            schema=[name]
-            if pred.ndim == 1
-            else [f"{name}_{i}" for i in range(pred.shape[1])],
+            schema=schema,
         )
 
         return pl.concat([data, prediction_df], how="horizontal")

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterable, Mapping
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, Sequence
 
 from polars._typing import IntoExpr
 
@@ -31,7 +31,7 @@ class GBDTNameSpace:
         params: Mapping[str, Any],
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
-        prediction_name: str = "prediction",
+        prediction_name: str | Sequence[str] = "prediction",
         save_dir: str | Path | None = None,
     ) -> Pipeline:
         return self.pipeline.pipe(
@@ -49,7 +49,7 @@ class GBDTNameSpace:
         params: Mapping[str, Any],
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
-        prediction_name: str = "prediction",
+        prediction_name: str | Sequence[str] = "prediction",
         save_dir: str | Path | None = None,
     ) -> Pipeline:
         return self.pipeline.pipe(
@@ -67,7 +67,7 @@ class GBDTNameSpace:
         params: Mapping[str, Any],
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
-        prediction_name: str = "prediction",
+        prediction_name: str | Sequence[str] = "prediction",
         save_dir: str | Path | None = None,
     ) -> Pipeline:
         return self.pipeline.pipe(
@@ -85,7 +85,7 @@ class GBDTNameSpace:
         params: Mapping[str, Any],
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
-        prediction_name: str = "prediction",
+        prediction_name: str | Sequence[str] = "prediction",
         save_dir: str | Path | None = None,
     ) -> Pipeline:
         return self.pipeline.pipe(
@@ -103,7 +103,7 @@ class GBDTNameSpace:
         params: Mapping[str, Any],
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
-        prediction_name: str = "prediction",
+        prediction_name: str | Sequence[str] = "prediction",
         save_dir: str | Path | None = None,
     ) -> Pipeline:
         return self.pipeline.pipe(
