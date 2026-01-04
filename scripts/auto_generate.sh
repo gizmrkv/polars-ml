@@ -1,5 +1,17 @@
-uv run python scripts/insert_pipeline_methods.py
-uv run python scripts/insert_group_by_methods.py
-uv run python scripts/insert_gbdt_methods.py
-uv run python scripts/insert_metrics_methods.py
+SCRIPTS=(
+    "scripts/insert_pipeline_methods.py"
+    "scripts/insert_group_by_methods.py"
+    "scripts/insert_gbdt_methods.py"
+    "scripts/insert_metrics_methods.py"
+    "scripts/insert_unified_io_methods.py"
+)
+
+for script in "${SCRIPTS[@]}"; do
+    echo "Running $script..."
+    uv run python "$script"
+done
+
+echo "Formatting code..."
 uv format
+
+echo "Done!"
