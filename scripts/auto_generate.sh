@@ -3,6 +3,7 @@ SCRIPTS=(
     "scripts/insert_group_by_methods.py"
     "scripts/insert_gbdt_methods.py"
     "scripts/insert_metrics_methods.py"
+    "scripts/insert_optimize_methods.py"
     "scripts/insert_unified_io_methods.py"
 )
 

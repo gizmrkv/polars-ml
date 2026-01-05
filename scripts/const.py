@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from polars_ml.gbdt import CatBoost, LightGBM, LightGBMTuner, LightGBMTunerCV, XGBoost
 from polars_ml.metrics import BinaryClassificationMetrics, RegressionMetrics
+from polars_ml.optimize import OptunaOptimizer
 from polars_ml.pipeline.basic import Apply, Concat, Const, Echo, Parrot, Side, ToDummies
 from polars_ml.pipeline.group_by import (
     DynamicGroupByNameSpace,
@@ -71,4 +72,7 @@ GBDT_TRANSFORMERS: list[tuple[str, type]] = [
 METRICS_TRANSFORMERS: list[tuple[str, type]] = [
     ("binary_classification", BinaryClassificationMetrics),
     ("regression", RegressionMetrics),
+]
+OPTIMIZE_TRANSFORMERS: list[tuple[str, type]] = [
+    ("optuna", OptunaOptimizer),
 ]

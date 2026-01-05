@@ -62,6 +62,7 @@ from polars_ml.base import HasFeatureImportance, Transformer
 from polars_ml.gbdt import GBDTNameSpace
 from polars_ml.linear import LinearNameSpace
 from polars_ml.metrics import MetricsNameSpace
+from polars_ml.optimize import OptimizeNameSpace
 from polars_ml.preprocessing import (
     ArithmeticSynthesis,
     BoxCoxTransform,
@@ -134,6 +135,10 @@ class Pipeline(Transformer, HasFeatureImportance):
     @property
     def metrics(self) -> MetricsNameSpace:
         return MetricsNameSpace(self)
+
+    @property
+    def optimize(self) -> OptimizeNameSpace:
+        return OptimizeNameSpace(self)
 
     # --- START INSERTION MARKER IN Pipeline
 
