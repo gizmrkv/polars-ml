@@ -21,13 +21,13 @@ from numpy.typing import NDArray
 from polars import DataFrame
 from polars._typing import IntoExpr
 
-from polars_ml.base import Transformer
+from polars_ml.base import HasFeatureImportance, Transformer
 
 if TYPE_CHECKING:
     import lightgbm as lgb
 
 
-class BaseLightGBM(Transformer, ABC):
+class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
     def __init__(
         self,
         params: Mapping[str, Any],
@@ -142,6 +142,47 @@ class BaseLightGBM(Transformer, ABC):
         else:
             for name, booster in boosters.items():
                 save_lightgbm_booster(booster, save_dir / name)
+
+    def get_feature_importance(self) -> DataFrame:
+        import lightgbm as lgb
+
+        boosters = self.get_booster()
+        if isinstance(boosters, lgb.Booster):
+            return DataFrame(
+                {
+                    "feature": boosters.feature_name(),
+                    **{
+                        importance_type: boosters.feature_importance(
+                            importance_type=importance_type
+                        )
+                        for importance_type in ["gain", "split"]
+                    },
+                }
+            )
+
+        # For CV, average the importance
+        all_importances = []
+        for booster in boosters.values():
+            all_importances.append(
+                DataFrame(
+                    {
+                        "feature": booster.feature_name(),
+                        **{
+                            importance_type: booster.feature_importance(
+                                importance_type=importance_type
+                            )
+                            for importance_type in ["gain", "split"]
+                        },
+                    }
+                )
+            )
+
+        return (
+            DataFrame.concat(all_importances)
+            .group_by("feature", maintain_order=True)
+            .mean()
+            .select("feature", "gain", "split")
+        )
 
 
 class LightGBM(BaseLightGBM):

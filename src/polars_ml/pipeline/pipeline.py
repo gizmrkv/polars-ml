@@ -58,7 +58,7 @@ from polars._typing import (
 from polars.interchange.protocol import CompatLevel
 from polars.io.cloud import CredentialProviderFunction
 
-from polars_ml.base import Transformer
+from polars_ml.base import HasFeatureImportance, Transformer
 from polars_ml.gbdt import GBDTNameSpace
 from polars_ml.linear import LinearNameSpace
 from polars_ml.metrics import MetricsNameSpace
@@ -81,9 +81,9 @@ from .getattr import GetAttr, GetAttrPolars
 from .group_by import DynamicGroupByNameSpace, GroupByNameSpace, RollingGroupByNameSpace
 
 
-class Pipeline(Transformer):
+class Pipeline(Transformer, HasFeatureImportance):
     def __init__(self, *steps: Transformer):
-        self.steps: list[Transformer] = list(*steps)
+        self.steps: list[Transformer] = list(steps)
 
     def pipe(self, step: Transformer) -> Self:
         self.steps.append(step)
@@ -109,6 +109,19 @@ class Pipeline(Transformer):
         for step in self.steps:
             data = step.transform(data)
         return data
+
+    def get_feature_importance(self) -> DataFrame:
+        if not self.steps:
+            raise ValueError("Pipeline has no steps.")
+
+        last_step = self.steps[-1]
+        if isinstance(last_step, HasFeatureImportance):
+            return last_step.get_feature_importance()
+
+        raise TypeError(
+            f"The last step of the pipeline ({type(last_step).__name__}) "
+            "does not support feature importance."
+        )
 
     @property
     def gbdt(self) -> GBDTNameSpace:

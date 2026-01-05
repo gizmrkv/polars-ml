@@ -17,13 +17,13 @@ from numpy.typing import NDArray
 from polars import DataFrame
 from polars._typing import IntoExpr
 
-from polars_ml.base import Transformer
+from polars_ml.base import HasFeatureImportance, Transformer
 
 if TYPE_CHECKING:
     import xgboost as xgb
 
 
-class XGBoost(Transformer):
+class XGBoost(Transformer, HasFeatureImportance):
     def __init__(
         self,
         params: Mapping[str, Any],
@@ -106,6 +106,27 @@ class XGBoost(Transformer):
         booster = self.get_booster()
         save_dir = Path(save_dir)
         save_xgboost_booster(booster, save_dir)
+
+    def get_feature_importance(self) -> DataFrame:
+        booster = self.get_booster()
+        feature_names = booster.feature_names
+        if feature_names is None:
+            feature_names = self.feature_names
+
+        importance_types = [
+            "gain",
+            "weight",
+            "cover",
+            "total_gain",
+            "total_cover",
+        ]
+
+        importance_data = {"feature": feature_names}
+        for it in importance_types:
+            scores = booster.get_score(importance_type=it)
+            importance_data[it] = [scores.get(fn, 0.0) for fn in feature_names]
+
+        return DataFrame(importance_data)
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import xgboost as xgb

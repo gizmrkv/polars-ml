@@ -13,3 +13,8 @@ class Transformer(ABC):
 
     @abstractmethod
     def transform(self, data: DataFrame) -> DataFrame: ...
+
+
+class HasFeatureImportance(ABC):
+    @abstractmethod
+    def get_feature_importance(self) -> DataFrame: ...

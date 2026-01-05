@@ -9,10 +9,10 @@ from numpy.typing import NDArray
 from polars import DataFrame
 from polars._typing import IntoExpr
 
-from polars_ml.base import Transformer
+from polars_ml.base import HasFeatureImportance, Transformer
 
 
-class BaseLinear(Transformer, ABC):
+class BaseLinear(Transformer, HasFeatureImportance, ABC):
     def __init__(
         self,
         model: Any,
@@ -74,3 +74,21 @@ class BaseLinear(Transformer, ABC):
         )
 
         return prediction_df
+
+    def get_feature_importance(self) -> pl.DataFrame:
+        model = self.get_model()
+        coef = model.coef_
+
+        if coef.ndim == 1:
+            return DataFrame(
+                {
+                    "feature": self.feature_names,
+                    "coefficient": coef,
+                }
+            )
+        else:
+            # Multi-class
+            data = {"feature": self.feature_names}
+            for i in range(coef.shape[0]):
+                data[f"coefficient_class_{i}"] = coef[i]
+            return DataFrame(data)

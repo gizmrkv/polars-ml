@@ -17,13 +17,13 @@ from numpy.typing import NDArray
 from polars import DataFrame
 from polars._typing import IntoExpr
 
-from polars_ml.base import Transformer
+from polars_ml.base import HasFeatureImportance, Transformer
 
 if TYPE_CHECKING:
     import catboost
 
 
-class CatBoost(Transformer):
+class CatBoost(Transformer, HasFeatureImportance):
     def __init__(
         self,
         params: Mapping[str, Any],
@@ -90,6 +90,16 @@ class CatBoost(Transformer):
         save_dir = Path(save_dir)
         save_dir.mkdir(parents=True, exist_ok=True)
         booster.save_model(str(save_dir / "model.cbm"))
+
+    def get_feature_importance(self) -> DataFrame:
+        booster = self.get_booster()
+        importance = booster.get_feature_importance()
+        return DataFrame(
+            {
+                "feature": self.feature_names,
+                "importance": importance,
+            }
+        )
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import catboost
