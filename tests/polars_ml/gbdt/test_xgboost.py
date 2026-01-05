@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from typing import Any
-
 import numpy as np
-import polars as pl
 import xgboost as xgb
 from numpy.typing import NDArray
+from polars import DataFrame
 
 from polars_ml.gbdt.xgboost_ import XGBoost
 
 
 def test_xgboost_default_flow():
-    df = pl.DataFrame(
+    df = DataFrame(
         {"f1": [1, 2, 3, 4, 5], "f2": [10, 20, 30, 40, 50], "target": [0, 1, 0, 1, 0]}
     )
 
@@ -32,7 +30,7 @@ def test_xgboost_default_flow():
 
 def test_base_xgboost_override():
     class CustomXGB(XGBoost):
-        def fit(self, data: pl.DataFrame) -> CustomXGB:
+        def fit(self, data: DataFrame) -> CustomXGB:
             import polars.selectors as cs
 
             if self.features_selector is None:
@@ -48,15 +46,15 @@ def test_base_xgboost_override():
         def get_booster(self) -> xgb.Booster:
             return self.booster
 
-        def create_dmatrix(self, data: pl.DataFrame) -> xgb.DMatrix:
+        def create_dmatrix(self, data: DataFrame) -> xgb.DMatrix:
             dm = super().create_dmatrix(data)
             dm.set_info(base_margin=np.zeros(len(data)))
             return dm
 
-        def predict(self, data: pl.DataFrame) -> NDArray:
+        def predict(self, data: DataFrame) -> NDArray:
             return np.zeros(len(data))
 
-    df = pl.DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
+    df = DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
 
     model = CustomXGB({"max_depth": 2}, "target")
     model.fit(df)
@@ -67,10 +65,8 @@ def test_base_xgboost_override():
 
 
 def test_xgboost_feature_consistency():
-    df_train = pl.DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
-    df_test = pl.DataFrame(
-        {"f1": [1, 2, 3], "extra": [10, 20, 30], "target": [0, 1, 0]}
-    )
+    df_train = DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
+    df_test = DataFrame({"f1": [1, 2, 3], "extra": [10, 20, 30], "target": [0, 1, 0]})
 
     model = XGBoost({"max_depth": 2}, label="target")
     model.fit(df_train)

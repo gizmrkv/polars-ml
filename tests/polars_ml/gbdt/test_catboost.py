@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from typing import Any
-
 import catboost
 import numpy as np
-import polars as pl
 from numpy.typing import NDArray
+from polars import DataFrame
 
 from polars_ml.gbdt.catboost_ import CatBoost
 
 
 def test_catboost_default_flow(catboost_tmpdir):
-    df = pl.DataFrame(
+    df = DataFrame(
         {"f1": [1, 2, 3, 4, 5], "f2": [10, 20, 30, 40, 50], "target": [0, 1, 0, 1, 0]}
     )
 
@@ -29,7 +27,7 @@ def test_catboost_default_flow(catboost_tmpdir):
 
 def test_base_catboost_override(catboost_tmpdir):
     class CustomCatBoost(CatBoost):
-        def fit(self, data: pl.DataFrame) -> CustomCatBoost:
+        def fit(self, data: DataFrame) -> CustomCatBoost:
             import catboost
             import polars.selectors as cs
 
@@ -50,10 +48,10 @@ def test_base_catboost_override(catboost_tmpdir):
         def get_booster(self) -> catboost.CatBoost:
             return self.model
 
-        def predict(self, data: pl.DataFrame) -> NDArray:
+        def predict(self, data: DataFrame) -> NDArray:
             return np.zeros(len(data))
 
-    df = pl.DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
+    df = DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
 
     model = CustomCatBoost({"depth": 2, "train_dir": catboost_tmpdir}, "target")
     model.fit(df)
@@ -64,10 +62,8 @@ def test_base_catboost_override(catboost_tmpdir):
 
 
 def test_catboost_feature_consistency(catboost_tmpdir):
-    df_train = pl.DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
-    df_test = pl.DataFrame(
-        {"f1": [1, 2, 3], "extra": [10, 20, 30], "target": [0, 1, 0]}
-    )
+    df_train = DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
+    df_test = DataFrame({"f1": [1, 2, 3], "extra": [10, 20, 30], "target": [0, 1, 0]})
 
     model = CatBoost(
         {"depth": 2, "iterations": 5, "verbose": False, "train_dir": catboost_tmpdir},

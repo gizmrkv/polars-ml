@@ -75,7 +75,7 @@ class BaseLinear(Transformer, HasFeatureImportance, ABC):
 
         return prediction_df
 
-    def get_feature_importance(self) -> pl.DataFrame:
+    def get_feature_importance(self) -> DataFrame:
         model = self.get_model()
         coef = model.coef_
 
