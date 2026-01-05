@@ -9,7 +9,7 @@ from polars_ml.pipeline.basic import Apply, Concat, Const, Echo, Parrot, Side, T
 
 @pytest.fixture
 def sample_df() -> DataFrame:
-    return pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    return DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
 
 def test_apply(sample_df: DataFrame):

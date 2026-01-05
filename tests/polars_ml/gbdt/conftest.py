@@ -5,11 +5,12 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 import pytest
+from polars import DataFrame
 
 
-def get_mock_data() -> pl.DataFrame:
+def get_mock_data() -> DataFrame:
     np.random.seed(42)
-    data = pl.DataFrame(
+    data = DataFrame(
         {
             "feature1": np.random.rand(100),
             "feature2": np.random.rand(100),

@@ -144,7 +144,7 @@ def save_xgboost_booster(booster: xgb.Booster, save_dir: str | Path):
         json.dump(config, f, indent=4)
 
     if feature_names := booster.feature_names:
-        pl.DataFrame(
+        DataFrame(
             {
                 "feature": feature_names,
                 **{

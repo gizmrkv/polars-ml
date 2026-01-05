@@ -25,8 +25,6 @@ from polars_ml.base import Transformer
 
 if TYPE_CHECKING:
     import lightgbm as lgb
-    import optuna
-    from sklearn.model_selection import BaseCrossValidator
 
 
 class BaseLightGBM(Transformer, ABC):

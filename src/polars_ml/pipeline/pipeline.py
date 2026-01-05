@@ -60,6 +60,7 @@ from polars.io.cloud import CredentialProviderFunction
 
 from polars_ml.base import Transformer
 from polars_ml.gbdt import GBDTNameSpace
+from polars_ml.linear import LinearNameSpace
 from polars_ml.metrics import MetricsNameSpace
 from polars_ml.preprocessing import (
     ArithmeticSynthesis,
@@ -112,6 +113,10 @@ class Pipeline(Transformer):
     @property
     def gbdt(self) -> GBDTNameSpace:
         return GBDTNameSpace(self)
+
+    @property
+    def linear(self) -> LinearNameSpace:
+        return LinearNameSpace(self)
 
     @property
     def metrics(self) -> MetricsNameSpace:

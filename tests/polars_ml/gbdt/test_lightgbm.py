@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-from typing import Any, Union
-
 import lightgbm as lgb
 import numpy as np
-import polars as pl
-import pytest
 from numpy.typing import NDArray
+from polars import DataFrame
 
 from polars_ml.gbdt.lightgbm_ import BaseLightGBM, LightGBM
 
 
 def test_lightgbm_default_flow():
-    df = pl.DataFrame(
+    df = DataFrame(
         {"f1": [1, 2, 3, 4, 5], "f2": [10, 20, 30, 40, 50], "target": [0, 1, 0, 1, 0]}
     )
 
@@ -34,7 +31,7 @@ def test_lightgbm_default_flow():
 
 def test_base_lightgbm_override():
     class CustomLGB(BaseLightGBM):
-        def fit(self, data: pl.DataFrame) -> CustomLGB:
+        def fit(self, data: DataFrame) -> CustomLGB:
             train_dataset, _, _ = self.make_train_valid_sets(data)
             self.booster = lgb.train(self.params, train_dataset, num_boost_round=5)
             return self
@@ -42,15 +39,15 @@ def test_base_lightgbm_override():
         def get_booster(self) -> lgb.Booster:
             return self.booster
 
-        def create_train(self, data: pl.DataFrame) -> lgb.Dataset:
+        def create_train(self, data: DataFrame) -> lgb.Dataset:
             ds = super().create_train(data)
             ds.custom_attr = "custom"
             return ds
 
-        def predict(self, data: pl.DataFrame) -> NDArray:
+        def predict(self, data: DataFrame) -> NDArray:
             return np.zeros(len(data))
 
-    df = pl.DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
+    df = DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
 
     model = CustomLGB({"verbosity": -1}, "target")
     model.fit(df)
@@ -61,10 +58,8 @@ def test_base_lightgbm_override():
 
 
 def test_feature_consistency():
-    df_train = pl.DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
-    df_test = pl.DataFrame(
-        {"f1": [1, 2, 3], "extra": [10, 20, 30], "target": [0, 1, 0]}
-    )
+    df_train = DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
+    df_test = DataFrame({"f1": [1, 2, 3], "extra": [10, 20, 30], "target": [0, 1, 0]})
 
     model = LightGBM({"verbosity": -1}, label="target")
     model.fit(df_train)
