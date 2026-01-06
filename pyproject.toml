@@ -3,17 +3,15 @@ name = "polars-ml"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-authors = [
-    { name = "gizmrkv", email = "gizmrkv@gmail.com" }
-]
-requires-python = ">=3.12"
+authors = [{ name = "gizmrkv", email = "gizmrkv@gmail.com" }]
+requires-python = ">=3.11"
 dependencies = [
     "catboost>=1.2.8",
     "inflection>=0.5.1",
     "lightgbm>=4.6.0",
     "optuna>=4.6.0",
     "optuna-integration>=4.6.0",
-    "polars>=1.35.2",
+    "polars>=1.36.1",
     "pyarrow>=22.0.0",
     "scikit-learn>=1.7.2",
     "shortuuid>=1.0.13",
@@ -28,9 +26,10 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "ipykernel>=7.1.0",
-    "kaggle>=1.8.3",
+    "kaggle>=1.7.4.5",
     "kagglehub>=0.3.13",
     "pytest>=9.0.2",
+    "torch==2.7.1+cu118",
 ]
 
 [tool.ruff]
@@ -38,3 +37,11 @@ extend-include = ["*.ipynb"]
 
 [tool.ruff.lint]
 ignore = ["F401"]
+
+[[tool.uv.index]]
+name = "pytorch-cu118"
+url = "https://download.pytorch.org/whl/cu118"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu118" }
