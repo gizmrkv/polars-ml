@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+from ctypes import Union
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -10,7 +12,6 @@ from typing import (
     Sequence,
 )
 
-import numpy as np
 import polars as pl
 import polars.selectors as cs
 from numpy.typing import NDArray
@@ -30,12 +31,32 @@ class XGBoost(Transformer, HasFeatureImportance):
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
+        num_boost_round: int = 10,
+        evals: Sequence[tuple[xgb.DMatrix, str]] | None = None,
+        obj: xgb.Objective | None = None,
+        maximize: bool | None = None,
+        early_stopping_rounds: int | None = None,
+        evals_result: xgb.TrainingCallback.EvalsLog | None = None,
+        verbose_eval: bool | int | None = True,
+        xgb_model: str | os.PathLike | xgb.Booster | bytearray | None = None,
+        callbacks: Sequence[xgb.TrainingCallback] | None = None,
+        custom_metric: xgb.Metric | None = None,
         prediction_name: str | Sequence[str] = "prediction",
         save_dir: str | Path | None = None,
     ):
-        self.params = params
         self.label = label
         self.features_selector = features
+        self.params = params
+        self.num_boost_round = num_boost_round
+        self.evals = evals
+        self.obj = obj
+        self.maximize = maximize
+        self.early_stopping_rounds = early_stopping_rounds
+        self.evals_result = evals_result
+        self.verbose_eval = verbose_eval
+        self.xgb_model = xgb_model
+        self.callbacks = callbacks
+        self.custom_metric = custom_metric
         self.prediction_name = prediction_name
         self.save_dir = Path(save_dir) if save_dir else None
 
@@ -65,6 +86,37 @@ class XGBoost(Transformer, HasFeatureImportance):
 
         evals.append((dtrain, "train"))
         return dtrain, evals
+
+    def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
+        import xgboost as xgb
+
+        if self.features_selector is None:
+            label_cols = data.lazy().select(self.label).collect_schema().names()
+            self.features_selector = cs.exclude(*label_cols)
+
+        self.feature_names = data.select(self.features_selector).columns
+
+        dtrain, evals = self.make_train_valid_sets(data, **more_data)
+
+        self.booster = xgb.train(
+            self.params,
+            dtrain,
+            self.num_boost_round,
+            evals=evals,
+            obj=self.obj,
+            maximize=self.maximize,
+            early_stopping_rounds=self.early_stopping_rounds,
+            evals_result=self.evals_result,
+            verbose_eval=self.verbose_eval,
+            xgb_model=self.xgb_model,
+            callbacks=self.callbacks,
+            custom_metric=self.custom_metric,
+        )
+
+        if self.save_dir:
+            self.save(self.save_dir)
+
+        return self
 
     def predict(self, data: DataFrame) -> NDArray:
         import xgboost as xgb
@@ -127,28 +179,6 @@ class XGBoost(Transformer, HasFeatureImportance):
             importance_data[it] = [scores.get(fn, 0.0) for fn in feature_names]
 
         return DataFrame(importance_data)
-
-    def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
-        import xgboost as xgb
-
-        if self.features_selector is None:
-            label_cols = data.lazy().select(self.label).collect_schema().names()
-            self.features_selector = cs.exclude(*label_cols)
-
-        self.feature_names = data.select(self.features_selector).columns
-
-        dtrain, evals = self.make_train_valid_sets(data, **more_data)
-
-        self.booster = xgb.train(
-            self.params,
-            dtrain,
-            evals=evals,
-        )
-
-        if self.save_dir:
-            self.save(self.save_dir)
-
-        return self
 
 
 def save_xgboost_booster(booster: xgb.Booster, save_dir: str | Path):

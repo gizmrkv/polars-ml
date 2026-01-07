@@ -30,12 +30,14 @@ class CatBoost(Transformer, HasFeatureImportance):
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
+        fit_params: Mapping[str, Any] | None = None,
         prediction_name: str | Sequence[str] = "prediction",
         save_dir: str | Path | None = None,
     ):
-        self.params = params
         self.label = label
         self.features_selector = features
+        self.params = params
+        self.fit_params = fit_params or {}
         self.prediction_name = prediction_name
         self.save_dir = Path(save_dir) if save_dir else None
 
@@ -53,6 +55,32 @@ class CatBoost(Transformer, HasFeatureImportance):
             label=label.to_pandas(),
             feature_names=self.feature_names,
         )
+
+    def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
+        import catboost
+
+        if self.features_selector is None:
+            label_cols = data.lazy().select(self.label).collect_schema().names()
+            self.features_selector = cs.exclude(*label_cols)
+
+        self.feature_names = data.select(self.features_selector).columns
+
+        train_pool = self.create_pool(data)
+        eval_sets = []
+        for valid_data in more_data.values():
+            eval_sets.append(self.create_pool(valid_data))
+
+        self.model = catboost.CatBoost(dict(self.params))
+        self.model.fit(
+            train_pool,
+            eval_set=eval_sets if eval_sets else None,
+            **self.fit_params,
+        )
+
+        if self.save_dir:
+            self.save(self.save_dir)
+
+        return self
 
     def predict(self, data: DataFrame) -> NDArray:
         input_data = data.select(self.feature_names).to_pandas()
@@ -100,28 +128,3 @@ class CatBoost(Transformer, HasFeatureImportance):
                 "importance": importance,
             }
         )
-
-    def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
-        import catboost
-
-        if self.features_selector is None:
-            label_cols = data.lazy().select(self.label).collect_schema().names()
-            self.features_selector = cs.exclude(*label_cols)
-
-        self.feature_names = data.select(self.features_selector).columns
-
-        train_pool = self.create_pool(data)
-        eval_sets = []
-        for valid_data in more_data.values():
-            eval_sets.append(self.create_pool(valid_data))
-
-        self.model = catboost.CatBoost(dict(self.params))
-        self.model.fit(
-            train_pool,
-            eval_set=eval_sets if eval_sets else None,
-        )
-
-        if self.save_dir:
-            self.save(self.save_dir)
-
-        return self

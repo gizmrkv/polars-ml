@@ -9,6 +9,7 @@ from typing import (
     Generator,
     Iterable,
     Iterator,
+    Literal,
     Mapping,
     Self,
     Sequence,
@@ -25,6 +26,10 @@ from polars_ml.base import HasFeatureImportance, Transformer
 
 if TYPE_CHECKING:
     import lightgbm as lgb
+    import optuna
+    from optuna import Study
+    from optuna.trial import FrozenTrial
+    from sklearn.model_selection import BaseCrossValidator
 
 
 class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
@@ -34,11 +39,13 @@ class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
+        categorical_feature: list[str] | list[int] | Literal["auto"] = "auto",
         prediction_name: str | Sequence[str] = "prediction",
     ):
-        self.label = label
         self.params = params
+        self.label = label
         self.features_selector = features
+        self.categorical_feature = categorical_feature
         self.prediction_name = prediction_name
 
     @abstractmethod
@@ -55,14 +62,11 @@ class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
         label = data.select(self.label)
         self.feature_names = features.columns
 
-        params: dict[str, Any] = {
-            "data": features.to_pandas(),
-            "label": label.to_pandas(),
-        }
-
         return lgb.Dataset(
-            **params,
+            features.to_pandas(),
+            label.to_pandas(),
             feature_name=self.feature_names,
+            categorical_feature=self.categorical_feature,
             free_raw_data=True,
         )
 
@@ -70,12 +74,10 @@ class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
         features = data.select(self.feature_names)
         label = data.select(self.label)
 
-        params: dict[str, Any] = {
-            "data": features.to_pandas(),
-            "label": label.to_pandas(),
-        }
-
-        return reference.create_valid(**params)
+        return reference.create_valid(
+            features.to_pandas(),
+            label.to_pandas(),
+        )
 
     def make_train_valid_sets(
         self, data: DataFrame, **more_data: DataFrame
@@ -192,6 +194,12 @@ class LightGBM(BaseLightGBM):
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
+        num_boost_round: int = 100,
+        feval: Callable[..., Any] | None = None,
+        init_model: Union[str, Path, lgb.Booster] | None = None,
+        keep_training_booster: bool = False,
+        callbacks: list[Callable] | None = None,
+        categorical_feature: list[str] | list[int] | Literal["auto"] = "auto",
         prediction_name: str | Sequence[str] = "prediction",
         save_dir: str | Path | None = None,
     ):
@@ -199,8 +207,14 @@ class LightGBM(BaseLightGBM):
             params,
             label,
             features,
+            categorical_feature=categorical_feature,
             prediction_name=prediction_name,
         )
+        self.num_boost_round = num_boost_round
+        self.feval = feval
+        self.init_model = init_model
+        self.keep_training_booster = keep_training_booster
+        self.callbacks = callbacks
         self.save_dir = Path(save_dir) if save_dir else None
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
@@ -215,6 +229,11 @@ class LightGBM(BaseLightGBM):
             train_dataset,
             valid_sets=valid_sets,
             valid_names=valid_names,
+            num_boost_round=self.num_boost_round,
+            feval=self.feval,
+            init_model=self.init_model,
+            keep_training_booster=self.keep_training_booster,
+            callbacks=self.callbacks,
         )
 
         if self.save_dir:
@@ -233,6 +252,18 @@ class LightGBMTuner(BaseLightGBM):
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
+        num_boost_round: int = 1000,
+        feval: Callable[..., Any] | None = None,
+        categorical_feature: list[str] | list[int] | Literal["auto"] = "auto",
+        keep_training_booster: bool = False,
+        callbacks: list[Callable[..., Any]] | None = None,
+        time_budget: int | None = None,
+        sample_size: int | None = None,
+        study: optuna.study.Study | None = None,
+        optuna_callbacks: list[Callable[[Study, FrozenTrial], None]] | None = None,
+        model_dir: str | None = None,
+        show_progress_bar: bool = True,
+        optuna_seed: int | None = None,
         prediction_name: str | Sequence[str] = "prediction",
         save_dir: str | Path | None = None,
     ):
@@ -240,8 +271,20 @@ class LightGBMTuner(BaseLightGBM):
             params,
             label,
             features,
+            categorical_feature=categorical_feature,
             prediction_name=prediction_name,
         )
+        self.num_boost_round = num_boost_round
+        self.feval = feval
+        self.keep_training_booster = keep_training_booster
+        self.callbacks = callbacks
+        self.time_budget = time_budget
+        self.sample_size = sample_size
+        self.study = study
+        self.optuna_callbacks = optuna_callbacks
+        self.model_dir = model_dir
+        self.show_progress_bar = show_progress_bar
+        self.optuna_seed = optuna_seed
         self.save_dir = Path(save_dir) if save_dir else None
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
@@ -256,6 +299,17 @@ class LightGBMTuner(BaseLightGBM):
             train_dataset,
             valid_sets=valid_sets,
             valid_names=valid_names,
+            num_boost_round=self.num_boost_round,
+            feval=self.feval,
+            keep_training_booster=self.keep_training_booster,
+            callbacks=self.callbacks,
+            time_budget=self.time_budget,
+            sample_size=self.sample_size,
+            study=self.study,
+            optuna_callbacks=self.optuna_callbacks,
+            model_dir=self.model_dir,
+            show_progress_bar=self.show_progress_bar,
+            optuna_seed=self.optuna_seed,
         )
         self.tuner.run()
         self.best_booster = self.tuner.get_best_booster()
@@ -276,6 +330,28 @@ class LightGBMTunerCV(BaseLightGBM):
         label: IntoExpr,
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
+        num_boost_round: int = 1000,
+        folds: (
+            Generator[tuple[int, int], None, None]
+            | Iterator[tuple[int, int]]
+            | BaseCrossValidator
+            | None
+        ) = None,
+        nfold: int = 5,
+        stratified: bool = True,
+        shuffle: bool = True,
+        feval: Callable[..., Any] | None = None,
+        categorical_feature: list[str] | list[int] | Literal["auto"] = "auto",
+        fpreproc: Callable[..., Any] | None = None,
+        seed: int = 0,
+        callbacks: list[Callable[..., Any]] | None = None,
+        time_budget: int | None = None,
+        sample_size: int | None = None,
+        study: optuna.study.Study | None = None,
+        optuna_callbacks: list[Callable[[Study, FrozenTrial], None]] | None = None,
+        model_dir: str | None = None,
+        show_progress_bar: bool = True,
+        optuna_seed: int | None = None,
         prediction_name: str | Sequence[str] = "prediction",
         save_dir: str | Path | None = None,
     ):
@@ -283,8 +359,25 @@ class LightGBMTunerCV(BaseLightGBM):
             params,
             label,
             features,
+            categorical_feature=categorical_feature,
             prediction_name=prediction_name,
         )
+        self.num_boost_round = num_boost_round
+        self.folds = folds
+        self.nfold = nfold
+        self.stratified = stratified
+        self.shuffle = shuffle
+        self.feval = feval
+        self.fpreproc = fpreproc
+        self.seed = seed
+        self.callbacks = callbacks
+        self.time_budget = time_budget
+        self.sample_size = sample_size
+        self.study = study
+        self.optuna_callbacks = optuna_callbacks
+        self.model_dir = model_dir
+        self.show_progress_bar = show_progress_bar
+        self.optuna_seed = optuna_seed
         self.prediction_name = prediction_name
         self.save_dir = Path(save_dir) if save_dir else None
 
@@ -296,6 +389,22 @@ class LightGBMTunerCV(BaseLightGBM):
         self.tuner = LightGBMTunerCV(
             self.params,
             train_dataset,
+            num_boost_round=self.num_boost_round,
+            folds=self.folds,
+            nfold=self.nfold,
+            stratified=self.stratified,
+            shuffle=self.shuffle,
+            feval=self.feval,
+            fpreproc=self.fpreproc,
+            seed=self.seed,
+            callbacks=self.callbacks,
+            time_budget=self.time_budget,
+            sample_size=self.sample_size,
+            study=self.study,
+            optuna_callbacks=self.optuna_callbacks,
+            model_dir=self.model_dir,
+            show_progress_bar=self.show_progress_bar,
+            optuna_seed=self.optuna_seed,
             return_cvbooster=True,
         )
         self.tuner.run()
