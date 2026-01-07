@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Self
+from typing import Any, Iterable, Self
 
 import numpy as np
 from numpy.typing import NDArray
 from polars import DataFrame
+from polars._typing import ColumnNameOrSelector
 from sklearn.metrics import (
     auc,
     average_precision_score,
@@ -18,9 +19,15 @@ from polars_ml.base import Transformer
 
 
 class BinaryClassificationMetrics(Transformer):
-    def __init__(self, y_true: str, y_pred: str, *, by: str | None = None):
+    def __init__(
+        self,
+        y_true: str,
+        y_preds: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *,
+        by: str | None = None,
+    ):
         self.y_true = y_true
-        self.y_pred = y_pred
+        self.y_preds = y_preds
         self.by = by
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
@@ -35,28 +42,15 @@ class BinaryClassificationMetrics(Transformer):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        if self.y_true not in data.columns or self.y_pred not in data.columns:
-            return data
+        if self.y_true not in data.columns:
+            raise ValueError(f"y_true column '{self.y_true}' not found in data")
 
         metrics_list = []
         if self.by is None:
-            y_true = data[self.y_true].to_numpy()
-            y_pred = data[self.y_pred].to_numpy()
-
-            n_sample = len(y_true)
-            n_positive = y_true.sum()
-            if n_positive == 0 or n_positive == n_sample:
-                return data
-
-            metrics = self.calc_metrics(y_true, y_pred)
-
-            metrics_list.extend([{"metric": k, "value": v} for k, v in metrics.items()])
-            metrics_df = DataFrame(metrics_list).select("metric", "value")
-
-        else:
-            for (by,), group in data.partition_by(self.by, as_dict=True).items():
-                y_true = group[self.y_true].to_numpy()
-                y_pred = group[self.y_pred].to_numpy()
+            y_pred_cols = data.select(self.y_preds).columns
+            for y_pred_col in y_pred_cols:
+                y_true = data[self.y_true].to_numpy()
+                y_pred = data[y_pred_col].to_numpy()
 
                 n_sample = len(y_true)
                 n_positive = y_true.sum()
@@ -65,10 +59,43 @@ class BinaryClassificationMetrics(Transformer):
 
                 metrics = self.calc_metrics(y_true, y_pred)
                 metrics_list.extend(
-                    [{"by": by, "metric": k, "value": v} for k, v in metrics.items()]
+                    [
+                        {"prediction": y_pred_col, "metric": k, "value": v}
+                        for k, v in metrics.items()
+                    ]
                 )
+            metrics_df = DataFrame(metrics_list).select("prediction", "metric", "value")
 
-            metrics_df = DataFrame(metrics_list).select("by", "metric", "value")
+        else:
+            for (by,), group in data.partition_by(
+                self.by, as_dict=True, maintain_order=True
+            ).items():
+                y_pred_cols = group.select(self.y_preds).columns
+                for y_pred_col in y_pred_cols:
+                    y_true = group[self.y_true].to_numpy()
+                    y_pred = group[y_pred_col].to_numpy()
+
+                    n_sample = len(y_true)
+                    n_positive = y_true.sum()
+                    if n_positive == 0 or n_positive == n_sample:
+                        continue
+
+                    metrics = self.calc_metrics(y_true, y_pred)
+                    metrics_list.extend(
+                        [
+                            {
+                                "by": by,
+                                "prediction": y_pred_col,
+                                "metric": k,
+                                "value": v,
+                            }
+                            for k, v in metrics.items()
+                        ]
+                    )
+
+            metrics_df = DataFrame(metrics_list).select(
+                "by", "prediction", "metric", "value"
+            )
 
         return metrics_df
 
