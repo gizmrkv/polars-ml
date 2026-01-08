@@ -11,6 +11,7 @@ from const import (
     BUILT_IN_FUNCTION_BLOCK_LIST,
     END_INSERTION_MARKER,
     GROUP_BY_NAMESPACES,
+    HORIZONTAL_NAMESPACES,
     START_INSERTION_MARKER,
 )
 from polars import DataFrame
@@ -99,6 +100,14 @@ def render_methods() -> list[str]:
             template.format(
                 name=name, params=params, namespace=namespace, call_args=call_args
             )
+        )
+
+    for name, namespace in HORIZONTAL_NAMESPACES:
+        params = "self, expr: IntoExpr | Iterable[IntoExpr], *more_expr: IntoExpr | Iterable[IntoExpr]"
+        namespace_name = namespace.__name__
+        codes.append(
+            f"\n    def {name}({params}) -> {namespace_name}:\n"
+            f"        return {namespace_name}(self, expr, *more_expr)\n"
         )
 
     template = """

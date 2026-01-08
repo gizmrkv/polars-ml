@@ -31,14 +31,18 @@ def render_param_sig(
 
 
 def render_params_sig(
-    func: Callable[..., Any], *, override_annotations: Mapping[str, str] | None = None
+    func: Callable[..., Any],
+    *,
+    override_annotations: Mapping[str, str] | None = None,
+    skip_params: set[str] | None = None,
 ) -> list[str]:
     params = list(inspect.signature(func).parameters.values())
     anns = override_annotations or {}
+    skip = skip_params or set()
     return [
         render_param_sig(p, override_annotation=anns.get(p.annotation))
         for p in params
-        if p.name not in {"self", "cls"}
+        if p.name not in {"self", "cls"} | skip
     ]
 
 
@@ -56,9 +60,12 @@ def render_call_arg(param: Parameter) -> str:
         raise ValueError(f"Unknown parameter kind: {param.kind}")
 
 
-def render_call_args(func: Callable[..., Any]) -> list[str]:
+def render_call_args(
+    func: Callable[..., Any], skip_params: set[str] | None = None
+) -> list[str]:
     params = list(inspect.signature(func).parameters.values())
-    return [render_call_arg(p) for p in params if p.name not in {"self", "cls"}]
+    skip = skip_params or set()
+    return [render_call_arg(p) for p in params if p.name not in {"self", "cls"} | skip]
 
 
 def insert_between_markers(

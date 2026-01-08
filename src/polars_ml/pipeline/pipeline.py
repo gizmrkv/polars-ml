@@ -67,6 +67,7 @@ from polars_ml.preprocessing import (
     ArithmeticSynthesis,
     BoxCoxTransform,
     Discretize,
+    HorizontalNameSpace,
     LabelEncode,
     LabelEncodeInverseContext,
     MinMaxScale,
@@ -1314,6 +1315,13 @@ class Pipeline(Transformer, HasFeatureImportance):
             closed=closed,
             group_by=group_by,
         )
+
+    def horizontal(
+        self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
+    ) -> HorizontalNameSpace:
+        return HorizontalNameSpace(self, expr, *more_expr)
 
     def apply(self, func: Callable[[DataFrame], DataFrame]) -> Self:
         return self.pipe(Apply(func))

@@ -17,6 +17,7 @@ from polars_ml.preprocessing import (
     ArithmeticSynthesis,
     BoxCoxTransform,
     Discretize,
+    HorizontalNameSpace,
     LabelEncode,
     LabelEncodeInverseContext,
     MinMaxScale,
@@ -46,6 +47,9 @@ GROUP_BY_NAMESPACES: list[tuple[str, type]] = [
     ("group_by", GroupByNameSpace),
     ("group_by_dynamic", DynamicGroupByNameSpace),
     ("rolling", RollingGroupByNameSpace),
+]
+HORIZONTAL_NAMESPACES: list[tuple[str, type]] = [
+    ("horizontal", HorizontalNameSpace),
 ]
 BASIC_TRANSFORMERS: list[type] = [
     Apply,

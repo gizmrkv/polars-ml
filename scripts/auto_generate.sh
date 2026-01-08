@@ -4,6 +4,7 @@ SCRIPTS=(
     "scripts/insert_gbdt_methods.py"
     "scripts/insert_metrics_methods.py"
     "scripts/insert_optimize_methods.py"
+    "scripts/insert_horizontal_methods.py"
     "scripts/insert_unified_io_methods.py"
 )
 
