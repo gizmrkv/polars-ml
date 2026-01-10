@@ -7,7 +7,7 @@ from typing import Literal
 from const import END_INSERTION_MARKER, START_INSERTION_MARKER
 from utils import insert_between_markers, render_call_args, render_params_sig
 
-from polars_ml.pipeline.pipeline import Pipeline
+from polars_ml.pipeline.mixin import PipelineMixin
 
 
 def render_methods() -> list[str]:
@@ -15,7 +15,7 @@ def render_methods() -> list[str]:
 
     # Handle write methods
     write_methods = []
-    for name, obj in inspect.getmembers(Pipeline):
+    for name, obj in inspect.getmembers(PipelineMixin):
         if name.startswith("write_") and callable(obj):
             format_name = name.replace("write_", "")
             params = render_params_sig(obj)
@@ -42,7 +42,7 @@ def render_methods() -> list[str]:
 
     # Handle read methods
     read_methods = []
-    for name, obj in inspect.getmembers(Pipeline):
+    for name, obj in inspect.getmembers(PipelineMixin):
         if name.startswith("read_") and callable(obj):
             format_name = name.replace("read_", "")
             params = render_params_sig(obj)
@@ -72,13 +72,17 @@ def render_methods() -> list[str]:
 def insert_unified_io_methods():
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-    target_file = PROJECT_ROOT / Path("src/polars_ml/pipeline/pipeline.py")
+    target_file = PROJECT_ROOT / Path("src/polars_ml/pipeline/mixin.py")
     codes = render_methods()
     insert_between_markers(
         target_file,
         "".join(codes),
-        START_INSERTION_MARKER.format(prefix=" " * 4, suffix=" IN Unified IO Pipeline"),
-        END_INSERTION_MARKER.format(prefix=" " * 4, suffix=" IN Unified IO Pipeline"),
+        START_INSERTION_MARKER.format(
+            prefix=" " * 4, suffix=" IN Unified IO PipelineMixin"
+        ),
+        END_INSERTION_MARKER.format(
+            prefix=" " * 4, suffix=" IN Unified IO PipelineMixin"
+        ),
     )
 
 
