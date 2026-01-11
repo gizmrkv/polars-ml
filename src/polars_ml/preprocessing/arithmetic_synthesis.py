@@ -6,7 +6,7 @@ from typing import Iterable, Literal, Self
 import polars as pl
 from polars import DataFrame, Expr
 from polars._typing import ColumnNameOrSelector, CorrelationMethod
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from polars_ml.base import Transformer
 
