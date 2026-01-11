@@ -12,7 +12,7 @@ def test_horizontal():
         }
     )
 
-    pipeline = Pipeline().horizontal("a", "b").sum(value_name="total")
+    pipeline = Pipeline().horizontal.sum("a", "b", value_name="total")
 
     result = pipeline.fit_transform(df)
 
@@ -35,7 +35,7 @@ def test_horizontal_mean():
         }
     )
 
-    pipeline = Pipeline().horizontal(pl.col("a"), pl.col("b")).mean(value_name="avg")
+    pipeline = Pipeline().horizontal.mean(pl.col("a"), pl.col("b"), value_name="avg")
 
     result = pipeline.fit_transform(df)
 
@@ -58,7 +58,7 @@ def test_horizontal_argmax():
         }
     )
 
-    pipeline = Pipeline().horizontal("v1", "v2").arg_max(value_name="max_col")
+    pipeline = Pipeline().horizontal.arg_max("v1", "v2", value_name="max_col")
 
     result = pipeline.fit_transform(df)
 
