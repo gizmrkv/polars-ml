@@ -23,23 +23,50 @@ class Pipeline(PipelineMixin, HasFeatureImportance):
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         for i, step in enumerate(self.steps):
-            if i < len(self.steps) - 1:
-                data = step.fit_transform(data, **more_data)
-                more_data = {k: step.transform(v) for k, v in more_data.items()}
-            else:
-                step.fit(data, **more_data)
+            try:
+                if i < len(self.steps) - 1:
+                    data = step.fit_transform(data, **more_data)
+                    more_data = {k: step.transform(v) for k, v in more_data.items()}
+                else:
+                    step.fit(data, **more_data)
+            except Exception as e:
+                if e.args and isinstance(e.args[0], str):
+                    e.args = (
+                        f"Step {i} ({type(step).__name__}): {e.args[0]}",
+                    ) + e.args[1:]
+                else:
+                    e.args = (f"Step {i} ({type(step).__name__})",) + e.args
+                raise
         return self
 
     def fit_transform(self, data: DataFrame, **more_data: DataFrame) -> DataFrame:
         for i, step in enumerate(self.steps):
-            data = step.fit_transform(data, **more_data)
-            if i < len(self.steps) - 1:
-                more_data = {k: step.transform(v) for k, v in more_data.items()}
+            try:
+                data = step.fit_transform(data, **more_data)
+                if i < len(self.steps) - 1:
+                    more_data = {k: step.transform(v) for k, v in more_data.items()}
+            except Exception as e:
+                if e.args and isinstance(e.args[0], str):
+                    e.args = (
+                        f"Step {i} ({type(step).__name__}): {e.args[0]}",
+                    ) + e.args[1:]
+                else:
+                    e.args = (f"Step {i} ({type(step).__name__})",) + e.args
+                raise
         return data
 
     def transform(self, data: DataFrame) -> DataFrame:
-        for step in self.steps:
-            data = step.transform(data)
+        for i, step in enumerate(self.steps):
+            try:
+                data = step.transform(data)
+            except Exception as e:
+                if e.args and isinstance(e.args[0], str):
+                    e.args = (
+                        f"Step {i} ({type(step).__name__}): {e.args[0]}",
+                    ) + e.args[1:]
+                else:
+                    e.args = (f"Step {i} ({type(step).__name__})",) + e.args
+                raise
         return data
 
     def get_feature_importance(self) -> DataFrame:
