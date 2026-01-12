@@ -1303,6 +1303,15 @@ class PipelineMixin(Transformer):
             )
         )
 
+    def combine(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        n: int,
+        delimiter: str = "_",
+        prefix: str = "comb_",
+    ) -> Self:
+        return self.pipe(Combine(columns, n, delimiter, prefix))
+
     def concat(
         self,
         items: Sequence[Transformer],

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .arithmetic_synthesis import ArithmeticSynthesis
+from .combine import Combine
 from .discretize import Discretize
 from .horizontal import (
     HorizontalAgg,
@@ -35,6 +36,7 @@ from .scale import (
 
 __all__ = [
     "ArithmeticSynthesis",
+    "Combine",
     "Discretize",
     "BoxCoxTransform",
     "YeoJohnsonTransform",

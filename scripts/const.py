@@ -16,6 +16,7 @@ from polars_ml.pipeline.group_by import (
 from polars_ml.preprocessing import (
     ArithmeticSynthesis,
     BoxCoxTransform,
+    Combine,
     Discretize,
     HorizontalNameSpace,
     LabelEncode,
@@ -58,6 +59,7 @@ BASIC_TRANSFORMERS: list[type] = [
     Parrot,
     Side,
     Discretize,
+    Combine,
     Concat,
     ToDummies,
     ArithmeticSynthesis,
