@@ -6,7 +6,7 @@ from polars_ml.metrics import (
     MulticlassClassificationMetrics,
     RegressionMetrics,
 )
-from polars_ml.optimize import OptunaOptimizer
+from polars_ml.optimize import LinearEnsemble, OptunaOptimizer, WeightedAverage
 from polars_ml.pipeline.basic import Apply, Concat, Const, Echo, Parrot, Side, ToDummies
 from polars_ml.pipeline.group_by import (
     DynamicGroupByNameSpace,
@@ -84,4 +84,6 @@ METRICS_TRANSFORMERS: list[tuple[str, type]] = [
 ]
 OPTIMIZE_TRANSFORMERS: list[tuple[str, type]] = [
     ("optuna", OptunaOptimizer),
+    ("weighted_average", WeightedAverage),
+    ("linear_ensemble", LinearEnsemble),
 ]

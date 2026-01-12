@@ -31,8 +31,8 @@ class BaseLinear(Transformer, HasFeatureImportance, ABC):
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         if self.features_selector is None:
-            label_cols = data.lazy().select(self.label).collect_schema().names()
-            self.features_selector = cs.exclude(*label_cols)
+            label_columns = data.lazy().select(self.label).collect_schema().names()
+            self.features_selector = cs.exclude(*label_columns)
 
         features = data.select(self.features_selector)
         label = data.select(self.label)

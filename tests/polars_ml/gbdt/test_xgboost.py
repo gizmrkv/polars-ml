@@ -34,8 +34,8 @@ def test_base_xgboost_override():
             import polars.selectors as cs
 
             if self.features_selector is None:
-                label_cols = data.lazy().select(self.label).collect_schema().names()
-                self.features_selector = cs.exclude(*label_cols)
+                label_columns = data.lazy().select(self.label).collect_schema().names()
+                self.features_selector = cs.exclude(*label_columns)
 
             self.feature_names = data.select(self.features_selector).columns
 

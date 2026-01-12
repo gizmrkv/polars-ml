@@ -55,8 +55,8 @@ class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
         import lightgbm as lgb
 
         if self.features_selector is None:
-            label_cols = data.lazy().select(self.label).collect_schema().names()
-            self.features_selector = cs.exclude(*label_cols)
+            label_columns = data.lazy().select(self.label).collect_schema().names()
+            self.features_selector = cs.exclude(*label_columns)
 
         features = data.select(self.features_selector)
         label = data.select(self.label)
@@ -446,11 +446,11 @@ def save_lightgbm_booster(booster: "lgb.Booster", save_dir: str | Path):
     ).write_csv(save_dir / "feature_importance.csv")
 
     lgb.plot_importance(booster, importance_type="gain")
-    plt.savefig(save_dir / "importance_gain.png")
     plt.tight_layout()
+    plt.savefig(save_dir / "importance_gain.png")
     plt.close()
 
     lgb.plot_importance(booster, importance_type="split")
-    plt.savefig(save_dir / "importance_split.png")
     plt.tight_layout()
+    plt.savefig(save_dir / "importance_split.png")
     plt.close()
