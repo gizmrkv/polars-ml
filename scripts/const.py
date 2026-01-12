@@ -7,7 +7,7 @@ from polars_ml.metrics import (
     RegressionMetrics,
 )
 from polars_ml.optimize import LinearEnsemble, OptunaOptimizer, WeightedAverage
-from polars_ml.pipeline.basic import Apply, Concat, Const, Echo, Parrot, Side, ToDummies
+from polars_ml.pipeline.basic import Apply, Concat, Const, Echo, Replay, Side, ToDummies
 from polars_ml.pipeline.group_by import (
     DynamicGroupByNameSpace,
     GroupByNameSpace,
@@ -56,7 +56,7 @@ BASIC_TRANSFORMERS: list[type] = [
     Apply,
     Const,
     Echo,
-    Parrot,
+    Replay,
     Side,
     Discretize,
     Combine,

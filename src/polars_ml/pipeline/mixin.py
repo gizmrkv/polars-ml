@@ -63,6 +63,7 @@ from polars_ml.base import Transformer
 from polars_ml.preprocessing import (
     ArithmeticSynthesis,
     BoxCoxTransform,
+    Combine,
     Discretize,
     HorizontalNameSpace,
     LabelEncode,
@@ -75,7 +76,7 @@ from polars_ml.preprocessing import (
     YeoJohnsonTransform,
 )
 
-from .basic import Apply, Concat, Const, Echo, Parrot, Side, ToDummies
+from .basic import Apply, Concat, Const, Echo, Replay, Side, ToDummies
 from .getattr import GetAttr, GetAttrPolars
 from .group_by import DynamicGroupByNameSpace, GroupByNameSpace, RollingGroupByNameSpace
 
@@ -1275,8 +1276,8 @@ class PipelineMixin(Transformer):
     def echo(self) -> Self:
         return self.pipe(Echo())
 
-    def parrot(self) -> Self:
-        return self.pipe(Parrot())
+    def replay(self) -> Self:
+        return self.pipe(Replay())
 
     def side(self, transformer: Transformer) -> Self:
         return self.pipe(Side(transformer))

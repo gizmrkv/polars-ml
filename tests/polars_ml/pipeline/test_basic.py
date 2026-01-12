@@ -4,7 +4,7 @@ from polars import DataFrame
 from polars.testing import assert_frame_equal
 
 from polars_ml import Transformer
-from polars_ml.pipeline.basic import Apply, Concat, Const, Echo, Parrot, Side, ToDummies
+from polars_ml.pipeline.basic import Apply, Concat, Const, Echo, Replay, Side, ToDummies
 
 
 @pytest.fixture
@@ -32,8 +32,8 @@ def test_const(sample_df: DataFrame):
     assert_frame_equal(output, const_df)
 
 
-def test_parrot(sample_df: DataFrame):
-    t = Parrot()
+def test_replay(sample_df: DataFrame):
+    t = Replay()
     t.fit(sample_df)
     output = t.transform(sample_df)
     assert_frame_equal(output, sample_df)

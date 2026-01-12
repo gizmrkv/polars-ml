@@ -33,7 +33,7 @@ class Const(Transformer):
         return self.data
 
 
-class Parrot(Transformer):
+class Replay(Transformer):
     def __init__(self):
         pass
 
