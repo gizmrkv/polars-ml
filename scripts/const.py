@@ -14,6 +14,7 @@ from polars_ml.pipeline.group_by import (
     RollingGroupByNameSpace,
 )
 from polars_ml.preprocessing import (
+    AggJoin,
     ArithmeticSynthesis,
     BoxCoxTransform,
     Combine,
@@ -63,6 +64,7 @@ BASIC_TRANSFORMERS: list[type] = [
     Concat,
     ToDummies,
     ArithmeticSynthesis,
+    AggJoin,
 ]
 BASIC_TRANSFORMERS_WITH_INVERSE: list[tuple[type, type]] = [
     (MinMaxScale, ScaleInverseContext),

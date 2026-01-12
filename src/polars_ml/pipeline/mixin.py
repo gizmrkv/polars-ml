@@ -61,6 +61,7 @@ from polars.io.cloud import CredentialProviderFunction
 
 from polars_ml.base import Transformer
 from polars_ml.preprocessing import (
+    AggJoin,
     ArithmeticSynthesis,
     BoxCoxTransform,
     Combine,
@@ -1349,6 +1350,16 @@ class PipelineMixin(Transformer):
                 show_progress=show_progress,
             )
         )
+
+    def agg_join(
+        self,
+        by: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *aggs: IntoExpr | Iterable[IntoExpr],
+        how: JoinStrategy = "left",
+        on: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+        suffix: str = "_agg",
+    ) -> Self:
+        return self.pipe(AggJoin(by, *aggs, how=how, on=on, suffix=suffix))
 
     @overload
     def min_max_scale(

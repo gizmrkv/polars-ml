@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .agg_join import AggJoin
 from .arithmetic_synthesis import ArithmeticSynthesis
 from .combine import Combine
 from .discretize import Discretize
@@ -64,4 +65,5 @@ __all__ = [
     "HorizontalQuantile",
     "HorizontalStd",
     "HorizontalSum",
+    "AggJoin",
 ]
