@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from polars_ml.feature_engineering import (
+    ArithmeticSynthesis,
+    FeatureEngineeringNameSpace,
+)
 from polars_ml.gbdt import CatBoost, LightGBM, LightGBMTuner, LightGBMTunerCV, XGBoost
 from polars_ml.metrics import (
     BinaryClassificationMetrics,
@@ -15,7 +19,6 @@ from polars_ml.pipeline.group_by import (
 )
 from polars_ml.preprocessing import (
     AggJoin,
-    ArithmeticSynthesis,
     BoxCoxTransform,
     Combine,
     Discretize,
@@ -53,6 +56,9 @@ GROUP_BY_NAMESPACES: list[tuple[str, type]] = [
 HORIZONTAL_NAMESPACES: list[tuple[str, type]] = [
     ("horizontal", HorizontalNameSpace),
 ]
+FEATURE_ENGINEERING_NAMESPACES: list[tuple[str, type]] = [
+    ("feature_engineering", FeatureEngineeringNameSpace),
+]
 BASIC_TRANSFORMERS: list[type] = [
     Apply,
     Const,
@@ -63,7 +69,6 @@ BASIC_TRANSFORMERS: list[type] = [
     Combine,
     Concat,
     ToDummies,
-    ArithmeticSynthesis,
     AggJoin,
 ]
 BASIC_TRANSFORMERS_WITH_INVERSE: list[tuple[type, type]] = [

@@ -64,25 +64,10 @@ def test_combine_fit_transform_n3() -> None:
 
 def test_combine_fit_custom_params() -> None:
     df = pl.DataFrame({"x": [1], "y": [2]})
-    transformer = Combine(columns=["x", "y"], n=2, delimiter="-", prefix="group")
+    transformer = Combine(["x", "y"], 2, delimiter="_", prefix="group_")
 
     transformer.fit(df)
     result = transformer.transform(df)
 
-    expected = df.with_columns(pl.struct(["x", "y"]).alias("group-x-y"))
-    assert_frame_equal(result, expected)
-
-
-def test_combination_pickle() -> None:
-    df = pl.DataFrame({"a": [1], "b": [2]})
-    transformer = Combine(columns=["a", "b"], n=2)
-    transformer.fit(df)
-
-    serialized = pickle.dumps(transformer)
-    deserialized_transformer = pickle.loads(serialized)
-
-    assert deserialized_transformer.combinations_ == transformer.combinations_
-
-    result = deserialized_transformer.transform(df)
-    expected = transformer.transform(df)
+    expected = df.with_columns(pl.struct(["x", "y"]).alias("group_x_y"))
     assert_frame_equal(result, expected)

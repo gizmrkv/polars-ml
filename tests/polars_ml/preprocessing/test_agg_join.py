@@ -10,7 +10,7 @@ def test_agg_join_basic():
 
     # Calculate mean per group
     transformer = AggJoin(
-        by="group", aggs=pl.col("value").mean().alias("mean_value"), how="left"
+        "group", pl.col("value").mean().alias("mean_value"), how="left"
     )
 
     transformer.fit(df)
@@ -26,7 +26,7 @@ def test_agg_join_multiple_keys():
         {"k1": ["A", "A", "B", "B"], "k2": [1, 1, 2, 2], "val": [10, 20, 30, 40]}
     )
 
-    transformer = AggJoin(by=["k1", "k2"], aggs=pl.col("val").sum().alias("sum_val"))
+    transformer = AggJoin(["k1", "k2"], pl.col("val").sum().alias("sum_val"))
 
     result = transformer.fit_transform(df)
 
@@ -45,7 +45,7 @@ def test_agg_join_unseen_category():
         }
     )
 
-    transformer = AggJoin(by="group", aggs=pl.col("val").max().alias("max_val"))
+    transformer = AggJoin("group", pl.col("val").max().alias("max_val"))
 
     transformer.fit(train_df)
     result = transformer.transform(test_df)
@@ -65,8 +65,8 @@ def test_agg_join_suffix_collision():
     # If I aggregate to a name that already exists in df but is NOT a join key:
 
     transformer = AggJoin(
-        by="group",
-        aggs=pl.col("val").mean().alias("val"),  # Collision with input "val"
+        "group",
+        pl.col("val").mean().alias("val"),  # Collision with input "val"
     )
 
     transformer.fit(df)

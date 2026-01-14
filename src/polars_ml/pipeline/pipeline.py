@@ -5,6 +5,7 @@ from typing import Self
 from polars import DataFrame
 
 from polars_ml.base import HasFeatureImportance, Transformer
+from polars_ml.feature_engineering import FeatureEngineeringNameSpace
 from polars_ml.gbdt import GBDTNameSpace
 from polars_ml.linear import LinearNameSpace
 from polars_ml.metrics import MetricsNameSpace
@@ -27,6 +28,12 @@ class Pipeline(PipelineMixin, HasFeatureImportance):
         else:
             self.verbose = verbose
             self.logger = logging.getLogger(__name__)
+            if self.verbose:
+                self.logger.setLevel(logging.INFO)
+                if not self.logger.handlers:
+                    handler = logging.StreamHandler()
+                    handler.setFormatter(logging.Formatter("[%(asctime)s] %(message)s"))
+                    self.logger.addHandler(handler)
 
     def pipe(self, step: Transformer) -> Self:
         self.steps.append(step)
@@ -161,3 +168,7 @@ class Pipeline(PipelineMixin, HasFeatureImportance):
     @property
     def horizontal(self) -> HorizontalNameSpace:
         return HorizontalNameSpace(self)
+
+    @property
+    def fe(self) -> FeatureEngineeringNameSpace:
+        return FeatureEngineeringNameSpace(self)

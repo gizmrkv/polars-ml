@@ -3,7 +3,7 @@ import pytest
 from polars import DataFrame
 from polars.testing import assert_series_equal
 
-from polars_ml.preprocessing import ArithmeticSynthesis
+from polars_ml.feature_engineering import ArithmeticSynthesis
 
 
 @pytest.fixture
