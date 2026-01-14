@@ -306,123 +306,134 @@ class HorizontalNameSpace:
     # --- START INSERTION MARKER IN HorizontalNameSpace
 
     def all(
-        self, value_name: str = "horizontal_all", maintain_order: bool = True
+        self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_all",
+        maintain_order: bool = True,
     ) -> Pipeline:
         return self.pipeline.pipe(
             HorizontalAll(
-                self.expr,
-                *self.more_expr,
-                value_name=value_name,
-                maintain_order=maintain_order,
+                expr, *more_expr, value_name=value_name, maintain_order=maintain_order
             )
         )
 
     def arg_max(
-        self, value_name: str = "horizontal_argmax", maintain_order: bool = True
+        self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_argmax",
+        maintain_order: bool = True,
     ) -> Pipeline:
         return self.pipeline.pipe(
             HorizontalArgMax(
-                self.expr,
-                *self.more_expr,
-                value_name=value_name,
-                maintain_order=maintain_order,
+                expr, *more_expr, value_name=value_name, maintain_order=maintain_order
             )
         )
 
     def arg_min(
-        self, value_name: str = "horizontal_argmin", maintain_order: bool = True
+        self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_argmin",
+        maintain_order: bool = True,
     ) -> Pipeline:
         return self.pipeline.pipe(
             HorizontalArgMin(
-                self.expr,
-                *self.more_expr,
-                value_name=value_name,
-                maintain_order=maintain_order,
+                expr, *more_expr, value_name=value_name, maintain_order=maintain_order
             )
         )
 
     def count(
-        self, value_name: str = "horizontal_count", maintain_order: bool = True
+        self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_count",
+        maintain_order: bool = True,
     ) -> Pipeline:
         return self.pipeline.pipe(
             HorizontalCount(
-                self.expr,
-                *self.more_expr,
-                value_name=value_name,
-                maintain_order=maintain_order,
+                expr, *more_expr, value_name=value_name, maintain_order=maintain_order
             )
         )
 
     def max(
-        self, value_name: str = "horizontal_max", maintain_order: bool = True
+        self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_max",
+        maintain_order: bool = True,
     ) -> Pipeline:
         return self.pipeline.pipe(
             HorizontalMax(
-                self.expr,
-                *self.more_expr,
-                value_name=value_name,
-                maintain_order=maintain_order,
+                expr, *more_expr, value_name=value_name, maintain_order=maintain_order
             )
         )
 
     def mean(
-        self, value_name: str = "horizontal_mean", maintain_order: bool = True
+        self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_mean",
+        maintain_order: bool = True,
     ) -> Pipeline:
         return self.pipeline.pipe(
             HorizontalMean(
-                self.expr,
-                *self.more_expr,
-                value_name=value_name,
-                maintain_order=maintain_order,
+                expr, *more_expr, value_name=value_name, maintain_order=maintain_order
             )
         )
 
     def median(
-        self, value_name: str = "horizontal_median", maintain_order: bool = True
+        self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_median",
+        maintain_order: bool = True,
     ) -> Pipeline:
         return self.pipeline.pipe(
             HorizontalMedian(
-                self.expr,
-                *self.more_expr,
-                value_name=value_name,
-                maintain_order=maintain_order,
+                expr, *more_expr, value_name=value_name, maintain_order=maintain_order
             )
         )
 
     def min(
-        self, value_name: str = "horizontal_min", maintain_order: bool = True
+        self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_min",
+        maintain_order: bool = True,
     ) -> Pipeline:
         return self.pipeline.pipe(
             HorizontalMin(
-                self.expr,
-                *self.more_expr,
-                value_name=value_name,
-                maintain_order=maintain_order,
+                expr, *more_expr, value_name=value_name, maintain_order=maintain_order
             )
         )
 
     def n_unique(
-        self, value_name: str = "horizontal_n_unique", maintain_order: bool = True
+        self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_n_unique",
+        maintain_order: bool = True,
     ) -> Pipeline:
         return self.pipeline.pipe(
             HorizontalNUnique(
-                self.expr,
-                *self.more_expr,
-                value_name=value_name,
-                maintain_order=maintain_order,
+                expr, *more_expr, value_name=value_name, maintain_order=maintain_order
             )
         )
 
     def quantile(
         self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
         quantile: float,
         value_name: str = "horizontal_quantile",
         maintain_order: bool = True,
     ) -> Pipeline:
         return self.pipeline.pipe(
             HorizontalQuantile(
-                self.expr,
-                *self.more_expr,
+                expr,
+                *more_expr,
                 quantile=quantile,
                 value_name=value_name,
                 maintain_order=maintain_order,
@@ -430,26 +441,28 @@ class HorizontalNameSpace:
         )
 
     def std(
-        self, value_name: str = "horizontal_std", maintain_order: bool = True
+        self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_std",
+        maintain_order: bool = True,
     ) -> Pipeline:
         return self.pipeline.pipe(
             HorizontalStd(
-                self.expr,
-                *self.more_expr,
-                value_name=value_name,
-                maintain_order=maintain_order,
+                expr, *more_expr, value_name=value_name, maintain_order=maintain_order
             )
         )
 
     def sum(
-        self, value_name: str = "horizontal_sum", maintain_order: bool = True
+        self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_sum",
+        maintain_order: bool = True,
     ) -> Pipeline:
         return self.pipeline.pipe(
             HorizontalSum(
-                self.expr,
-                *self.more_expr,
-                value_name=value_name,
-                maintain_order=maintain_order,
+                expr, *more_expr, value_name=value_name, maintain_order=maintain_order
             )
         )
 
