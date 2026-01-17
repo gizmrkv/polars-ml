@@ -18,13 +18,14 @@ class AggJoin(Transformer):
         how: JoinStrategy = "left",
         suffix: str = "_agg",
     ):
-        self.by = by
+        self.by_selector = by
         self.aggs = aggs
         self.how = how
         self.suffix = suffix
         self.agg_df_: DataFrame | None = None
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
+        self.by = data.lazy().select(self.by_selector).collect_schema().names()
         self.agg_df_ = data.group_by(self.by).agg(self.aggs)
         return self
 
