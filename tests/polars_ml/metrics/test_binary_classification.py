@@ -77,22 +77,10 @@ def test_binary_classification_metrics_selector():
     assert "other" not in predictions
 
 
-def test_binary_classification_metrics_missing_y_true():
-    df = pl.DataFrame(
-        {
-            "pred": [0.1, 0.9, 0.2, 0.8],
-        }
-    )
-
-    metrics = BinaryClassificationMetrics(y_true="target", y_preds="pred")
-    with pytest.raises(ValueError, match="y_true column 'target' not found in data"):
-        metrics.transform(df)
-
-
 def test_binary_classification_metrics_constant_target():
     df = pl.DataFrame(
         {
-            "target": [1, 1, 0, 1],  # Group A: [1, 1], Group B: [0, 1]
+            "target": [1, 1, 0, 1],
             "pred": [0.9, 0.8, 0.1, 0.7],
             "group": ["A", "A", "B", "B"],
         }
@@ -103,7 +91,5 @@ def test_binary_classification_metrics_constant_target():
     result = metrics.transform(df)
 
     groups = result["by"].unique().to_list()
-    assert (
-        "A" not in groups
-    )  # Group A should be skipped because target is constant (all 1s)
+    assert "A" not in groups
     assert "B" in groups

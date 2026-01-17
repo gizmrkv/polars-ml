@@ -8,6 +8,7 @@ from polars import DataFrame, Expr
 from polars._typing import ColumnNameOrSelector
 
 from polars_ml.base import Transformer
+from polars_ml.exceptions import NotFittedError
 
 
 class Combine(Transformer):
@@ -26,7 +27,7 @@ class Combine(Transformer):
         self.n = n
         self.delimiter = delimiter
         self.prefix = prefix
-        self.combinations_: list[tuple[str, ...]] = []
+        self.combinations_: list[tuple[str, ...]] | None = None
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         columns = data.select(self.selector).collect_schema().names()
@@ -34,6 +35,9 @@ class Combine(Transformer):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
+        if self.combinations_ is None:
+            raise NotFittedError()
+
         expressions: list[Expr] = []
         for combination in self.combinations_:
             name = self.prefix + self.delimiter.join(combination)

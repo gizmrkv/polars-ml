@@ -18,6 +18,7 @@ from polars import DataFrame
 from polars._typing import IntoExpr
 
 from polars_ml.base import HasFeatureImportance, Transformer
+from polars_ml.exceptions import NotFittedError
 
 if TYPE_CHECKING:
     import catboost
@@ -83,6 +84,9 @@ class CatBoost(Transformer, HasFeatureImportance):
         return self
 
     def predict(self, data: DataFrame) -> NDArray:
+        if not hasattr(self, "feature_names"):
+            raise NotFittedError()
+
         input_data = data.select(self.feature_names).to_pandas()
         booster = self.get_booster()
 

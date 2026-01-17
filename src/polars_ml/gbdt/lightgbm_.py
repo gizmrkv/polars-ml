@@ -23,6 +23,7 @@ from polars import DataFrame
 from polars._typing import IntoExpr
 
 from polars_ml.base import HasFeatureImportance, Transformer
+from polars_ml.exceptions import NotFittedError
 
 if TYPE_CHECKING:
     import lightgbm as lgb
@@ -98,6 +99,9 @@ class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
     def predict(self, data: DataFrame) -> NDArray:
         import lightgbm as lgb
         import numpy as np
+
+        if not hasattr(self, "feature_names"):
+            raise NotFittedError()
 
         input_data = data.select(self.feature_names).to_numpy()
         boosters = self.get_booster()

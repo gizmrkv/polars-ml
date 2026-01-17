@@ -16,6 +16,7 @@ from sklearn.metrics import (
 )
 
 from polars_ml.base import Transformer
+from polars_ml.exceptions import NotFittedError
 
 
 class BinaryClassificationMetrics(Transformer):
@@ -42,6 +43,9 @@ class BinaryClassificationMetrics(Transformer):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
+        if not hasattr(self, "train_pos_rate"):
+            raise NotFittedError()
+
         if self.y_true not in data.columns:
             raise ValueError(f"y_true column '{self.y_true}' not found in data")
 

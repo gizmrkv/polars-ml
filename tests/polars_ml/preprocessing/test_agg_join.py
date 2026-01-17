@@ -40,7 +40,7 @@ def test_agg_join_unseen_category():
 
     test_df = pl.DataFrame(
         {
-            "group": ["A", "C"],  # C is unseen
+            "group": ["A", "C"],
             "val": [1, 5],
         }
     )
@@ -50,7 +50,6 @@ def test_agg_join_unseen_category():
     transformer.fit(train_df)
     result = transformer.transform(test_df)
 
-    # For "A", max is 1. For "C", it should be null (left join)
     expected = test_df.with_columns(pl.Series("max_val", [1, None]))
 
     assert_frame_equal(result, expected)
@@ -59,19 +58,10 @@ def test_agg_join_unseen_category():
 def test_agg_join_suffix_collision():
     df = pl.DataFrame({"group": ["A", "A"], "val": [1, 2]})
 
-    # If the agg result has same name as existing column (besides join keys),
-    # suffix should be applied if it's not the join key?
-    # Actually join keys are merged.
-    # If I aggregate to a name that already exists in df but is NOT a join key:
-
-    transformer = AggJoin(
-        "group",
-        pl.col("val").mean().alias("val"),  # Collision with input "val"
-    )
+    transformer = AggJoin("group", pl.col("val").mean().alias("val"))
 
     transformer.fit(df)
     result = transformer.transform(df)
 
-    # Should have "val" (original) and "val_agg" (joined)
     assert "val_agg" in result.columns
     assert result["val_agg"][0] == 1.5

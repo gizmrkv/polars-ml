@@ -9,6 +9,7 @@ dependencies = [
     "catboost>=1.2.8",
     "inflection>=0.5.1",
     "lightgbm>=4.6.0",
+    "openfe>=0.0.12",
     "optuna>=4.6.0",
     "optuna-integration>=4.6.0",
     "polars>=1.36.1",

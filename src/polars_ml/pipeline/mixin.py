@@ -1335,10 +1335,9 @@ class PipelineMixin(Transformer):
         by: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         *aggs: IntoExpr | Iterable[IntoExpr],
         how: JoinStrategy = "left",
-        on: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         suffix: str = "_agg",
     ) -> Self:
-        return self.pipe(AggJoin(by, *aggs, how=how, on=on, suffix=suffix))
+        return self.pipe(AggJoin(by, *aggs, how=how, suffix=suffix))
 
     @overload
     def min_max_scale(

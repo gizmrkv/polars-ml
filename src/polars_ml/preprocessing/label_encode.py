@@ -7,6 +7,7 @@ from polars import DataFrame, Series
 from polars._typing import ColumnNameOrSelector
 
 from polars_ml.base import Transformer
+from polars_ml.exceptions import NotFittedError
 
 if TYPE_CHECKING:
     from polars_ml import Pipeline
@@ -52,6 +53,9 @@ class LabelEncode(Transformer):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
+        if not hasattr(self, "mappings"):
+            raise NotFittedError()
+
         columns = data.collect_schema().names()
         for col, mapping in self.mappings.items():
             if col not in columns:
@@ -80,6 +84,9 @@ class LabelEncodeInverse(Transformer):
         return {col: col for col in self.label_encode.mappings.keys()}
 
     def transform(self, data: DataFrame) -> DataFrame:
+        if not hasattr(self.label_encode, "mappings"):
+            raise NotFittedError()
+
         import shortuuid
 
         tmp_suf = shortuuid.ShortUUID().random(length=8)

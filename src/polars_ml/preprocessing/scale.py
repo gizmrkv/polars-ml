@@ -9,6 +9,7 @@ from polars._typing import ColumnNameOrSelector
 from shortuuid import ShortUUID
 
 from polars_ml.base import Transformer
+from polars_ml.exceptions import NotFittedError
 
 if TYPE_CHECKING:
     from polars_ml import Pipeline
@@ -50,6 +51,9 @@ class BaseScale(Transformer, ABC):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
+        if not hasattr(self, "stats"):
+            raise NotFittedError()
+
         input_columns = data.collect_schema().names()
         scale_columns = set(input_columns) & set(self.columns)
         on_args: dict[str, Any] = (
@@ -160,6 +164,9 @@ class ScaleInverse(Transformer):
         return {col: col for col in self.scale.columns}
 
     def transform(self, data: DataFrame) -> DataFrame:
+        if not hasattr(self.scale, "stats"):
+            raise NotFittedError()
+
         input_columns = data.collect_schema().names()
         sources = set(self.scale.columns) & set(self.mapping.values())
         on_args: dict[str, Any] = (

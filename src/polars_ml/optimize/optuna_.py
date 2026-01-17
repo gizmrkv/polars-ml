@@ -19,6 +19,7 @@ import optuna.storages.journal
 from polars import DataFrame
 
 from polars_ml.base import HasFeatureImportance, Transformer
+from polars_ml.exceptions import NotFittedError
 
 
 class ModelFunction(Protocol):
@@ -120,7 +121,7 @@ class OptunaOptimizer(Transformer, HasFeatureImportance):
 
     def transform(self, data: DataFrame) -> DataFrame:
         if not hasattr(self, "best_model"):
-            raise ValueError("The optimizer has not been fitted yet.")
+            raise NotFittedError()
         return self.best_model.transform(data)
 
     def get_feature_importance(self) -> DataFrame:

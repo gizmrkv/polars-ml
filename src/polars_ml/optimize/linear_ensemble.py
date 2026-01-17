@@ -9,6 +9,7 @@ from polars._typing import ColumnNameOrSelector
 from sklearn.linear_model import ElasticNet
 
 from polars_ml.base import Transformer
+from polars_ml.exceptions import NotFittedError
 
 
 class LinearEnsemble(Transformer):
@@ -73,7 +74,7 @@ class LinearEnsemble(Transformer):
 
     def transform(self, data: DataFrame) -> DataFrame:
         if not hasattr(self, "model_"):
-            raise ValueError("The transformer has not been fitted yet.")
+            raise NotFittedError()
 
         X = data.select(self.pred_columns_).to_numpy()
         y_pred = self.model_.predict(X)

@@ -18,7 +18,7 @@ def render_methods() -> list[str]:
     codes = []
     template = """
     def {name}({params}) -> Pipeline:
-        return self.pipeline.pipe({cls_name}(self.expr, *self.more_expr, {call_args}))
+        return self.pipeline.pipe({cls_name}(expr, *more_expr, {call_args}))
 """
     for name, obj in inspect.getmembers(horizontal):
         if (
@@ -37,7 +37,12 @@ def render_methods() -> list[str]:
         params_sig = render_params_sig(
             init_method, skip_params={"expr", "more_expr", "self"}
         )
-        params = ", ".join(["self"] + params_sig)
+        params = ", ".join(
+            [
+                "self, expr: IntoExpr | Iterable[IntoExpr], *more_expr: IntoExpr | Iterable[IntoExpr]"
+            ]
+            + params_sig
+        )
         call_args = ", ".join(
             render_call_args(init_method, skip_params={"expr", "more_expr", "self"})
         )

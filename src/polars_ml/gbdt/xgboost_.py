@@ -19,6 +19,7 @@ from polars import DataFrame
 from polars._typing import IntoExpr
 
 from polars_ml.base import HasFeatureImportance, Transformer
+from polars_ml.exceptions import NotFittedError
 
 if TYPE_CHECKING:
     import xgboost as xgb
@@ -120,6 +121,9 @@ class XGBoost(Transformer, HasFeatureImportance):
 
     def predict(self, data: DataFrame) -> NDArray:
         import xgboost as xgb
+
+        if not hasattr(self, "feature_names"):
+            raise NotFittedError()
 
         input_data = xgb.DMatrix(
             data.select(self.feature_names).to_pandas(),

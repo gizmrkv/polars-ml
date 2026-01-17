@@ -7,6 +7,7 @@ from polars import DataFrame
 from polars._typing import IntoExpr
 
 from polars_ml.base import Transformer
+from polars_ml.exceptions import NotFittedError
 
 
 class Discretize(Transformer):
@@ -51,6 +52,9 @@ class Discretize(Transformer):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
+        if not hasattr(self, "breakpoints"):
+            raise NotFittedError()
+
         discretized = data.select(self.exprs, *self.more_exprs)
         breakpoints = {
             c: bs

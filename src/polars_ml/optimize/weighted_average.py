@@ -10,6 +10,7 @@ from scipy.optimize import minimize
 from sklearn.metrics import mean_squared_error
 
 from polars_ml.base import Transformer
+from polars_ml.exceptions import NotFittedError
 
 
 class WeightedAverage(Transformer):
@@ -96,7 +97,7 @@ class WeightedAverage(Transformer):
 
     def transform(self, data: DataFrame) -> DataFrame:
         if not hasattr(self, "weights_"):
-            raise ValueError("The transformer has not been fitted yet.")
+            raise NotFittedError()
 
         # Calculate weighted average
         # We use pl.sum_horizontal with weights by scaling columns first

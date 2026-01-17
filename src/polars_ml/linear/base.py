@@ -10,6 +10,7 @@ from polars import DataFrame
 from polars._typing import IntoExpr
 
 from polars_ml.base import HasFeatureImportance, Transformer
+from polars_ml.exceptions import NotFittedError
 
 
 class BaseLinear(Transformer, HasFeatureImportance, ABC):
@@ -45,6 +46,9 @@ class BaseLinear(Transformer, HasFeatureImportance, ABC):
         return self
 
     def predict(self, data: DataFrame) -> NDArray:
+        if not hasattr(self, "feature_names"):
+            raise NotFittedError()
+
         input_data = data.select(self.feature_names).to_pandas()
         return self.get_model().predict(input_data)
 
