@@ -21,7 +21,7 @@ class LabelEncode(Transformer):
         orders: Mapping[str, Sequence[Any]] | None = None,
         maintain_order: bool = True,
         suffix: str = "",
-    ):
+    ) -> None:
         self.column_selectors = columns
         self.more_column_selectors = more_columns
         self.orders = orders or {}
@@ -73,7 +73,7 @@ class LabelEncode(Transformer):
 class LabelEncodeInverse(Transformer):
     def __init__(
         self, label_encode: LabelEncode, mapping: Mapping[str, str] | None = None
-    ):
+    ) -> None:
         self.label_encode = label_encode
         self._mapping = mapping
 
@@ -119,7 +119,7 @@ class LabelEncodeInverseContext:
         pipeline: Pipeline,
         label_encode: LabelEncode,
         mapping: Mapping[str, str] | None = None,
-    ):
+    ) -> None:
         self.pipeline = pipeline
         self.label_encode = label_encode
         self.mapping = mapping
@@ -127,5 +127,5 @@ class LabelEncodeInverseContext:
     def __enter__(self) -> Pipeline:
         return self.pipeline.pipe(self.label_encode)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.pipeline.pipe(LabelEncodeInverse(self.label_encode, mapping=self.mapping))

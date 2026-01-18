@@ -21,7 +21,7 @@ class ArithmeticSynthesis(Transformer):
         drop_high_correlation_features_method: CorrelationMethod | None = None,
         threshold: float = 0.9,
         show_progress: bool = True,
-    ):
+    ) -> None:
         self.selector = columns
         self.order = order
         self.method = method

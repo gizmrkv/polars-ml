@@ -16,7 +16,7 @@ def sample_df() -> DataFrame:
     return DataFrame({"cat": ["A", "B", "A", "C"], "val": [1, 2, 3, 4]})
 
 
-def test_label_encode_basic(sample_df: DataFrame):
+def test_label_encode_basic(sample_df: DataFrame) -> None:
     t = LabelEncode(columns="cat")
 
     t.fit(sample_df)
@@ -26,7 +26,7 @@ def test_label_encode_basic(sample_df: DataFrame):
     assert output["cat"].n_unique() == 3
 
 
-def test_label_encode_inverse(sample_df: DataFrame):
+def test_label_encode_inverse(sample_df: DataFrame) -> None:
     t = LabelEncode(columns="cat")
     t.fit(sample_df)
     encoded = t.transform(sample_df)
@@ -36,7 +36,7 @@ def test_label_encode_inverse(sample_df: DataFrame):
     assert_series_equal(decoded["cat"], sample_df["cat"])
 
 
-def test_label_encode_context(sample_df: DataFrame):
+def test_label_encode_context(sample_df: DataFrame) -> None:
     pipeline = Pipeline()
     t = LabelEncode(columns="cat")
 
@@ -50,7 +50,7 @@ def test_label_encode_context(sample_df: DataFrame):
     assert_frame_equal(output, sample_df)
 
 
-def test_label_encode_with_orders():
+def test_label_encode_with_orders() -> None:
     df = DataFrame({"cat": ["A", "B", "C"]})
     t = LabelEncode(columns="cat", orders={"cat": ["C", "B", "A"]})
     t.fit(df)

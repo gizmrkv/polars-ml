@@ -7,7 +7,7 @@ from polars_ml.base import Transformer
 
 
 class GetAttr(Transformer):
-    def __init__(self, attr: str, *args: Any, **kwargs: Any):
+    def __init__(self, attr: str, *args: Any, **kwargs: Any) -> None:
         self.attr = attr
         self.args = args
         self.kwargs = kwargs
@@ -51,7 +51,7 @@ class GetAttr(Transformer):
 
 
 class GetAttrPolars(Transformer):
-    def __init__(self, attr: str, *args: Any, **kwargs: Any):
+    def __init__(self, attr: str, *args: Any, **kwargs: Any) -> None:
         self.attr = attr
         self.args = args
         self.kwargs = kwargs

@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 class OptimizeNameSpace:
-    def __init__(self, pipeline: Pipeline):
+    def __init__(self, pipeline: Pipeline) -> None:
         self.pipeline = pipeline
 
     # --- START INSERTION MARKER IN OptimizeNameSpace

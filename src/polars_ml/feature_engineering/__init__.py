@@ -13,7 +13,7 @@ __all__ = ["ArithmeticSynthesis", "FeatureEngineeringNameSpace"]
 
 
 class FeatureEngineeringNameSpace:
-    def __init__(self, pipeline: Pipeline):
+    def __init__(self, pipeline: Pipeline) -> None:
         self.pipeline = pipeline
 
     # --- START INSERTION MARKER IN FeatureEngineeringNameSpace

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from .agg_join import AggJoin
 from .combine import Combine
 from .discretize import Discretize
 from .horizontal import (
@@ -19,6 +18,7 @@ from .horizontal import (
     HorizontalStd,
     HorizontalSum,
 )
+from .join_agg import JoinAgg
 from .label_encode import LabelEncode, LabelEncodeInverse, LabelEncodeInverseContext
 from .power import (
     BoxCoxTransform,
@@ -63,5 +63,5 @@ __all__ = [
     "HorizontalQuantile",
     "HorizontalStd",
     "HorizontalSum",
-    "AggJoin",
+    "JoinAgg",
 ]

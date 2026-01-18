@@ -11,7 +11,7 @@ def sample_df() -> DataFrame:
     return DataFrame({"group": ["A", "A", "B", "B"], "val": [1, 2, 3, 4]})
 
 
-def test_group_by_agg(sample_df: DataFrame):
+def test_group_by_agg(sample_df: DataFrame) -> None:
     pipeline = Pipeline().group_by("group").agg(pl.col("val").sum().alias("sum_val"))
 
     pipeline.fit(sample_df)

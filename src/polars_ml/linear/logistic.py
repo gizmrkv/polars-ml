@@ -18,7 +18,7 @@ class LogisticRegression(BaseLinear):
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
         prediction_name: str | Sequence[str] = "prediction",
-    ):
+    ) -> None:
         super().__init__(
             model,
             label,

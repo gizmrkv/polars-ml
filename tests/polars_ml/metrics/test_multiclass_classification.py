@@ -5,7 +5,7 @@ import pytest
 from polars_ml.metrics.multiclass_classification import MulticlassClassificationMetrics
 
 
-def test_multiclass_classification_metrics_single_pred():
+def test_multiclass_classification_metrics_single_pred() -> None:
     df = pl.DataFrame({"target": [0, 1, 2, 0, 1, 2], "pred": [0, 1, 2, 1, 1, 2]})
 
     metrics = MulticlassClassificationMetrics(y_true="target", y_preds="pred")
@@ -17,7 +17,7 @@ def test_multiclass_classification_metrics_single_pred():
     assert "f1_macro" in result["metric"].to_list()
 
 
-def test_multiclass_classification_metrics_multi_preds():
+def test_multiclass_classification_metrics_multi_preds() -> None:
     df = pl.DataFrame(
         {
             "target": [0, 1, 2, 0, 1, 2],
@@ -37,7 +37,7 @@ def test_multiclass_classification_metrics_multi_preds():
     assert "pred2" in predictions
 
 
-def test_multiclass_classification_metrics_with_by():
+def test_multiclass_classification_metrics_with_by() -> None:
     df = pl.DataFrame(
         {
             "target": [0, 1, 2, 0, 1, 2],
@@ -57,7 +57,7 @@ def test_multiclass_classification_metrics_with_by():
     assert "B" in groups
 
 
-def test_multiclass_classification_metrics_selector():
+def test_multiclass_classification_metrics_selector() -> None:
     df = pl.DataFrame(
         {
             "target": [0, 1, 2, 0, 1, 2],
@@ -78,7 +78,7 @@ def test_multiclass_classification_metrics_selector():
     assert "other" not in predictions
 
 
-def test_multiclass_classification_metrics_missing_y_true():
+def test_multiclass_classification_metrics_missing_y_true() -> None:
     df = pl.DataFrame(
         {
             "pred": [0, 1, 2],
@@ -90,7 +90,7 @@ def test_multiclass_classification_metrics_missing_y_true():
         metrics.transform(df)
 
 
-def test_multiclass_classification_metrics_zero_division():
+def test_multiclass_classification_metrics_zero_division() -> None:
     # Test case where some classes are missing in pred or true
     df = pl.DataFrame({"target": [0, 1, 2], "pred": [0, 0, 0]})
 

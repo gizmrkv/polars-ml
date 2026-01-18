@@ -59,7 +59,7 @@ def render_methods() -> list[str]:
     return codes
 
 
-def insert_horizontal_methods():
+def insert_horizontal_methods() -> None:
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
     target_file = PROJECT_ROOT / Path("src/polars_ml/preprocessing/horizontal.py")

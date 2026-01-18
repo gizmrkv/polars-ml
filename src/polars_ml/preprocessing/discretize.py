@@ -20,7 +20,7 @@ class Discretize(Transformer):
         left_closed: bool = False,
         allow_duplicates: bool = False,
         suffix: str = "_discretized",
-    ):
+    ) -> None:
         self.exprs = exprs
         self.more_exprs = more_exprs
         self.quantiles = quantiles

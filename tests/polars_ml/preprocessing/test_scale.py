@@ -18,7 +18,7 @@ def sample_df() -> DataFrame:
     return DataFrame({"val": [10.0, 20.0, 30.0], "group": ["A", "A", "B"]})
 
 
-def test_standard_scale(sample_df: DataFrame):
+def test_standard_scale(sample_df: DataFrame) -> None:
     t = StandardScale(columns="val")
 
     t.fit(sample_df)
@@ -26,7 +26,7 @@ def test_standard_scale(sample_df: DataFrame):
     assert_series_equal(output["val"], pl.Series("val", [-1.0, 0.0, 1.0]))
 
 
-def test_min_max_scale(sample_df: DataFrame):
+def test_min_max_scale(sample_df: DataFrame) -> None:
     t = MinMaxScale(columns="val")
 
     t.fit(sample_df)
@@ -34,7 +34,7 @@ def test_min_max_scale(sample_df: DataFrame):
     assert_series_equal(output["val"], pl.Series("val", [0.0, 0.5, 1.0]))
 
 
-def test_robust_scale():
+def test_robust_scale() -> None:
     df = DataFrame({"val": [1, 2, 3, 4, 5]})
     t = RobustScale(columns="val", quantile_range=(0.25, 0.75))
     t.fit(df)
@@ -42,7 +42,7 @@ def test_robust_scale():
     assert_series_equal(output["val"], pl.Series("val", [-1.0, -0.5, 0.0, 0.5, 1.0]))
 
 
-def test_scale_by_group():
+def test_scale_by_group() -> None:
     df = DataFrame({"val": [10.0, 20.0, 100.0, 200.0], "group": ["A", "A", "B", "B"]})
     t = StandardScale(columns="val", by="group")
     t.fit(df)
@@ -59,7 +59,7 @@ def test_scale_by_group():
     )
 
 
-def test_scale_inverse(sample_df: DataFrame):
+def test_scale_inverse(sample_df: DataFrame) -> None:
     t = StandardScale(columns="val")
     t.fit(sample_df)
     scaled = t.transform(sample_df)
@@ -69,7 +69,7 @@ def test_scale_inverse(sample_df: DataFrame):
     assert_frame_equal(restored, sample_df)
 
 
-def test_scale_context(sample_df: DataFrame):
+def test_scale_context(sample_df: DataFrame) -> None:
     pipeline = Pipeline()
     t = StandardScale(columns="val")
 

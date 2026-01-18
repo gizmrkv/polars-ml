@@ -20,7 +20,7 @@ class Pipeline(PipelineMixin, HasFeatureImportance):
         self,
         *steps: Transformer,
         verbose: bool | logging.Logger = False,
-    ):
+    ) -> None:
         self.steps: list[Transformer] = list(steps)
         if isinstance(verbose, logging.Logger):
             self.verbose = True

@@ -24,7 +24,7 @@ class LinearEnsemble(Transformer):
         positive: bool = True,
         max_iter: int = 1000,
         output_column: str = "ensemble",
-    ):
+    ) -> None:
         self.pred_columns = pred_columns
         self.target_column = target_column
         self.alpha = alpha

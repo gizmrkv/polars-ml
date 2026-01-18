@@ -21,14 +21,14 @@ class MockTransformer(Transformer):
         return data
 
 
-def test_pipeline_time_formatting_seconds():
+def test_pipeline_time_formatting_seconds() -> None:
     pipeline = Pipeline(MockTransformer())
     # < 60s
     assert pipeline._format_time(45.678) == "45.68s"
     assert pipeline._format_time(0.1234) == "0.12s"
 
 
-def test_pipeline_time_formatting_long_duration():
+def test_pipeline_time_formatting_long_duration() -> None:
     pipeline = Pipeline(MockTransformer())
     # > 60s (minutes)
     assert pipeline._format_time(65.432) == "01m 05.43s"
@@ -41,7 +41,7 @@ def test_pipeline_time_formatting_long_duration():
     assert pipeline._format_time(172800.0) == "2d 00h 00m 00.00s"
 
 
-def test_pipeline_logging_with_formatted_time():
+def test_pipeline_logging_with_formatted_time() -> None:
     df = pl.DataFrame({"a": [1, 2, 3]})
     steps = [MockTransformer()]
 

@@ -56,7 +56,7 @@ class OptunaOptimizer(Transformer, HasFeatureImportance):
         gc_after_trial: bool = False,
         show_progress_bar: bool = False,
         storage: str | Path | optuna.storages.BaseStorage = "./journal.log",
-    ):
+    ) -> None:
         self.model_fn = model_fn
         self.objective_fn = objective_fn
         self.search_space = search_space

@@ -14,7 +14,7 @@ class KFold:
         seed: int | None = None,
         shuffle: bool = False,
         stratify: IntoExpr | Iterable[IntoExpr] | None = None,
-    ):
+    ) -> None:
         self.n_splits = n_splits
         self.shuffle = shuffle
         self.seed = seed

@@ -12,36 +12,36 @@ def sample_df() -> DataFrame:
     return DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
 
-def test_apply(sample_df: DataFrame):
+def test_apply(sample_df: DataFrame) -> None:
     t = Apply(lambda df: df.select(pl.col("a") * 2))
     output = t.transform(sample_df)
     expected = sample_df.select(pl.col("a") * 2)
     assert_frame_equal(output, expected)
 
 
-def test_echo(sample_df: DataFrame):
+def test_echo(sample_df: DataFrame) -> None:
     t = Echo()
     output = t.transform(sample_df)
     assert_frame_equal(output, sample_df)
 
 
-def test_const(sample_df: DataFrame):
+def test_const(sample_df: DataFrame) -> None:
     const_df = DataFrame({"x": [1]})
     t = Const(const_df)
     output = t.transform(sample_df)
     assert_frame_equal(output, const_df)
 
 
-def test_replay(sample_df: DataFrame):
+def test_replay(sample_df: DataFrame) -> None:
     t = Replay()
     t.fit(sample_df)
     output = t.transform(sample_df)
     assert_frame_equal(output, sample_df)
 
 
-def test_side(sample_df: DataFrame):
+def test_side(sample_df: DataFrame) -> None:
     class MockTransformer(Transformer):
-        def __init__(self):
+        def __init__(self) -> None:
             self.called = False
 
         def transform(self, data: DataFrame) -> DataFrame:
@@ -55,7 +55,7 @@ def test_side(sample_df: DataFrame):
     assert_frame_equal(output, sample_df)
 
 
-def test_concat_vertical(sample_df: DataFrame):
+def test_concat_vertical(sample_df: DataFrame) -> None:
     t = Concat([Echo(), Echo()], how="vertical")
 
     output = t.transform(sample_df)
@@ -63,7 +63,7 @@ def test_concat_vertical(sample_df: DataFrame):
     assert_frame_equal(output, expected)
 
 
-def test_concat_horizontal(sample_df: DataFrame):
+def test_concat_horizontal(sample_df: DataFrame) -> None:
     t = Concat(
         [Apply(lambda df: df.select("a")), Apply(lambda df: df.select("b"))],
         how="horizontal",
@@ -76,7 +76,7 @@ def test_concat_horizontal(sample_df: DataFrame):
     assert_frame_equal(output, expected)
 
 
-def test_to_dummies(sample_df: DataFrame):
+def test_to_dummies(sample_df: DataFrame) -> None:
     df = DataFrame({"cat": ["A", "B", "A"]})
     t = ToDummies(columns=["cat"])
     t.fit(df)

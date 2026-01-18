@@ -6,7 +6,7 @@ from polars_ml import Pipeline
 from polars_ml.linear import LinearRegression, LogisticRegression
 
 
-def test_linear_regression():
+def test_linear_regression() -> None:
     df = DataFrame(
         {"x1": [1, 2, 3, 4, 5], "x2": [10, 20, 30, 40, 50], "y": [2, 4, 6, 8, 10]}
     )
@@ -23,7 +23,7 @@ def test_linear_regression():
     assert (result["prediction"] - df["y"]).abs().max() < 1e-10
 
 
-def test_logistic_regression():
+def test_logistic_regression() -> None:
     df = DataFrame({"x1": [1, 2, 3, 4, 5], "y": [0, 0, 1, 1, 1]})
 
     model = SkLogisticRegression()
@@ -40,7 +40,7 @@ def test_logistic_regression():
     )
 
 
-def test_pipeline_integration():
+def test_pipeline_integration() -> None:
     df = DataFrame({"x1": [1, 2, 3, 4, 5], "y": [2, 4, 6, 8, 10]})
 
     pipeline = Pipeline().linear.regression(
@@ -54,7 +54,7 @@ def test_pipeline_integration():
     assert len(result) == 5
 
 
-def test_feature_selection_exclude_label():
+def test_feature_selection_exclude_label() -> None:
     df = DataFrame({"f1": [1, 2, 3], "f2": [4, 5, 6], "target": [7, 8, 9]})
 
     lr = LinearRegression(SkLinearRegression(), label="target")

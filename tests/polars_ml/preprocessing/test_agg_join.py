@@ -2,14 +2,14 @@ import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
 
-from polars_ml.preprocessing.agg_join import AggJoin
+from polars_ml.preprocessing.join_agg import JoinAgg
 
 
-def test_agg_join_basic():
+def test_join_agg_basic() -> None:
     df = pl.DataFrame({"group": ["A", "A", "B", "B", "C"], "value": [1, 2, 3, 4, 5]})
 
     # Calculate mean per group
-    transformer = AggJoin(
+    transformer = JoinAgg(
         "group", pl.col("value").mean().alias("mean_value"), how="left"
     )
 
@@ -21,12 +21,12 @@ def test_agg_join_basic():
     assert_frame_equal(result, expected)
 
 
-def test_agg_join_multiple_keys():
+def test_join_agg_multiple_keys() -> None:
     df = pl.DataFrame(
         {"k1": ["A", "A", "B", "B"], "k2": [1, 1, 2, 2], "val": [10, 20, 30, 40]}
     )
 
-    transformer = AggJoin(["k1", "k2"], pl.col("val").sum().alias("sum_val"))
+    transformer = JoinAgg(["k1", "k2"], pl.col("val").sum().alias("sum_val"))
 
     result = transformer.fit_transform(df)
 
@@ -35,7 +35,7 @@ def test_agg_join_multiple_keys():
     assert_frame_equal(result, expected)
 
 
-def test_agg_join_unseen_category():
+def test_join_agg_unseen_category() -> None:
     train_df = pl.DataFrame({"group": ["A", "B"], "val": [1, 2]})
 
     test_df = pl.DataFrame(
@@ -45,7 +45,7 @@ def test_agg_join_unseen_category():
         }
     )
 
-    transformer = AggJoin("group", pl.col("val").max().alias("max_val"))
+    transformer = JoinAgg("group", pl.col("val").max().alias("max_val"))
 
     transformer.fit(train_df)
     result = transformer.transform(test_df)
@@ -55,10 +55,10 @@ def test_agg_join_unseen_category():
     assert_frame_equal(result, expected)
 
 
-def test_agg_join_suffix_collision():
+def test_join_agg_suffix_collision() -> None:
     df = pl.DataFrame({"group": ["A", "A"], "val": [1, 2]})
 
-    transformer = AggJoin("group", pl.col("val").mean().alias("val"))
+    transformer = JoinAgg("group", pl.col("val").mean().alias("val"))
 
     transformer.fit(df)
     result = transformer.transform(df)

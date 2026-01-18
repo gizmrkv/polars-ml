@@ -1,3 +1,15 @@
+from pandas import DataFrame
+from polars import DataFrame
+from polars.interchange.protocol import DataFrame
+from narwhals.stable.v2 import DataFrame
+from catboost.core import DataFrame
+from polars.dataframe import DataFrame
+from catboost.metrics import DataFrame
+from narwhals import DataFrame
+from narwhals.stable.v1 import DataFrame
+from narwhals.dataframe import DataFrame
+from polars.dataframe.frame import DataFrame
+from pandas.core.frame import DataFrame
 import polars as pl
 import pytest
 
@@ -7,7 +19,7 @@ from polars_ml.optimize import OptunaOptimizer
 
 
 class MockModel(Transformer, HasFeatureImportance):
-    def __init__(self, param1=1):
+    def __init__(self, param1: int = 1) -> None:
         self.param1 = param1
 
     def fit(self, data, **more_data):
@@ -17,11 +29,11 @@ class MockModel(Transformer, HasFeatureImportance):
     def transform(self, data):
         return data.with_columns(pl.lit(self.param1).alias("pred"))
 
-    def get_feature_importance(self):
+    def get_feature_importance(self) -> DataFrame:
         return pl.DataFrame({"feature": ["a"], "importance": [self.param1]})
 
 
-def model_fn(param1=1, trial=None):
+def model_fn(param1: int = 1, trial=None) -> MockModel:
     return MockModel(param1=param1)
 
 
@@ -30,7 +42,7 @@ def objective_fn(model, data, trial=None, **more_data):
     return model.param1
 
 
-def test_optuna_optimizer_basic():
+def test_optuna_optimizer_basic() -> None:
     search_space = {"param1": {"min": 1, "max": 10}}
 
     df = pl.DataFrame({"a": [1, 2, 3]})
@@ -59,7 +71,7 @@ def test_optuna_optimizer_basic():
     assert importance["importance"][0] == optimizer.best_params["param1"]
 
 
-def test_pipeline_integration():
+def test_pipeline_integration() -> None:
     search_space = {"param1": {"min": 1, "max": 10}}
 
     df = pl.DataFrame({"a": [1, 2, 3]})
@@ -83,7 +95,7 @@ def test_pipeline_integration():
     assert "importance" in importance.columns
 
 
-def test_more_data_passing():
+def test_more_data_passing() -> None:
     def objective_with_more_data(model, data, trial=None, **more_data):
         assert "valid" in more_data
         return model.param1

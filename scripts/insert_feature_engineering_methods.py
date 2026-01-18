@@ -44,7 +44,7 @@ def render_methods() -> list[str]:
     return codes
 
 
-def insert_feature_engineering_methods():
+def insert_feature_engineering_methods() -> None:
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
     target_file = PROJECT_ROOT / Path("src/polars_ml/feature_engineering/__init__.py")

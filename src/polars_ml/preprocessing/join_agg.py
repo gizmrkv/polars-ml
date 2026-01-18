@@ -10,14 +10,14 @@ from polars_ml.base import Transformer
 from polars_ml.exceptions import NotFittedError
 
 
-class AggJoin(Transformer):
+class JoinAgg(Transformer):
     def __init__(
         self,
         by: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         *aggs: IntoExpr | Iterable[IntoExpr],
         how: JoinStrategy = "left",
         suffix: str = "_agg",
-    ):
+    ) -> None:
         self.by_selector = by
         self.aggs = aggs
         self.how = how

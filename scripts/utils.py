@@ -70,7 +70,7 @@ def render_call_args(
 
 def insert_between_markers(
     filepath: str | Path, text: str, start_marker: str, end_marker: str
-):
+) -> None:
     """
     Inserts (replaces) text between a start marker and an end marker in the specified file.
 

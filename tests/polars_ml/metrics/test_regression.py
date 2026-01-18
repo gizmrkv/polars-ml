@@ -5,7 +5,7 @@ import pytest
 from polars_ml.metrics.regression import RegressionMetrics
 
 
-def test_regression_metrics_single_pred():
+def test_regression_metrics_single_pred() -> None:
     df = pl.DataFrame({"target": [1.0, 2.0, 3.0], "pred": [1.1, 1.9, 3.2]})
 
     metrics = RegressionMetrics(y_true="target", y_preds="pred")
@@ -16,7 +16,7 @@ def test_regression_metrics_single_pred():
     assert "mse" in result["metric"].to_list()
 
 
-def test_regression_metrics_multi_preds():
+def test_regression_metrics_multi_preds() -> None:
     df = pl.DataFrame(
         {"target": [1.0, 2.0, 3.0], "pred1": [1.1, 1.9, 3.2], "pred2": [1.2, 2.1, 2.9]}
     )
@@ -32,7 +32,7 @@ def test_regression_metrics_multi_preds():
     assert result.filter(pl.col("prediction") == "pred2").height > 0
 
 
-def test_regression_metrics_with_by():
+def test_regression_metrics_with_by() -> None:
     df = pl.DataFrame(
         {
             "target": [1.0, 2.0, 3.0, 4.0],
@@ -54,7 +54,7 @@ def test_regression_metrics_with_by():
     )
 
 
-def test_regression_metrics_multi_preds_with_by():
+def test_regression_metrics_multi_preds_with_by() -> None:
     df = pl.DataFrame(
         {
             "target": [1.0, 2.0, 3.0, 4.0],
@@ -85,7 +85,7 @@ def test_regression_metrics_multi_preds_with_by():
     )
 
 
-def test_regression_metrics_selector():
+def test_regression_metrics_selector() -> None:
     df = pl.DataFrame(
         {
             "target": [1.0, 2.0, 3.0],
@@ -106,7 +106,7 @@ def test_regression_metrics_selector():
     assert "other" not in predictions
 
 
-def test_regression_metrics_missing_y_true():
+def test_regression_metrics_missing_y_true() -> None:
     df = pl.DataFrame(
         {
             "pred": [1.1, 1.9, 3.2],

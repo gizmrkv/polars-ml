@@ -8,7 +8,7 @@ from polars import DataFrame
 from polars_ml.gbdt.xgboost_ import XGBoost
 
 
-def test_xgboost_default_flow():
+def test_xgboost_default_flow() -> None:
     df = DataFrame(
         {"f1": [1, 2, 3, 4, 5], "f2": [10, 20, 30, 40, 50], "target": [0, 1, 0, 1, 0]}
     )
@@ -28,7 +28,7 @@ def test_xgboost_default_flow():
     assert len(result) == 5
 
 
-def test_base_xgboost_override():
+def test_base_xgboost_override() -> None:
     class CustomXGB(XGBoost):
         def fit(self, data: DataFrame) -> CustomXGB:
             import polars.selectors as cs
@@ -64,7 +64,7 @@ def test_base_xgboost_override():
     assert (result["prediction"] == 0).all()
 
 
-def test_xgboost_feature_consistency():
+def test_xgboost_feature_consistency() -> None:
     df_train = DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
     df_test = DataFrame({"f1": [1, 2, 3], "extra": [10, 20, 30], "target": [0, 1, 0]})
 

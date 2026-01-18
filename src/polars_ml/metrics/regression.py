@@ -25,7 +25,7 @@ class RegressionMetrics(Transformer):
         y_preds: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         *,
         by: str | None = None,
-    ):
+    ) -> None:
         self.y_true = y_true
         self.y_preds = y_preds
         self.by = by

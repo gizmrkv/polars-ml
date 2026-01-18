@@ -30,7 +30,7 @@ class BasePowerTransform(Transformer, ABC):
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         suffix: str = "",
-    ):
+    ) -> None:
         self.column_selectors = columns
         self.more_column_selectors = more_columns
         self.by = [by] if isinstance(by, str) else [*by] if by is not None else []
@@ -100,7 +100,7 @@ class BoxCoxTransform(BasePowerTransform):
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         suffix: str = "",
-    ):
+    ) -> None:
         super().__init__(columns, *more_columns, by=by, suffix=suffix)
 
     def calc_maxlog(self, values: Series) -> float:
@@ -120,7 +120,7 @@ class YeoJohnsonTransform(BasePowerTransform):
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         suffix: str = "",
-    ):
+    ) -> None:
         super().__init__(columns, *more_columns, by=by, suffix=suffix)
 
     def calc_maxlog(self, values: Series) -> float:
@@ -138,7 +138,7 @@ class PowerTransformInverse(Transformer):
         self,
         power_transform: BasePowerTransform,
         mapping: Mapping[str, str] | None = None,
-    ):
+    ) -> None:
         self.power_transform = power_transform
         self._mapping = mapping
 
@@ -184,7 +184,7 @@ class PowerTransformInverseContext:
         pipeline: Pipeline,
         power_transform: BasePowerTransform,
         mapping: Mapping[str, str] | None = None,
-    ):
+    ) -> None:
         self.pipeline = pipeline
         self.power_transform = power_transform
         self.mapping = mapping
@@ -192,7 +192,7 @@ class PowerTransformInverseContext:
     def __enter__(self) -> Pipeline:
         return self.pipeline.pipe(self.power_transform)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.pipeline.pipe(
             PowerTransformInverse(self.power_transform, mapping=self.mapping),
         )

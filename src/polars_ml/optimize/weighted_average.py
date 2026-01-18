@@ -26,7 +26,7 @@ class WeightedAverage(Transformer):
         non_negative: bool = True,
         output_column: str = "weighted_average",
         scipy_kwargs: Mapping[str, Any] | None = None,
-    ):
+    ) -> None:
         self.pred_columns = pred_columns
         self.target_column = target_column
         self.metric_fn = metric_fn or mean_squared_error

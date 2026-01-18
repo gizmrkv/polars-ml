@@ -21,7 +21,7 @@ class MockTransformer(Transformer):
         return data
 
 
-def test_pipeline_logging_verbose():
+def test_pipeline_logging_verbose() -> None:
     df = pl.DataFrame({"a": [1, 2, 3]})
     steps = [MockTransformer(), MockTransformer()]
 
@@ -41,7 +41,7 @@ def test_pipeline_logging_verbose():
     assert "[2/2] MockTransformer finished in" in log_output
 
 
-def test_pipeline_no_verbose():
+def test_pipeline_no_verbose() -> None:
     df = pl.DataFrame({"a": [1, 2, 3]})
     steps = [MockTransformer()]
 
@@ -57,7 +57,7 @@ def test_pipeline_no_verbose():
     assert log_capture.getvalue() == ""
 
 
-def test_pipeline_fit_transform_logging():
+def test_pipeline_fit_transform_logging() -> None:
     df = pl.DataFrame({"a": [1, 2, 3]})
     steps = [MockTransformer()]
 
@@ -75,7 +75,7 @@ def test_pipeline_fit_transform_logging():
     assert "[1/1] MockTransformer finished in" in log_output
 
 
-def test_pipeline_transform_logging():
+def test_pipeline_transform_logging() -> None:
     df = pl.DataFrame({"a": [1, 2, 3]})
     steps = [MockTransformer()]
 

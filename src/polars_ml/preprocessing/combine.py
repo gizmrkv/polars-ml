@@ -22,7 +22,7 @@ class Combine(Transformer):
         n: int,
         delimiter: str = "_",
         prefix: str = "comb_",
-    ):
+    ) -> None:
         self.selector = columns
         self.n = n
         self.delimiter = delimiter

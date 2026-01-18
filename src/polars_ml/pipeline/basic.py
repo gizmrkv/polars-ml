@@ -10,7 +10,7 @@ from polars_ml.base import Transformer
 
 
 class Apply(Transformer):
-    def __init__(self, func: Callable[[DataFrame], DataFrame]):
+    def __init__(self, func: Callable[[DataFrame], DataFrame]) -> None:
         self.func = func
 
     def transform(self, data: DataFrame) -> DataFrame:
@@ -18,7 +18,7 @@ class Apply(Transformer):
 
 
 class Echo(Transformer):
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def transform(self, data: DataFrame) -> DataFrame:
@@ -26,7 +26,7 @@ class Echo(Transformer):
 
 
 class Const(Transformer):
-    def __init__(self, data: DataFrame):
+    def __init__(self, data: DataFrame) -> None:
         self.data = data
 
     def transform(self, data: DataFrame) -> DataFrame:
@@ -34,7 +34,7 @@ class Const(Transformer):
 
 
 class Replay(Transformer):
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
@@ -46,7 +46,7 @@ class Replay(Transformer):
 
 
 class Side(Transformer):
-    def __init__(self, transformer: Transformer):
+    def __init__(self, transformer: Transformer) -> None:
         self.transformer = transformer
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
@@ -70,7 +70,7 @@ class Concat(Transformer):
         how: ConcatMethod = "vertical",
         rechunk: bool = False,
         parallel: bool = True,
-    ):
+    ) -> None:
         self.items = items
         self.params = {
             "how": how,
@@ -99,7 +99,7 @@ class ToDummies(Transformer):
         *,
         separator: str = "_",
         drop_first: bool = False,
-    ):
+    ) -> None:
         self.columns = columns
         self.separator = separator
         self.drop_first = drop_first

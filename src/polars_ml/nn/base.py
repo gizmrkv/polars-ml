@@ -22,7 +22,7 @@ class Module(Transformer):
         epochs: int = 1,
         device: str | torch.device | None = None,
         prediction_name: str = "prediction",
-    ):
+    ) -> None:
         self.model = model
         self.to_batch = to_batch
         self.loss_fn = loss_fn

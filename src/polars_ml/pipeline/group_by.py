@@ -28,7 +28,7 @@ class GroupByGetAttr(Transformer):
         group_by_kwargs: Mapping[str, Any] | None = None,
         *agg_args: Any,
         **agg_kwargs: Any,
-    ):
+    ) -> None:
         self.group_by_attr = group_by_attr
         self.group_by_args = group_by_args or ()
         self.group_by_kwargs = group_by_kwargs or {}
@@ -46,7 +46,9 @@ class GroupByGetAttr(Transformer):
 
 
 class GroupByNameSpace:
-    def __init__(self, pipeline: Pipeline, attr: str, *args: Any, **kwargs: Any):
+    def __init__(
+        self, pipeline: Pipeline, attr: str, *args: Any, **kwargs: Any
+    ) -> None:
         self.pipeline = pipeline
         self.attr = attr
         self.args = args
@@ -190,7 +192,9 @@ class GroupByNameSpace:
 
 
 class DynamicGroupByNameSpace:
-    def __init__(self, pipeline: Pipeline, attr: str, *args: Any, **kwargs: Any):
+    def __init__(
+        self, pipeline: Pipeline, attr: str, *args: Any, **kwargs: Any
+    ) -> None:
         self.pipeline = pipeline
         self.attr = attr
         self.args = args
@@ -220,7 +224,9 @@ class DynamicGroupByNameSpace:
 
 
 class RollingGroupByNameSpace:
-    def __init__(self, pipeline: Pipeline, attr: str, *args: Any, **kwargs: Any):
+    def __init__(
+        self, pipeline: Pipeline, attr: str, *args: Any, **kwargs: Any
+    ) -> None:
         self.pipeline = pipeline
         self.attr = attr
         self.args = args

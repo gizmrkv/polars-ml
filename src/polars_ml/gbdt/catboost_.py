@@ -4,131 +4,137 @@ from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     Iterable,
     Mapping,
     Self,
     Sequence,
 )
 
-import numpy as np
 import polars as pl
 import polars.selectors as cs
 from numpy.typing import NDArray
 from polars import DataFrame
-from polars._typing import IntoExpr
+from polars._typing import ColumnNameOrSelector
 
 from polars_ml.base import HasFeatureImportance, Transformer
 from polars_ml.exceptions import NotFittedError
 
 if TYPE_CHECKING:
-    import catboost
+    import catboost as cb
 
 
 class CatBoost(Transformer, HasFeatureImportance):
     def __init__(
         self,
-        params: Mapping[str, Any],
-        label: IntoExpr,
-        features: IntoExpr | Iterable[IntoExpr] | None = None,
+        target: ColumnNameOrSelector,
+        prediction: str | Sequence[str],
+        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         *,
-        fit_params: Mapping[str, Any] | None = None,
-        prediction_name: str | Sequence[str] = "prediction",
-        save_dir: str | Path | None = None,
-    ):
-        self.label = label
-        self.features_selector = features
-        self.params = params
-        self.fit_params = fit_params or {}
-        self.prediction_name = prediction_name
-        self.save_dir = Path(save_dir) if save_dir else None
-
-    def get_booster(self) -> catboost.CatBoost:
-        return self.model
-
-    def create_pool(self, data: DataFrame) -> catboost.Pool:
-        import catboost
-
-        features = data.select(self.feature_names)
-        label = data.select(self.label)
-
-        return catboost.Pool(
-            data=features.to_pandas(),
-            label=label.to_pandas(),
-            feature_names=self.feature_names,
+        params: Mapping[str, Any] | None = None,
+        fit_dir: str | Path | None = None,
+        **fit_params: Any,
+    ) -> None:
+        self._target_selector = target
+        self._prediction = (
+            [prediction] if isinstance(prediction, str) else list(prediction)
         )
+        self._features_selector = features
+        self._params = dict(params) if params else {}
+        self._fit_dir = Path(fit_dir) if fit_dir else None
+        self._fit_params = fit_params
+
+        self._target: list[str] | None = None
+        self._features: list[str] | None = None
+        self._pool_params: dict[str, Any] | None = None
+        self._booster: cb.CatBoost | None = None
+
+    @property
+    def target(self) -> list[str]:
+        if self._target is None:
+            raise NotFittedError()
+        return self._target
+
+    @property
+    def features(self) -> list[str]:
+        if self._features is None:
+            raise NotFittedError()
+        return self._features
+
+    @property
+    def pool_params(self) -> dict[str, Any]:
+        if self._pool_params is None:
+            raise NotFittedError()
+        return self._pool_params
+
+    @property
+    def booster(self) -> cb.CatBoost:
+        if self._booster is None:
+            raise NotFittedError()
+        return self._booster
+
+    def init_target(self, data: DataFrame) -> list[str]:
+        return data.lazy().select(self._target_selector).collect_schema().names()
+
+    def init_features(self, data: DataFrame) -> list[str]:
+        return data.lazy().select(self._features_selector).collect_schema().names()
+
+    def init_fit_params(self, data: DataFrame) -> dict[str, Any]:
+        return self._fit_params
+
+    def init_pool_params(self, data: DataFrame) -> dict[str, Any]:
+        return {}
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
-        import catboost
+        self._target = self.init_target(data)
+        self._features = self.init_features(data)
+        self._pool_params = self.init_pool_params(data)
+        self._fit_params = self.init_fit_params(data)
 
-        if self.features_selector is None:
-            label_columns = data.lazy().select(self.label).collect_schema().names()
-            self.features_selector = cs.exclude(*label_columns)
-
-        self.feature_names = data.select(self.features_selector).columns
-
-        train_pool = self.create_pool(data)
+        train_pool = cb.Pool(
+            data=data.select(*self.features).to_pandas(),
+            label=data.select(*self.target).to_pandas(),
+            feature_names=self._features,
+            **self.pool_params,
+        )
         eval_sets = []
         for valid_data in more_data.values():
-            eval_sets.append(self.create_pool(valid_data))
+            eval_sets.append(
+                cb.Pool(
+                    data=valid_data.select(*self.features).to_pandas(),
+                    label=valid_data.select(*self.target).to_pandas(),
+                    feature_names=self._features,
+                    **self.pool_params,
+                )
+            )
 
-        self.model = catboost.CatBoost(dict(self.params))
+        self.model = cb.CatBoost(self._params)
         self.model.fit(
             train_pool,
             eval_set=eval_sets if eval_sets else None,
-            **self.fit_params,
+            **self._fit_params,
         )
 
-        if self.save_dir:
-            self.save(self.save_dir)
+        if self._fit_dir:
+            self.save(self._fit_dir)
 
         return self
 
-    def predict(self, data: DataFrame) -> NDArray:
-        if not hasattr(self, "feature_names"):
-            raise NotFittedError()
-
-        input_data = data.select(self.feature_names).to_pandas()
-        booster = self.get_booster()
-
-        return booster.predict(input_data)
-
     def transform(self, data: DataFrame) -> DataFrame:
-        pred = self.predict(data)
-        name = self.prediction_name
+        input_data = data.select(*self.features).to_pandas()
+        pred = self.booster.predict(input_data)
+        return pl.from_numpy(pred, schema=self._prediction)
 
-        if isinstance(name, str):
-            schema = (
-                [name]
-                if pred.ndim == 1
-                else [f"{name}_{i}" for i in range(pred.shape[1])]
-            )
-        else:
-            n_cols = 1 if pred.ndim == 1 else pred.shape[1]
-            if len(name) != n_cols:
-                raise ValueError(
-                    f"prediction_name length ({len(name)}) does not match prediction shape ({n_cols})"
-                )
-            schema = list(name)
-
-        prediction_df = pl.from_numpy(
-            pred,
-            schema=schema,
-        )
-
-        return prediction_df
-
-    def save(self, save_dir: str | Path) -> None:
-        booster = self.get_booster()
-        save_dir = Path(save_dir)
-        save_dir.mkdir(parents=True, exist_ok=True)
-        booster.save_model(str(save_dir / "model.cbm"))
+    def save(self, fit_dir: str | Path) -> None:
+        fit_dir = Path(fit_dir)
+        fit_dir.mkdir(parents=True, exist_ok=True)
+        self.booster.save_model(str(fit_dir / "model.cbm"))
 
     def get_feature_importance(self) -> DataFrame:
-        booster = self.get_booster()
-        importance = booster.get_feature_importance()
+        importance = self.booster.get_feature_importance()
         return DataFrame(
             {
-                "feature": self.feature_names,
+                "feature": self.features,
                 "importance": importance,
             }
         )

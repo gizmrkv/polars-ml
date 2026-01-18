@@ -61,11 +61,11 @@ from polars.io.cloud import CredentialProviderFunction
 
 from polars_ml.base import Transformer
 from polars_ml.preprocessing import (
-    AggJoin,
     BoxCoxTransform,
     Combine,
     Discretize,
     HorizontalNameSpace,
+    JoinAgg,
     LabelEncode,
     LabelEncodeInverseContext,
     MinMaxScale,
@@ -1330,14 +1330,14 @@ class PipelineMixin(Transformer):
     ) -> Self:
         return self.pipe(ToDummies(columns, separator=separator, drop_first=drop_first))
 
-    def agg_join(
+    def join_agg(
         self,
         by: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         *aggs: IntoExpr | Iterable[IntoExpr],
         how: JoinStrategy = "left",
         suffix: str = "_agg",
     ) -> Self:
-        return self.pipe(AggJoin(by, *aggs, how=how, suffix=suffix))
+        return self.pipe(JoinAgg(by, *aggs, how=how, suffix=suffix))
 
     @overload
     def min_max_scale(

@@ -18,11 +18,11 @@ from polars_ml.pipeline.group_by import (
     RollingGroupByNameSpace,
 )
 from polars_ml.preprocessing import (
-    AggJoin,
     BoxCoxTransform,
     Combine,
     Discretize,
     HorizontalNameSpace,
+    JoinAgg,
     LabelEncode,
     LabelEncodeInverseContext,
     MinMaxScale,
@@ -69,7 +69,7 @@ BASIC_TRANSFORMERS: list[type] = [
     Combine,
     Concat,
     ToDummies,
-    AggJoin,
+    JoinAgg,
 ]
 BASIC_TRANSFORMERS_WITH_INVERSE: list[tuple[type, type]] = [
     (MinMaxScale, ScaleInverseContext),

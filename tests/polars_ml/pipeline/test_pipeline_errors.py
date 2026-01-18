@@ -16,7 +16,7 @@ class FailingTransformer(Transformer):
         raise ValueError("Intentional failure in fit_transform")
 
 
-def test_pipeline_fit_error_context():
+def test_pipeline_fit_error_context() -> None:
     df = pl.DataFrame({"a": [1, 2, 3]})
     pipeline = Pipeline(
         FailingTransformer(),  # Step 0
@@ -29,7 +29,7 @@ def test_pipeline_fit_error_context():
     assert "Intentional failure in fit" in str(excinfo.value)
 
 
-def test_pipeline_transform_error_context():
+def test_pipeline_transform_error_context() -> None:
     df = pl.DataFrame({"a": [1, 2, 3]})
     pipeline = Pipeline(
         FailingTransformer(),  # Step 0
@@ -42,7 +42,7 @@ def test_pipeline_transform_error_context():
     assert "Intentional failure in transform" in str(excinfo.value)
 
 
-def test_pipeline_multiple_steps_error_context():
+def test_pipeline_multiple_steps_error_context() -> None:
     class DummyTransformer(Transformer):
         def fit(self, data, **more_data):
             return self

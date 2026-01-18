@@ -11,7 +11,7 @@ def sample_df() -> DataFrame:
     return DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
 
-def test_getattr_fit_transform(sample_df: DataFrame):
+def test_getattr_fit_transform(sample_df: DataFrame) -> None:
     t = GetAttr("select", pl.col("a") * 2)
     t.fit(sample_df)
 
@@ -20,7 +20,7 @@ def test_getattr_fit_transform(sample_df: DataFrame):
     assert_frame_equal(output, expected)
 
 
-def test_getattr_polars_fit_transform(sample_df: DataFrame):
+def test_getattr_polars_fit_transform(sample_df: DataFrame) -> None:
     t = GetAttrPolars("concat", [sample_df, sample_df])
     t.fit(sample_df)
 

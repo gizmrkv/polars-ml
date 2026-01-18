@@ -5,7 +5,7 @@ import pytest
 from polars_ml.metrics.binary_classification import BinaryClassificationMetrics
 
 
-def test_binary_classification_metrics_single_pred():
+def test_binary_classification_metrics_single_pred() -> None:
     df = pl.DataFrame({"target": [0, 1, 0, 1], "pred": [0.1, 0.9, 0.2, 0.8]})
 
     metrics = BinaryClassificationMetrics(y_true="target", y_preds="pred")
@@ -17,7 +17,7 @@ def test_binary_classification_metrics_single_pred():
     assert "log_loss" in result["metric"].to_list()
 
 
-def test_binary_classification_metrics_multi_preds():
+def test_binary_classification_metrics_multi_preds() -> None:
     df = pl.DataFrame(
         {
             "target": [0, 1, 0, 1],
@@ -36,7 +36,7 @@ def test_binary_classification_metrics_multi_preds():
     assert "pred2" in predictions
 
 
-def test_binary_classification_metrics_with_by():
+def test_binary_classification_metrics_with_by() -> None:
     df = pl.DataFrame(
         {
             "target": [0, 1, 0, 1, 0, 1, 0, 1],
@@ -55,7 +55,7 @@ def test_binary_classification_metrics_with_by():
     assert "B" in groups
 
 
-def test_binary_classification_metrics_selector():
+def test_binary_classification_metrics_selector() -> None:
     df = pl.DataFrame(
         {
             "target": [0, 1, 0, 1],
@@ -77,7 +77,7 @@ def test_binary_classification_metrics_selector():
     assert "other" not in predictions
 
 
-def test_binary_classification_metrics_constant_target():
+def test_binary_classification_metrics_constant_target() -> None:
     df = pl.DataFrame(
         {
             "target": [1, 1, 0, 1],
