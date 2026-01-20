@@ -1,18 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, Optional, Union
+from typing import TYPE_CHECKING, Any, Mapping
 
-import numpy as np
-from sklearn.metrics import mean_squared_error
-
-from .linear_ensemble import LinearEnsemble
 from .optuna_ import ModelFunction, ObjectiveFunction, OptunaOptimizer
-from .weighted_average import WeightedAverage
 
 if TYPE_CHECKING:
     import optuna
-    from polars._typing import ColumnNameOrSelector
 
     from polars_ml import Pipeline
 
@@ -20,8 +14,6 @@ if TYPE_CHECKING:
 class OptimizeNameSpace:
     def __init__(self, pipeline: Pipeline):
         self.pipeline = pipeline
-
-    # --- START INSERTION MARKER IN OptimizeNameSpace
 
     def optuna(
         self,
@@ -59,64 +51,10 @@ class OptimizeNameSpace:
             )
         )
 
-    def weighted_average(
-        self,
-        pred_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
-        target_column: str,
-        metric_fn: Callable[[NDArray[Any], NDArray[Any]], float] | None = None,
-        is_higher_better: bool = False,
-        method: str = "SLSQP",
-        sum_to_one: bool = True,
-        non_negative: bool = True,
-        output_column: str = "weighted_average",
-        scipy_kwargs: Mapping[str, Any] | None = None,
-    ) -> Pipeline:
-        return self.pipeline.pipe(
-            WeightedAverage(
-                pred_columns,
-                target_column,
-                metric_fn=metric_fn,
-                is_higher_better=is_higher_better,
-                method=method,
-                sum_to_one=sum_to_one,
-                non_negative=non_negative,
-                output_column=output_column,
-                scipy_kwargs=scipy_kwargs,
-            )
-        )
-
-    def linear_ensemble(
-        self,
-        pred_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
-        target_column: str,
-        alpha: float = 1.0,
-        l1_ratio: float = 0.5,
-        fit_intercept: bool = False,
-        positive: bool = True,
-        max_iter: int = 1000,
-        output_column: str = "ensemble",
-    ) -> Pipeline:
-        return self.pipeline.pipe(
-            LinearEnsemble(
-                pred_columns,
-                target_column,
-                alpha=alpha,
-                l1_ratio=l1_ratio,
-                fit_intercept=fit_intercept,
-                positive=positive,
-                max_iter=max_iter,
-                output_column=output_column,
-            )
-        )
-
-    # --- END INSERTION MARKER IN OptimizeNameSpace
-
 
 __all__ = [
     "OptunaOptimizer",
     "ModelFunction",
     "ObjectiveFunction",
     "OptimizeNameSpace",
-    "WeightedAverage",
-    "LinearEnsemble",
 ]

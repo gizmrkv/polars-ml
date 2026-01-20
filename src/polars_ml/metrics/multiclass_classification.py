@@ -23,19 +23,19 @@ class MulticlassClassificationMetrics(Transformer):
         *,
         by: str | None = None,
     ):
-        self.y_true = y_true
-        self.y_preds = y_preds
-        self.by = by
+        self._y_true = y_true
+        self._y_preds = y_preds
+        self._by = by
 
     def transform(self, data: DataFrame) -> DataFrame:
-        if self.y_true not in data.columns:
-            raise ValueError(f"y_true column '{self.y_true}' not found in data")
+        if self._y_true not in data.columns:
+            raise ValueError(f"y_true column '{self._y_true}' not found in data")
 
         metrics_list = []
-        if self.by is None:
-            y_pred_cols = data.select(self.y_preds).columns
+        if self._by is None:
+            y_pred_cols = data.select(self._y_preds).columns
             for y_pred_col in y_pred_cols:
-                y_true = data[self.y_true].to_numpy()
+                y_true = data[self._y_true].to_numpy()
                 y_pred = data[y_pred_col].to_numpy()
 
                 metrics = self.calc_metrics(y_true, y_pred)
@@ -49,11 +49,11 @@ class MulticlassClassificationMetrics(Transformer):
 
         else:
             for (by,), group in data.partition_by(
-                self.by, as_dict=True, maintain_order=True
+                self._by, as_dict=True, maintain_order=True
             ).items():
-                y_pred_cols = group.select(self.y_preds).columns
+                y_pred_cols = group.select(self._y_preds).columns
                 for y_pred_col in y_pred_cols:
-                    y_true = group[self.y_true].to_numpy()
+                    y_true = group[self._y_true].to_numpy()
                     y_pred = group[y_pred_col].to_numpy()
 
                     metrics = self.calc_metrics(y_true, y_pred)

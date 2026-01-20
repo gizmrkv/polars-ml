@@ -27,33 +27,38 @@ class BinaryClassificationMetrics(Transformer):
         *,
         by: str | None = None,
     ):
-        self.y_true = y_true
-        self.y_preds = y_preds
-        self.by = by
+        self._y_true = y_true
+        self._y_preds = y_preds
+        self._by = by
+
+        self._n_train_sample: int | None = None
+        self._n_train_positive: int | float | None = None
+        self._n_train_negative: int | float | None = None
+        self._train_pos_rate: float | None = None
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
-        self.n_train_sample = len(data)
-        self.n_train_positive = data[self.y_true].sum()
-        self.n_train_negative = self.n_train_sample - self.n_train_positive
-        self.train_pos_rate = (
-            self.n_train_positive / self.n_train_sample
-            if self.n_train_sample > 0
+        self._n_train_sample = len(data)
+        self._n_train_positive = data[self._y_true].sum()
+        self._n_train_negative = self._n_train_sample - self._n_train_positive
+        self._train_pos_rate = (
+            self._n_train_positive / self._n_train_sample
+            if self._n_train_sample > 0
             else 1e-15
         )
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        if not hasattr(self, "train_pos_rate"):
+        if self._train_pos_rate is None:
             raise NotFittedError()
 
-        if self.y_true not in data.columns:
-            raise ValueError(f"y_true column '{self.y_true}' not found in data")
+        if self._y_true not in data.columns:
+            raise ValueError(f"y_true column '{self._y_true}' not found in data")
 
         metrics_list = []
-        if self.by is None:
-            y_pred_cols = data.select(self.y_preds).columns
+        if self._by is None:
+            y_pred_cols = data.select(self._y_preds).columns
             for y_pred_col in y_pred_cols:
-                y_true = data[self.y_true].to_numpy()
+                y_true = data[self._y_true].to_numpy()
                 y_pred = data[y_pred_col].to_numpy()
 
                 n_sample = len(y_true)
@@ -72,11 +77,11 @@ class BinaryClassificationMetrics(Transformer):
 
         else:
             for (by,), group in data.partition_by(
-                self.by, as_dict=True, maintain_order=True
+                self._by, as_dict=True, maintain_order=True
             ).items():
-                y_pred_cols = group.select(self.y_preds).columns
+                y_pred_cols = group.select(self._y_preds).columns
                 for y_pred_col in y_pred_cols:
-                    y_true = group[self.y_true].to_numpy()
+                    y_true = group[self._y_true].to_numpy()
                     y_pred = group[y_pred_col].to_numpy()
 
                     n_sample = len(y_true)
@@ -106,14 +111,17 @@ class BinaryClassificationMetrics(Transformer):
     def calc_metrics(
         self, y_true: NDArray[Any], y_pred: NDArray[Any]
     ) -> dict[str, Any]:
+        if self._train_pos_rate is None:
+            raise NotFittedError()
+
         n_sample = len(y_true)
         n_positive = y_true.sum()
         pos_rate = n_positive / n_sample if n_sample > 0 else 0.0
 
         log_loss_value = log_loss(y_true, y_pred)
         entropy = -(
-            pos_rate * np.log(self.train_pos_rate)
-            + (1 - pos_rate) * np.log(1 - self.train_pos_rate)
+            pos_rate * np.log(self._train_pos_rate)
+            + (1 - pos_rate) * np.log(1 - self._train_pos_rate)
         )
         normalized_entropy = log_loss_value / entropy if entropy > 0 else 0.0
 

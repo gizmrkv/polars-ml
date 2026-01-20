@@ -47,35 +47,39 @@ class OptunaOptimizer(Transformer, HasFeatureImportance):
         show_progress_bar: bool = False,
         storage: str | Path | optuna.storages.BaseStorage = "./journal.log",
     ):
-        self.model_fn = model_fn
-        self.objective_fn = objective_fn
-        self.search_space = search_space
-        self.sampler = sampler
-        self.pruner = pruner
-        self.study_name = study_name
-        self.is_higher_better = is_higher_better
-        self.load_if_exists = load_if_exists
-        self.n_trials = n_trials
-        self.timeout = timeout
-        self.n_jobs = n_jobs
-        self.gc_after_trial = gc_after_trial
-        self.show_progress_bar = show_progress_bar
+        self._model_fn = model_fn
+        self._objective_fn = objective_fn
+        self._search_space = search_space
+        self._sampler = sampler
+        self._pruner = pruner
+        self._study_name = study_name
+        self._is_higher_better = is_higher_better
+        self._load_if_exists = load_if_exists
+        self._n_trials = n_trials
+        self._timeout = timeout
+        self._n_jobs = n_jobs
+        self._gc_after_trial = gc_after_trial
+        self._show_progress_bar = show_progress_bar
 
         if isinstance(storage, (str, Path)):
             file_path = storage if isinstance(storage, str) else storage.as_posix()
             storage = optuna.storages.journal.JournalStorage(
                 optuna.storages.journal.JournalFileBackend(file_path)
             )
-        self.storage = storage
+
+        self._storage = storage
+
+        self._best_params: dict[str, Any] | None = None
+        self._best_model: Transformer | None = None
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         study = optuna.create_study(
-            storage=self.storage,
-            sampler=self.sampler,
-            pruner=self.pruner,
-            study_name=self.study_name,
-            direction="maximize" if self.is_higher_better else "minimize",
-            load_if_exists=self.load_if_exists,
+            storage=self._storage,
+            sampler=self._sampler,
+            pruner=self._pruner,
+            study_name=self._study_name,
+            direction="maximize" if self._is_higher_better else "minimize",
+            load_if_exists=self._load_if_exists,
         )
 
         def wrap_objective(
@@ -84,7 +88,7 @@ class OptunaOptimizer(Transformer, HasFeatureImportance):
         ) -> Callable[[optuna.Trial], Any]:
             def _objective(trial: optuna.Trial) -> Any:
                 return objective(
-                    self.model_fn(
+                    self._model_fn(
                         **self.suggest_params(trial, search_space), trial=trial
                     ),
                     deepcopy(data),
@@ -95,33 +99,35 @@ class OptunaOptimizer(Transformer, HasFeatureImportance):
             return _objective
 
         study.optimize(
-            wrap_objective(self.objective_fn, self.search_space),
-            n_trials=self.n_trials,
-            timeout=self.timeout,
-            n_jobs=self.n_jobs,
-            gc_after_trial=self.gc_after_trial,
-            show_progress_bar=self.show_progress_bar,
+            wrap_objective(self._objective_fn, self._search_space),
+            n_trials=self._n_trials,
+            timeout=self._timeout,
+            n_jobs=self._n_jobs,
+            gc_after_trial=self._gc_after_trial,
+            show_progress_bar=self._show_progress_bar,
         )
 
-        self.best_params = self.get_params(study.best_trial, self.search_space)
-        self.best_model = self.model_fn(**self.best_params)
-        self.best_model.fit(data, **more_data)
+        self._best_params = self.get_params(study.best_trial, self._search_space)
+        self._best_model = self._model_fn(**self._best_params)
+        self._best_model.fit(data, **more_data)
 
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        if not hasattr(self, "best_model"):
+        if self._best_model is None:
             raise NotFittedError()
-        return self.best_model.transform(data)
+
+        return self._best_model.transform(data)
 
     def get_feature_importance(self) -> DataFrame:
-        if not hasattr(self, "best_model"):
+        if self._best_model is None:
             raise ValueError("The optimizer has not been fitted yet.")
-        if isinstance(self.best_model, HasFeatureImportance):
-            return self.best_model.get_feature_importance()
+
+        if isinstance(self._best_model, HasFeatureImportance):
+            return self._best_model.get_feature_importance()
 
         raise TypeError(
-            f"The best model ({type(self.best_model).__name__}) "
+            f"The best model ({type(self._best_model).__name__}) "
             "does not support feature importance."
         )
 

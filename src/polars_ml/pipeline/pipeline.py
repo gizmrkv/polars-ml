@@ -8,7 +8,6 @@ from polars._typing import ConcatMethod
 from polars_ml.base import HasFeatureImportance, Transformer
 from polars_ml.feature_engineering import FeatureEngineeringNameSpace
 from polars_ml.gbdt import GBDTNameSpace
-from polars_ml.linear import LinearNameSpace
 from polars_ml.metrics import MetricsNameSpace
 from polars_ml.optimize import OptimizeNameSpace
 from polars_ml.pipeline.basic import Apply, Concat, Const, Echo, Replay, Side
@@ -65,10 +64,6 @@ class Pipeline(Transformer, HasFeatureImportance):
     @property
     def gbdt(self) -> GBDTNameSpace:
         return GBDTNameSpace(self)
-
-    @property
-    def linear(self) -> LinearNameSpace:
-        return LinearNameSpace(self)
 
     @property
     def metrics(self) -> MetricsNameSpace:
