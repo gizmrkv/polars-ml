@@ -19,7 +19,7 @@ __all__ = [
 
 
 class MetricsNameSpace:
-    def __init__(self, pipeline: Pipeline) -> None:
+    def __init__(self, pipeline: Pipeline):
         self.pipeline = pipeline
 
     # --- START INSERTION MARKER IN MetricsNameSpace

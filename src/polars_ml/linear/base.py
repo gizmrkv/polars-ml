@@ -21,7 +21,7 @@ class BaseLinear(Transformer, HasFeatureImportance, ABC):
         features: IntoExpr | Iterable[IntoExpr] | None = None,
         *,
         prediction_name: str | Sequence[str] = "prediction",
-    ) -> None:
+    ):
         self.model = model
         self.label = label
         self.features_selector = features
@@ -45,7 +45,7 @@ class BaseLinear(Transformer, HasFeatureImportance, ABC):
 
         return self
 
-    def predict(self, data: DataFrame) -> NDArray:
+    def predict(self, data: DataFrame) -> NDArray[Any]:
         if not hasattr(self, "feature_names"):
             raise NotFittedError()
 

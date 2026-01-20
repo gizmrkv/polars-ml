@@ -1,17 +1,17 @@
-from pandas import DataFrame
-from polars import DataFrame
-from polars.interchange.protocol import DataFrame
-from narwhals.stable.v2 import DataFrame
-from catboost.core import DataFrame
-from polars.dataframe import DataFrame
-from catboost.metrics import DataFrame
-from narwhals import DataFrame
-from narwhals.stable.v1 import DataFrame
-from narwhals.dataframe import DataFrame
-from polars.dataframe.frame import DataFrame
-from pandas.core.frame import DataFrame
 import polars as pl
 import pytest
+from catboost.core import DataFrame
+from catboost.metrics import DataFrame
+from narwhals import DataFrame
+from narwhals.dataframe import DataFrame
+from narwhals.stable.v1 import DataFrame
+from narwhals.stable.v2 import DataFrame
+from pandas import DataFrame
+from pandas.core.frame import DataFrame
+from polars import DataFrame
+from polars.dataframe import DataFrame
+from polars.dataframe.frame import DataFrame
+from polars.interchange.protocol import DataFrame
 
 from polars_ml import Pipeline
 from polars_ml.base import HasFeatureImportance, Transformer
@@ -19,7 +19,7 @@ from polars_ml.optimize import OptunaOptimizer
 
 
 class MockModel(Transformer, HasFeatureImportance):
-    def __init__(self, param1: int = 1) -> None:
+    def __init__(self, param1: int = 1):
         self.param1 = param1
 
     def fit(self, data, **more_data):
@@ -42,7 +42,7 @@ def objective_fn(model, data, trial=None, **more_data):
     return model.param1
 
 
-def test_optuna_optimizer_basic() -> None:
+def test_optuna_optimizer_basic():
     search_space = {"param1": {"min": 1, "max": 10}}
 
     df = pl.DataFrame({"a": [1, 2, 3]})
@@ -71,7 +71,7 @@ def test_optuna_optimizer_basic() -> None:
     assert importance["importance"][0] == optimizer.best_params["param1"]
 
 
-def test_pipeline_integration() -> None:
+def test_pipeline_integration():
     search_space = {"param1": {"min": 1, "max": 10}}
 
     df = pl.DataFrame({"a": [1, 2, 3]})
@@ -95,7 +95,7 @@ def test_pipeline_integration() -> None:
     assert "importance" in importance.columns
 
 
-def test_more_data_passing() -> None:
+def test_more_data_passing():
     def objective_with_more_data(model, data, trial=None, **more_data):
         assert "valid" in more_data
         return model.param1

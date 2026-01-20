@@ -11,7 +11,7 @@ def sample_df() -> DataFrame:
     return DataFrame({"a": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]})
 
 
-def test_discretize_quantiles(sample_df: DataFrame) -> None:
+def test_discretize_quantiles(sample_df: DataFrame):
     t = Discretize(exprs="a", quantiles=2, suffix="_bin")
 
     t.fit(sample_df)
@@ -20,7 +20,7 @@ def test_discretize_quantiles(sample_df: DataFrame) -> None:
     assert output["a_bin"].n_unique() == 2
 
 
-def test_discretize_labels(sample_df: DataFrame) -> None:
+def test_discretize_labels(sample_df: DataFrame):
     t = Discretize(exprs="a", quantiles=2, labels=["low", "high"], suffix="_label")
 
     t.fit(sample_df)
@@ -32,7 +32,7 @@ def test_discretize_labels(sample_df: DataFrame) -> None:
     )
 
 
-def test_discretize_fit_transform(sample_df: DataFrame) -> None:
+def test_discretize_fit_transform(sample_df: DataFrame):
     t = Discretize(exprs="a", quantiles=2, labels=["L", "H"])
 
     t.fit(sample_df)

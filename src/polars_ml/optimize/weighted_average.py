@@ -19,14 +19,14 @@ class WeightedAverage(Transformer):
         pred_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         target_column: str,
         *,
-        metric_fn: Callable[[np.ndarray, np.ndarray], float] | None = None,
+        metric_fn: Callable[[NDArray[Any], NDArray[Any]], float] | None = None,
         is_higher_better: bool = False,
         method: str = "SLSQP",
         sum_to_one: bool = True,
         non_negative: bool = True,
         output_column: str = "weighted_average",
         scipy_kwargs: Mapping[str, Any] | None = None,
-    ) -> None:
+    ):
         self.pred_columns = pred_columns
         self.target_column = target_column
         self.metric_fn = metric_fn or mean_squared_error
@@ -56,7 +56,7 @@ class WeightedAverage(Transformer):
             y_preds = dataset.select(pred_columns).to_numpy()
             validation_datasets.append((y_true, y_preds))
 
-        def objective(weights: np.ndarray) -> float:
+        def objective(weights: NDArray[Any]) -> float:
             # Calculate average metric across all validation datasets
             scores = []
             for y_true, y_preds in validation_datasets:

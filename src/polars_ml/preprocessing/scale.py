@@ -22,7 +22,7 @@ class BaseScale(Transformer, ABC):
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         suffix: str = "",
-    ) -> None:
+    ):
         self.column_selectors = columns
         self.more_column_selectors = more_columns
         self.by = [by] if isinstance(by, str) else [*by] if by is not None else []
@@ -99,7 +99,7 @@ class StandardScale(BaseScale):
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         suffix: str = "",
-    ) -> None:
+    ):
         super().__init__(columns, *more_columns, by=by, suffix=suffix)
 
     def loc_expr(self, column: str) -> Expr:
@@ -116,7 +116,7 @@ class MinMaxScale(BaseScale):
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         suffix: str = "",
-    ) -> None:
+    ):
         super().__init__(columns, *more_columns, by=by, suffix=suffix)
 
     def loc_expr(self, column: str) -> Expr:
@@ -134,7 +134,7 @@ class RobustScale(BaseScale):
         by: str | Sequence[str] | None = None,
         quantile_range: tuple[float, float] = (0.25, 0.75),
         suffix: str = "",
-    ) -> None:
+    ):
         super().__init__(columns, *more_columns, by=by, suffix=suffix)
         self.q_lower, self.q_upper = quantile_range
 
@@ -153,9 +153,7 @@ class RobustScale(BaseScale):
 
 
 class ScaleInverse(Transformer):
-    def __init__(
-        self, scale: BaseScale, mapping: Mapping[str, str] | None = None
-    ) -> None:
+    def __init__(self, scale: BaseScale, mapping: Mapping[str, str] | None = None):
         self.scale = scale
         self._mapping = mapping
 
@@ -216,7 +214,7 @@ class ScaleInverseContext:
         pipeline: Pipeline,
         scale: BaseScale,
         mapping: Mapping[str, str] | None = None,
-    ) -> None:
+    ):
         self.pipeline = pipeline
         self.scale = scale
         self.mapping = mapping
@@ -224,5 +222,5 @@ class ScaleInverseContext:
     def __enter__(self) -> Pipeline:
         return self.pipeline.pipe(self.scale)
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.pipeline.pipe(ScaleInverse(self.scale, mapping=self.mapping))

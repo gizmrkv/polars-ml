@@ -5,7 +5,7 @@ from polars.testing import assert_frame_equal
 from polars_ml.preprocessing.join_agg import JoinAgg
 
 
-def test_join_agg_basic() -> None:
+def test_join_agg_basic():
     df = pl.DataFrame({"group": ["A", "A", "B", "B", "C"], "value": [1, 2, 3, 4, 5]})
 
     # Calculate mean per group
@@ -21,7 +21,7 @@ def test_join_agg_basic() -> None:
     assert_frame_equal(result, expected)
 
 
-def test_join_agg_multiple_keys() -> None:
+def test_join_agg_multiple_keys():
     df = pl.DataFrame(
         {"k1": ["A", "A", "B", "B"], "k2": [1, 1, 2, 2], "val": [10, 20, 30, 40]}
     )
@@ -35,7 +35,7 @@ def test_join_agg_multiple_keys() -> None:
     assert_frame_equal(result, expected)
 
 
-def test_join_agg_unseen_category() -> None:
+def test_join_agg_unseen_category():
     train_df = pl.DataFrame({"group": ["A", "B"], "val": [1, 2]})
 
     test_df = pl.DataFrame(
@@ -55,7 +55,7 @@ def test_join_agg_unseen_category() -> None:
     assert_frame_equal(result, expected)
 
 
-def test_join_agg_suffix_collision() -> None:
+def test_join_agg_suffix_collision():
     df = pl.DataFrame({"group": ["A", "A"], "val": [1, 2]})
 
     transformer = JoinAgg("group", pl.col("val").mean().alias("val"))

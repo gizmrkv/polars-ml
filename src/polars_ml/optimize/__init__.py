@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 class OptimizeNameSpace:
-    def __init__(self, pipeline: Pipeline) -> None:
+    def __init__(self, pipeline: Pipeline):
         self.pipeline = pipeline
 
     # --- START INSERTION MARKER IN OptimizeNameSpace
@@ -63,7 +63,7 @@ class OptimizeNameSpace:
         self,
         pred_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         target_column: str,
-        metric_fn: Callable[[np.ndarray, np.ndarray], float] | None = None,
+        metric_fn: Callable[[NDArray[Any], NDArray[Any]], float] | None = None,
         is_higher_better: bool = False,
         method: str = "SLSQP",
         sum_to_one: bool = True,

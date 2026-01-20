@@ -8,7 +8,7 @@ from polars_ml.gbdt import CatBoost, LightGBM, XGBoost
 from polars_ml.linear import LinearRegression, LogisticRegression
 
 
-def test_lightgbm_feature_importance() -> None:
+def test_lightgbm_feature_importance():
     df = DataFrame({"f1": [1, 2, 3], "f2": [4, 5, 6], "target": [0, 1, 0]})
     model = LightGBM({"verbosity": -1}, label="target")
     model.fit(df)
@@ -20,7 +20,7 @@ def test_lightgbm_feature_importance() -> None:
     assert set(importance["feature"]) == {"f1", "f2"}
 
 
-def test_xgboost_feature_importance() -> None:
+def test_xgboost_feature_importance():
     df = DataFrame({"f1": [1, 2, 3], "f2": [4, 5, 6], "target": [0, 1, 0]})
     model = XGBoost({"verbosity": 0}, label="target")
     model.fit(df)
@@ -39,7 +39,7 @@ def test_xgboost_feature_importance() -> None:
     assert set(importance["feature"]) == {"f1", "f2"}
 
 
-def test_catboost_feature_importance() -> None:
+def test_catboost_feature_importance():
     df = DataFrame({"f1": [1, 2, 3], "f2": [4, 5, 6], "target": [0, 1, 0]})
     model = CatBoost({"verbose": False}, label="target")
     model.fit(df)
@@ -51,7 +51,7 @@ def test_catboost_feature_importance() -> None:
     assert set(importance["feature"]) == {"f1", "f2"}
 
 
-def test_linear_regression_importance() -> None:
+def test_linear_regression_importance():
     df = DataFrame({"f1": [1, 2, 3], "f2": [4, 5, 6], "target": [7, 8, 9]})
     model = SkLinearRegression()
     lr = LinearRegression(model, label="target")
@@ -64,7 +64,7 @@ def test_linear_regression_importance() -> None:
     assert set(importance["feature"]) == {"f1", "f2"}
 
 
-def test_logistic_regression_importance_binary() -> None:
+def test_logistic_regression_importance_binary():
     df = DataFrame({"f1": [1, 2, 3, 4], "target": [0, 0, 1, 1]})
     model = SkLogisticRegression()
     lr = LogisticRegression(model, label="target")
@@ -77,7 +77,7 @@ def test_logistic_regression_importance_binary() -> None:
     assert set(importance["feature"]) == {"f1"}
 
 
-def test_logistic_regression_importance_multi() -> None:
+def test_logistic_regression_importance_multi():
     df = DataFrame({"f1": [1, 2, 3, 4, 5, 6], "target": [0, 0, 1, 1, 2, 2]})
     model = SkLogisticRegression()
     lr = LogisticRegression(model, label="target")
@@ -92,7 +92,7 @@ def test_logistic_regression_importance_multi() -> None:
     assert set(importance["feature"]) == {"f1"}
 
 
-def test_pipeline_feature_importance() -> None:
+def test_pipeline_feature_importance():
     from polars_ml import Pipeline
 
     df = DataFrame({"f1": [1, 2, 3], "target": [7, 8, 9]})
@@ -105,7 +105,7 @@ def test_pipeline_feature_importance() -> None:
     assert set(importance.columns) == {"feature", "coefficient"}
 
 
-def test_pipeline_feature_importance_error() -> None:
+def test_pipeline_feature_importance_error():
     from polars_ml import Pipeline
     from polars_ml.pipeline.basic import Echo
 

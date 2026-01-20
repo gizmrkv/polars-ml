@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Iterable, Self
+from typing import Iterable, Self
 
 import numpy as np
 import polars as pl
@@ -24,7 +24,7 @@ class LinearEnsemble(Transformer):
         positive: bool = True,
         max_iter: int = 1000,
         output_column: str = "ensemble",
-    ) -> None:
+    ):
         self.pred_columns = pred_columns
         self.target_column = target_column
         self.alpha = alpha

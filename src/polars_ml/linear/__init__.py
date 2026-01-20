@@ -18,7 +18,7 @@ __all__ = ["LinearRegression", "LogisticRegression"]
 
 
 class LinearNameSpace:
-    def __init__(self, pipeline: Pipeline) -> None:
+    def __init__(self, pipeline: Pipeline):
         self.pipeline = pipeline
 
     def regression(

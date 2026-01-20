@@ -6,7 +6,7 @@ from polars_ml.optimize.linear_ensemble import LinearEnsemble
 from polars_ml.pipeline import Pipeline
 
 
-def test_linear_ensemble_ridge() -> None:
+def test_linear_ensemble_ridge():
     # Test Ridge regression (l1_ratio=0)
     np.random.seed(42)
     n = 100
@@ -44,7 +44,7 @@ def test_linear_ensemble_ridge() -> None:
     assert "ensemble" in df_transformed.columns
 
 
-def test_linear_ensemble_lasso() -> None:
+def test_linear_ensemble_lasso():
     # Test Lasso regression (l1_ratio=1) for sparsity
     np.random.seed(42)
     n = 100
@@ -77,7 +77,7 @@ def test_linear_ensemble_lasso() -> None:
     assert weights["p3"] < 0.1
 
 
-def test_linear_ensemble_elastic_net() -> None:
+def test_linear_ensemble_elastic_net():
     # Test ElasticNet (l1_ratio=0.5)
     np.random.seed(42)
     n = 100
@@ -108,7 +108,7 @@ def test_linear_ensemble_elastic_net() -> None:
     assert all(w >= 0 for w in weights.values())
 
 
-def test_linear_ensemble_pipeline() -> None:
+def test_linear_ensemble_pipeline():
     np.random.seed(42)
     n = 100
     p1 = np.random.rand(n)
@@ -134,7 +134,7 @@ def test_linear_ensemble_pipeline() -> None:
     assert "ensemble_pred" in df_transformed.columns
 
 
-def test_linear_ensemble_with_intercept() -> None:
+def test_linear_ensemble_with_intercept():
     # Test with fit_intercept=True
     np.random.seed(42)
     n = 100

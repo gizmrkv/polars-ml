@@ -24,7 +24,7 @@ class HorizontalAgg(Transformer):
         maintain_order: bool = True,
         aggs: Iterable[IntoExpr | Iterable[IntoExpr]] | None = None,
         named_aggs: Mapping[str, IntoExpr] | None = None,
-    ) -> None:
+    ):
         self.exprs = expr
         self.more_exprs = more_expr
         self.value_name = value_name
@@ -67,7 +67,7 @@ class HorizontalAll(HorizontalAgg):
         *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_all",
         maintain_order: bool = True,
-    ) -> None:
+    ):
         super().__init__(
             expr,
             *more_expr,
@@ -84,7 +84,7 @@ class HorizontalCount(HorizontalAgg):
         *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_count",
         maintain_order: bool = True,
-    ) -> None:
+    ):
         super().__init__(
             expr,
             *more_expr,
@@ -101,7 +101,7 @@ class HorizontalMax(HorizontalAgg):
         *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_max",
         maintain_order: bool = True,
-    ) -> None:
+    ):
         super().__init__(
             expr,
             *more_expr,
@@ -118,7 +118,7 @@ class HorizontalMean(HorizontalAgg):
         *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_mean",
         maintain_order: bool = True,
-    ) -> None:
+    ):
         super().__init__(
             expr,
             *more_expr,
@@ -135,7 +135,7 @@ class HorizontalMedian(HorizontalAgg):
         *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_median",
         maintain_order: bool = True,
-    ) -> None:
+    ):
         super().__init__(
             expr,
             *more_expr,
@@ -152,7 +152,7 @@ class HorizontalMin(HorizontalAgg):
         *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_min",
         maintain_order: bool = True,
-    ) -> None:
+    ):
         super().__init__(
             expr,
             *more_expr,
@@ -169,7 +169,7 @@ class HorizontalNUnique(HorizontalAgg):
         *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_n_unique",
         maintain_order: bool = True,
-    ) -> None:
+    ):
         super().__init__(
             expr,
             *more_expr,
@@ -187,7 +187,7 @@ class HorizontalQuantile(HorizontalAgg):
         quantile: float,
         value_name: str = "horizontal_quantile",
         maintain_order: bool = True,
-    ) -> None:
+    ):
         super().__init__(
             expr,
             *more_expr,
@@ -204,7 +204,7 @@ class HorizontalStd(HorizontalAgg):
         *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_std",
         maintain_order: bool = True,
-    ) -> None:
+    ):
         super().__init__(
             expr,
             *more_expr,
@@ -221,7 +221,7 @@ class HorizontalSum(HorizontalAgg):
         *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_sum",
         maintain_order: bool = True,
-    ) -> None:
+    ):
         super().__init__(
             expr,
             *more_expr,
@@ -238,7 +238,7 @@ class HorizontalArgMax(HorizontalAgg):
         *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_argmax",
         maintain_order: bool = True,
-    ) -> None:
+    ):
         self.variable_name = uuid.uuid4().hex
         super().__init__(
             expr,
@@ -272,7 +272,7 @@ class HorizontalArgMin(HorizontalAgg):
         *more_expr: IntoExpr | Iterable[IntoExpr],
         value_name: str = "horizontal_argmin",
         maintain_order: bool = True,
-    ) -> None:
+    ):
         self.variable_name = uuid.uuid4().hex
         super().__init__(
             expr,
@@ -300,7 +300,7 @@ class HorizontalArgMin(HorizontalAgg):
 
 
 class HorizontalNameSpace:
-    def __init__(self, pipeline: Pipeline) -> None:
+    def __init__(self, pipeline: Pipeline):
         self.pipeline = pipeline
 
     # --- START INSERTION MARKER IN HorizontalNameSpace

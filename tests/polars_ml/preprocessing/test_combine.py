@@ -9,7 +9,7 @@ from polars.testing import assert_frame_equal
 from polars_ml.preprocessing.combine import Combine
 
 
-def test_combine_fit_transform() -> None:
+def test_combine_fit_transform():
     df = pl.DataFrame(
         {
             "a": [1, 2, 3],
@@ -40,7 +40,7 @@ def test_combine_fit_transform() -> None:
     assert_frame_equal(result, expected)
 
 
-def test_combine_fit_transform_n3() -> None:
+def test_combine_fit_transform_n3():
     df = pl.DataFrame(
         {
             "a": [1],
@@ -62,7 +62,7 @@ def test_combine_fit_transform_n3() -> None:
     assert_frame_equal(result, expected)
 
 
-def test_combine_fit_custom_params() -> None:
+def test_combine_fit_custom_params():
     df = pl.DataFrame({"x": [1], "y": [2]})
     transformer = Combine(["x", "y"], 2, delimiter="_", prefix="group_")
 

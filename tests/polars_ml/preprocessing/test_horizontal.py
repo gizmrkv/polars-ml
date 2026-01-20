@@ -4,7 +4,7 @@ import polars.testing as pt
 from polars_ml import Pipeline
 
 
-def test_horizontal() -> None:
+def test_horizontal():
     df = pl.DataFrame(
         {
             "a": [1, 2, 3],
@@ -27,7 +27,7 @@ def test_horizontal() -> None:
     pt.assert_frame_equal(result, expected)
 
 
-def test_horizontal_mean() -> None:
+def test_horizontal_mean():
     df = pl.DataFrame(
         {
             "a": [1, 2, 3],
@@ -50,7 +50,7 @@ def test_horizontal_mean() -> None:
     pt.assert_frame_equal(result, expected)
 
 
-def test_horizontal_argmax() -> None:
+def test_horizontal_argmax():
     df = pl.DataFrame(
         {
             "v1": [1, 10, 5],

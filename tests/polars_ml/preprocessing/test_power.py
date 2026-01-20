@@ -17,7 +17,7 @@ def sample_df() -> DataFrame:
     return DataFrame({"val": [1.0, 2.0, 3.0, 4.0, 5.0]})
 
 
-def test_box_cox_transform(sample_df: DataFrame) -> None:
+def test_box_cox_transform(sample_df: DataFrame):
     t = BoxCoxTransform(columns="val")
 
     t.fit(sample_df)
@@ -26,7 +26,7 @@ def test_box_cox_transform(sample_df: DataFrame) -> None:
     assert output["val"].n_unique() == 5
 
 
-def test_yeo_johnson_transform(sample_df: DataFrame) -> None:
+def test_yeo_johnson_transform(sample_df: DataFrame):
     t = YeoJohnsonTransform(columns="val")
 
     t.fit(sample_df)
@@ -35,7 +35,7 @@ def test_yeo_johnson_transform(sample_df: DataFrame) -> None:
     assert output["val"].n_unique() == 5
 
 
-def test_power_inverse(sample_df: DataFrame) -> None:
+def test_power_inverse(sample_df: DataFrame):
     t = BoxCoxTransform(columns="val")
 
     t.fit(sample_df)
@@ -46,7 +46,7 @@ def test_power_inverse(sample_df: DataFrame) -> None:
     assert_series_equal(restored["val"], sample_df["val"])
 
 
-def test_power_context(sample_df: DataFrame) -> None:
+def test_power_context(sample_df: DataFrame):
     pipeline = Pipeline()
     t = BoxCoxTransform(columns="val")
 
@@ -58,7 +58,7 @@ def test_power_context(sample_df: DataFrame) -> None:
     assert_series_equal(output["val"], sample_df["val"])
 
 
-def test_power_by_group() -> None:
+def test_power_by_group():
     df = DataFrame(
         {"val": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0], "group": ["A", "A", "A", "B", "B", "B"]}
     )

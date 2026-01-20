@@ -11,7 +11,7 @@ def sample_df() -> DataFrame:
     return DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0], "c": [7.0, 8.0, 9.0]})
 
 
-def test_arithmetic_synthesis_additive(sample_df: DataFrame) -> None:
+def test_arithmetic_synthesis_additive(sample_df: DataFrame):
     t = ArithmeticSynthesis(
         columns=["a", "b", "c"], order=1, method="additive", show_progress=False
     )
@@ -24,7 +24,7 @@ def test_arithmetic_synthesis_additive(sample_df: DataFrame) -> None:
     assert_series_equal(output["a-b"], pl.Series("a-b", [-3.0, -3.0, -3.0]))
 
 
-def test_arithmetic_synthesis_multiplicative(sample_df: DataFrame) -> None:
+def test_arithmetic_synthesis_multiplicative(sample_df: DataFrame):
     t = ArithmeticSynthesis(
         columns=["a", "b"], order=1, method="multiplicative", show_progress=False
     )
@@ -37,7 +37,7 @@ def test_arithmetic_synthesis_multiplicative(sample_df: DataFrame) -> None:
     assert_series_equal(output["a/b"], pl.Series("a/b", [0.25, 0.4, 0.5]))
 
 
-def test_arithmetic_synthesis_drop_corr(sample_df: DataFrame) -> None:
+def test_arithmetic_synthesis_drop_corr(sample_df: DataFrame):
     df = DataFrame({"a": [1.0, 2.0, 3.0], "b": [1.1, 2.1, 3.1]})
     t = ArithmeticSynthesis(
         columns=["a", "b"],

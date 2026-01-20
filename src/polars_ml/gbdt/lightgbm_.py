@@ -1,24 +1,10 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Generator,
-    Iterable,
-    Iterator,
-    Literal,
-    Mapping,
-    Self,
-    Sequence,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, Self, Sequence
 
 import polars as pl
-import polars.selectors as cs
-from numpy.typing import NDArray
 from polars import DataFrame
 from polars._typing import ColumnNameOrSelector
 
@@ -38,10 +24,10 @@ class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
-        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
-        *,
         params: Mapping[str, Any],
-    ) -> None:
+        *,
+        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+    ):
         self._target_selector = target
         self._prediction = (
             [prediction] if isinstance(prediction, str) else list(prediction)
@@ -132,7 +118,7 @@ class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
                 how="horizontal",
             )
 
-    def save(self, fit_dir: str | Path) -> None:
+    def save(self, fit_dir: str | Path):
         fit_dir = Path(fit_dir)
 
         if isinstance(self.booster, lgb.Booster):
@@ -184,13 +170,13 @@ class LightGBM(BaseLightGBM):
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
-        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
-        *,
         params: Mapping[str, Any],
+        *,
+        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         fit_dir: str | Path | None = None,
         **train_params: Any,
-    ) -> None:
-        super().__init__(target, prediction, features, params=params)
+    ):
+        super().__init__(target, prediction, params, features=features)
         self._fit_dir = Path(fit_dir) if fit_dir else None
         self._train_params = train_params
 
@@ -226,13 +212,13 @@ class LightGBMTuner(BaseLightGBM):
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
-        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
-        *,
         params: Mapping[str, Any],
+        *,
+        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         fit_dir: str | Path | None = None,
         **tuner_params: Any,
-    ) -> None:
-        super().__init__(target, prediction, features, params=params)
+    ):
+        super().__init__(target, prediction, params, features=features)
         self._fit_dir = Path(fit_dir) if fit_dir else None
         self._tuner_params = tuner_params
 
@@ -272,13 +258,13 @@ class LightGBMTunerCV(BaseLightGBM):
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
-        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
-        *,
         params: Mapping[str, Any],
+        *,
+        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         fit_dir: str | Path | None = None,
         **tuner_params: Any,
-    ) -> None:
-        super().__init__(target, prediction, features, params=params)
+    ):
+        super().__init__(target, prediction, params, features=features)
         self._fit_dir = Path(fit_dir) if fit_dir else None
         self._tuner_params = tuner_params
 
@@ -309,7 +295,7 @@ class LightGBMTunerCV(BaseLightGBM):
         return self
 
 
-def save_lightgbm_booster(booster: lgb.Booster, fit_dir: str | Path) -> None:
+def save_lightgbm_booster(booster: lgb.Booster, fit_dir: str | Path):
     import json
 
     import matplotlib.pyplot as plt

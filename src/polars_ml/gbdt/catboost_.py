@@ -1,19 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Iterable,
-    Mapping,
-    Self,
-    Sequence,
-)
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, Self, Sequence
 
 import polars as pl
-import polars.selectors as cs
-from numpy.typing import NDArray
 from polars import DataFrame
 from polars._typing import ColumnNameOrSelector
 
@@ -29,12 +19,12 @@ class CatBoost(Transformer, HasFeatureImportance):
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
-        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
-        *,
         params: Mapping[str, Any] | None = None,
+        *,
+        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         fit_dir: str | Path | None = None,
         **fit_params: Any,
-    ) -> None:
+    ):
         self._target_selector = target
         self._prediction = (
             [prediction] if isinstance(prediction, str) else list(prediction)
@@ -125,7 +115,7 @@ class CatBoost(Transformer, HasFeatureImportance):
         pred = self.booster.predict(input_data)
         return pl.from_numpy(pred, schema=self._prediction)
 
-    def save(self, fit_dir: str | Path) -> None:
+    def save(self, fit_dir: str | Path):
         fit_dir = Path(fit_dir)
         fit_dir.mkdir(parents=True, exist_ok=True)
         self.booster.save_model(str(fit_dir / "model.cbm"))

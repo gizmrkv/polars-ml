@@ -12,7 +12,7 @@ def sample_df() -> DataFrame:
     return DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
 
-def test_pipeline_methods(sample_df: DataFrame) -> None:
+def test_pipeline_methods(sample_df: DataFrame):
     step1 = GetAttr("with_columns", c=pl.col("a") + pl.col("b"))
     step2 = GetAttr("select", "c")
     pipeline = Pipeline().pipe(step1).pipe(step2)
@@ -23,7 +23,7 @@ def test_pipeline_methods(sample_df: DataFrame) -> None:
     assert_frame_equal(output, expected)
 
 
-def test_pipeline_shortcut_methods(sample_df: DataFrame) -> None:
+def test_pipeline_shortcut_methods(sample_df: DataFrame):
     pipeline = Pipeline().with_columns(c=pl.col("a") + pl.col("b")).select("c")
 
     pipeline.fit(sample_df)

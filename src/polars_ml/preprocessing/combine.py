@@ -12,17 +12,13 @@ from polars_ml.exceptions import NotFittedError
 
 
 class Combine(Transformer):
-    """
-    Combines n columns into a struct column.
-    """
-
     def __init__(
         self,
         columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         n: int,
         delimiter: str = "_",
         prefix: str = "comb_",
-    ) -> None:
+    ):
         self.selector = columns
         self.n = n
         self.delimiter = delimiter

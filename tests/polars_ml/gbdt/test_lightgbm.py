@@ -8,7 +8,7 @@ from polars import DataFrame
 from polars_ml.gbdt.lightgbm_ import BaseLightGBM, LightGBM
 
 
-def test_lightgbm_default_flow() -> None:
+def test_lightgbm_default_flow():
     df = DataFrame(
         {"f1": [1, 2, 3, 4, 5], "f2": [10, 20, 30, 40, 50], "target": [0, 1, 0, 1, 0]}
     )
@@ -29,7 +29,7 @@ def test_lightgbm_default_flow() -> None:
     assert len(result) == 5
 
 
-def test_base_lightgbm_override() -> None:
+def test_base_lightgbm_override():
     class CustomLGB(BaseLightGBM):
         def fit(self, data: DataFrame) -> CustomLGB:
             train_dataset, _, _ = self.make_train_valid_sets(data)
@@ -57,7 +57,7 @@ def test_base_lightgbm_override() -> None:
     assert (result["prediction"] == 0).all()
 
 
-def test_feature_consistency() -> None:
+def test_feature_consistency():
     df_train = DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
     df_test = DataFrame({"f1": [1, 2, 3], "extra": [10, 20, 30], "target": [0, 1, 0]})
 

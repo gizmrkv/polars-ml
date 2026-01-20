@@ -8,7 +8,7 @@ from polars import DataFrame
 from polars_ml.gbdt.catboost_ import CatBoost
 
 
-def test_catboost_default_flow(catboost_tmpdir) -> None:
+def test_catboost_default_flow(catboost_tmpdir):
     df = DataFrame(
         {"f1": [1, 2, 3, 4, 5], "f2": [10, 20, 30, 40, 50], "target": [0, 1, 0, 1, 0]}
     )
@@ -25,7 +25,7 @@ def test_catboost_default_flow(catboost_tmpdir) -> None:
     assert len(result) == 5
 
 
-def test_base_catboost_override(catboost_tmpdir) -> None:
+def test_base_catboost_override(catboost_tmpdir):
     class CustomCatBoost(CatBoost):
         def fit(self, data: DataFrame) -> CustomCatBoost:
             import catboost
@@ -61,7 +61,7 @@ def test_base_catboost_override(catboost_tmpdir) -> None:
     assert (result["prediction"] == 0).all()
 
 
-def test_catboost_feature_consistency(catboost_tmpdir) -> None:
+def test_catboost_feature_consistency(catboost_tmpdir):
     df_train = DataFrame({"f1": [1, 2, 3], "target": [0, 1, 0]})
     df_test = DataFrame({"f1": [1, 2, 3], "extra": [10, 20, 30], "target": [0, 1, 0]})
 

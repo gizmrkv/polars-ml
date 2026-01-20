@@ -17,7 +17,7 @@ class JoinAgg(Transformer):
         *aggs: IntoExpr | Iterable[IntoExpr],
         how: JoinStrategy = "left",
         suffix: str = "_agg",
-    ) -> None:
+    ):
         self.by_selector = by
         self.aggs = aggs
         self.how = how

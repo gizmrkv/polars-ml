@@ -7,7 +7,7 @@ from polars_ml.optimize.weighted_average import WeightedAverage
 from polars_ml.pipeline import Pipeline
 
 
-def test_weighted_average_basic() -> None:
+def test_weighted_average_basic():
     # Create synthetic data
     # y = 0.3 * p1 + 0.7 * p2
     np.random.seed(42)
@@ -57,7 +57,7 @@ def test_weighted_average_basic() -> None:
     assert mse < mse2
 
 
-def test_weighted_average_pipeline() -> None:
+def test_weighted_average_pipeline():
     np.random.seed(42)
     n = 100
     p1 = np.random.rand(n)
@@ -80,7 +80,7 @@ def test_weighted_average_pipeline() -> None:
     assert "ensemble" in df_transformed.columns
 
 
-def test_weighted_average_method_nelder_mead() -> None:
+def test_weighted_average_method_nelder_mead():
     # Nelder-Mead doesn't support constraints, so sum_to_one/non_negative might be ignored or fail
     # In our implementation we pass them to minimize.
     # Scipy should ignore them or raise warning/error depending on version.

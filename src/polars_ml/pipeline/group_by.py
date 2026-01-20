@@ -1,16 +1,8 @@
 from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Generic,
-    Iterable,
-    Mapping,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping
 
-from polars import DataFrame, LazyFrame
+from polars import DataFrame
 from polars._typing import IntoExpr, QuantileMethod, SchemaDict
 
 from polars_ml.base import Transformer
@@ -28,7 +20,7 @@ class GroupByGetAttr(Transformer):
         group_by_kwargs: Mapping[str, Any] | None = None,
         *agg_args: Any,
         **agg_kwargs: Any,
-    ) -> None:
+    ):
         self.group_by_attr = group_by_attr
         self.group_by_args = group_by_args or ()
         self.group_by_kwargs = group_by_kwargs or {}
@@ -46,15 +38,11 @@ class GroupByGetAttr(Transformer):
 
 
 class GroupByNameSpace:
-    def __init__(
-        self, pipeline: Pipeline, attr: str, *args: Any, **kwargs: Any
-    ) -> None:
+    def __init__(self, pipeline: Pipeline, attr: str, *args: Any, **kwargs: Any):
         self.pipeline = pipeline
         self.attr = attr
         self.args = args
         self.kwargs = kwargs
-
-    # --- START INSERTION MARKER IN GroupByNameSpace
 
     def agg(
         self, *aggs: IntoExpr | Iterable[IntoExpr], **named_aggs: IntoExpr
@@ -188,19 +176,13 @@ class GroupByNameSpace:
             GroupByGetAttr(self.attr, "tail", self.args, self.kwargs, n)
         )
 
-    # --- END INSERTION MARKER IN GroupByNameSpace
-
 
 class DynamicGroupByNameSpace:
-    def __init__(
-        self, pipeline: Pipeline, attr: str, *args: Any, **kwargs: Any
-    ) -> None:
+    def __init__(self, pipeline: Pipeline, attr: str, *args: Any, **kwargs: Any):
         self.pipeline = pipeline
         self.attr = attr
         self.args = args
         self.kwargs = kwargs
-
-    # --- START INSERTION MARKER IN DynamicGroupByNameSpace
 
     def agg(
         self, *aggs: IntoExpr | Iterable[IntoExpr], **named_aggs: IntoExpr
@@ -219,20 +201,14 @@ class DynamicGroupByNameSpace:
                 self.attr, "map_groups", self.args, self.kwargs, function, schema
             )
         )
-
-    # --- END INSERTION MARKER IN DynamicGroupByNameSpace
 
 
 class RollingGroupByNameSpace:
-    def __init__(
-        self, pipeline: Pipeline, attr: str, *args: Any, **kwargs: Any
-    ) -> None:
+    def __init__(self, pipeline: Pipeline, attr: str, *args: Any, **kwargs: Any):
         self.pipeline = pipeline
         self.attr = attr
         self.args = args
         self.kwargs = kwargs
-
-    # --- START INSERTION MARKER IN RollingGroupByNameSpace
 
     def agg(
         self, *aggs: IntoExpr | Iterable[IntoExpr], **named_aggs: IntoExpr
@@ -251,5 +227,3 @@ class RollingGroupByNameSpace:
                 self.attr, "map_groups", self.args, self.kwargs, function, schema
             )
         )
-
-    # --- END INSERTION MARKER IN RollingGroupByNameSpace

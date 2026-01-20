@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import logging
 import time
-from typing import Self
+from typing import Callable, Self, Sequence
 
 from polars import DataFrame
+from polars._typing import ConcatMethod
 
 from polars_ml.base import HasFeatureImportance, Transformer
 from polars_ml.feature_engineering import FeatureEngineeringNameSpace
@@ -10,17 +13,16 @@ from polars_ml.gbdt import GBDTNameSpace
 from polars_ml.linear import LinearNameSpace
 from polars_ml.metrics import MetricsNameSpace
 from polars_ml.optimize import OptimizeNameSpace
+from polars_ml.pipeline.basic import Apply, Concat, Const, Echo, Replay, Side
 from polars_ml.preprocessing.horizontal import HorizontalNameSpace
 
-from .mixin import PipelineMixin
 
-
-class Pipeline(PipelineMixin, HasFeatureImportance):
+class Pipeline(HasFeatureImportance):
     def __init__(
         self,
         *steps: Transformer,
         verbose: bool | logging.Logger = False,
-    ) -> None:
+    ):
         self.steps: list[Transformer] = list(steps)
         if isinstance(verbose, logging.Logger):
             self.verbose = True
@@ -172,3 +174,28 @@ class Pipeline(PipelineMixin, HasFeatureImportance):
     @property
     def fe(self) -> FeatureEngineeringNameSpace:
         return FeatureEngineeringNameSpace(self)
+
+    def apply(self, func: Callable[[DataFrame], DataFrame]) -> Self:
+        return self.pipe(Apply(func))
+
+    def concat(
+        self,
+        items: Sequence[Transformer],
+        *,
+        how: ConcatMethod = "vertical",
+        rechunk: bool = False,
+        parallel: bool = True,
+    ) -> Self:
+        return self.pipe(Concat(items, how=how, rechunk=rechunk, parallel=parallel))
+
+    def const(self, data: DataFrame) -> Self:
+        return self.pipe(Const(data))
+
+    def echo(self) -> Self:
+        return self.pipe(Echo())
+
+    def replay(self) -> Self:
+        return self.pipe(Replay())
+
+    def side(self, transformer: Transformer) -> Self:
+        return self.pipe(Side(transformer))

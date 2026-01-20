@@ -1,19 +1,9 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Iterable,
-    Mapping,
-    Self,
-    Sequence,
-)
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, Self, Sequence
 
 import polars as pl
-import polars.selectors as cs
-from numpy.typing import NDArray
 from polars import DataFrame
 from polars._typing import ColumnNameOrSelector
 
@@ -29,18 +19,18 @@ class XGBoost(Transformer, HasFeatureImportance):
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
-        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
-        *,
         params: Mapping[str, Any],
+        *,
+        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         fit_dir: str | Path | None = None,
         **train_params: Any,
-    ) -> None:
+    ):
         self._target_selector = target
         self._prediction = (
             [prediction] if isinstance(prediction, str) else list(prediction)
         )
-        self._features_selector = features
         self._params = dict(params)
+        self._features_selector = features
         self._fit_dir = Path(fit_dir) if fit_dir else None
         self._train_params = train_params
 
@@ -131,7 +121,7 @@ class XGBoost(Transformer, HasFeatureImportance):
         pred = self.booster.predict(input_data)
         return pl.from_numpy(pred, schema=self._prediction)
 
-    def save(self, fit_dir: str | Path) -> None:
+    def save(self, fit_dir: str | Path):
         booster = self.booster
         fit_dir = Path(fit_dir)
         save_xgboost_booster(booster, fit_dir)
@@ -153,7 +143,7 @@ class XGBoost(Transformer, HasFeatureImportance):
         return DataFrame(importance_data)
 
 
-def save_xgboost_booster(booster: xgb.Booster, fit_dir: str | Path) -> None:
+def save_xgboost_booster(booster: xgb.Booster, fit_dir: str | Path):
     import json
 
     import matplotlib.pyplot as plt
