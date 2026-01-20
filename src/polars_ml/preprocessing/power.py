@@ -31,10 +31,13 @@ class BasePowerTransform(Transformer, ABC):
         by: str | Sequence[str] | None = None,
         suffix: str = "",
     ):
-        self.column_selectors = columns
-        self.more_column_selectors = more_columns
+        self._selector = columns
+        self._more_selectors = more_columns
         self.by = [by] if isinstance(by, str) else [*by] if by is not None else []
-        self.suffix = suffix
+        self._suffix = suffix
+
+        self.columns: list[str] | None = None
+        self.maxlog: DataFrame | None = None
 
     @abstractmethod
     def calc_maxlog(self, values: Series) -> float: ...
@@ -46,7 +49,7 @@ class BasePowerTransform(Transformer, ABC):
     def power_inv_expr(self, column: str, maxlog: str) -> Expr: ...
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
-        data = data.select(self.column_selectors, *self.more_column_selectors, *self.by)
+        data = data.select(self._selector, *self._more_selectors, *self.by)
         self.columns = [c for c in data.columns if c not in self.by]
         exprs = [
             pl.col(column)
@@ -62,7 +65,7 @@ class BasePowerTransform(Transformer, ABC):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        if not hasattr(self, "maxlog"):
+        if self.columns is None or self.maxlog is None:
             raise NotFittedError()
 
         input_columns = data.collect_schema().names()
@@ -86,7 +89,7 @@ class BasePowerTransform(Transformer, ABC):
                 **on_args,
             )
             .with_columns(
-                self.power_expr(c, f"{c}_maxlog_{tmp_suf}").alias(f"{c}{self.suffix}")
+                self.power_expr(c, f"{c}_maxlog_{tmp_suf}").alias(f"{c}{self._suffix}")
                 for c in power_columns
             )
             .drop(*[f"{c}_maxlog_{tmp_suf}" for c in power_columns])
@@ -139,30 +142,37 @@ class PowerTransformInverse(Transformer):
         power_transform: BasePowerTransform,
         mapping: Mapping[str, str] | None = None,
     ):
-        self.power_transform = power_transform
+        self._power_transform = power_transform
         self._mapping = mapping
 
     @property
     def mapping(self) -> Mapping[str, str]:
         if self._mapping is not None:
             return self._mapping
-        return {col: col for col in self.power_transform.columns}
+
+        if self._power_transform.columns is None:
+            raise NotFittedError()
+
+        return {col: col for col in self._power_transform.columns}
 
     def transform(self, data: DataFrame) -> DataFrame:
-        if not hasattr(self.power_transform, "maxlog"):
+        if (
+            self._power_transform.columns is None
+            or self._power_transform.maxlog is None
+        ):
             raise NotFittedError()
 
         input_columns = data.collect_schema().names()
-        sources = set(self.power_transform.columns) & set(self.mapping.values())
+        sources = set(self._power_transform.columns) & set(self.mapping.values())
         on_args: dict[str, Any] = (
-            {"on": self.power_transform.by}
-            if self.power_transform.by
+            {"on": self._power_transform.by}
+            if self._power_transform.by
             else {"left_on": pl.lit(0), "right_on": pl.lit(0)}
         )
         tmp_suf = ShortUUID().random(length=8)
         data = data.join(
-            self.power_transform.maxlog.select(
-                *self.power_transform.by,
+            self._power_transform.maxlog.select(
+                *self._power_transform.by,
                 *[
                     pl.col(f"{c}_maxlog").alias(f"{c}_maxlog_{tmp_suf}")
                     for c in sources
@@ -172,7 +182,7 @@ class PowerTransformInverse(Transformer):
             **on_args,
         )
         return data.with_columns(
-            self.power_transform.power_inv_expr(t, f"{s}_maxlog_{tmp_suf}").alias(t)
+            self._power_transform.power_inv_expr(t, f"{s}_maxlog_{tmp_suf}").alias(t)
             for t, s in self.mapping.items()
             if t in input_columns
         ).drop(*(f"{s}_maxlog_{tmp_suf}" for s in sources))
@@ -192,7 +202,7 @@ class PowerTransformInverseContext:
     def __enter__(self) -> Pipeline:
         return self.pipeline.pipe(self.power_transform)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any):
         self.pipeline.pipe(
             PowerTransformInverse(self.power_transform, mapping=self.mapping),
         )

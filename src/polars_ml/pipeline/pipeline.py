@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import logging
-import time
 from typing import Callable, Self, Sequence
 
 from polars import DataFrame
@@ -17,132 +15,45 @@ from polars_ml.pipeline.basic import Apply, Concat, Const, Echo, Replay, Side
 from polars_ml.preprocessing.horizontal import HorizontalNameSpace
 
 
-class Pipeline(HasFeatureImportance):
+class Pipeline(Transformer, HasFeatureImportance):
     def __init__(
         self,
         *steps: Transformer,
-        verbose: bool | logging.Logger = False,
     ):
-        self.steps: list[Transformer] = list(steps)
-        if isinstance(verbose, logging.Logger):
-            self.verbose = True
-            self.logger = verbose
-        else:
-            self.verbose = verbose
-            self.logger = logging.getLogger(__name__)
-            if self.verbose:
-                self.logger.setLevel(logging.INFO)
-                if not self.logger.handlers:
-                    handler = logging.StreamHandler()
-                    handler.setFormatter(logging.Formatter("[%(asctime)s] %(message)s"))
-                    self.logger.addHandler(handler)
+        self._steps = list(steps)
 
     def pipe(self, step: Transformer) -> Self:
-        self.steps.append(step)
+        self._steps.append(step)
         return self
 
-    def _format_time(self, seconds: float) -> str:
-        if seconds < 60:
-            return f"{seconds:.2f}s"
-
-        s = seconds % 60
-        m = int(seconds // 60)
-        h = int(m // 60)
-        m = m % 60
-        d = int(h // 24)
-        h = h % 24
-
-        parts = []
-        if d > 0:
-            parts.append(f"{d}d")
-        if h > 0 or d > 0:
-            parts.append(f"{h:02d}h")
-        if m > 0 or h > 0 or d > 0:
-            parts.append(f"{m:02d}m")
-        parts.append(f"{s:05.2f}s")
-
-        return " ".join(parts)
-
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
-        for i, step in enumerate(self.steps):
-            step_name = type(step).__name__
-            if self.verbose:
-                self.logger.info(f"[{i + 1}/{len(self.steps)}] {step_name} fitting...")
-            start_time = time.perf_counter()
-            try:
-                if i < len(self.steps) - 1:
-                    data = step.fit_transform(data, **more_data)
-                    more_data = {k: step.transform(v) for k, v in more_data.items()}
-                else:
-                    step.fit(data, **more_data)
+        for i, step in enumerate(self._steps):
+            if i < len(self._steps) - 1:
+                data = step.fit_transform(data, **more_data)
+                more_data = {k: step.transform(v) for k, v in more_data.items()}
+            else:
+                step.fit(data, **more_data)
 
-                elapsed = time.perf_counter() - start_time
-                if self.verbose:
-                    self.logger.info(
-                        f"[{i + 1}/{len(self.steps)}] {step_name} finished in {self._format_time(elapsed)}"
-                    )
-            except Exception as e:
-                if e.args and isinstance(e.args[0], str):
-                    e.args = (f"Step {i} ({step_name}): {e.args[0]}",) + e.args[1:]
-                else:
-                    e.args = (f"Step {i} ({step_name})",) + e.args
-                raise
         return self
 
     def fit_transform(self, data: DataFrame, **more_data: DataFrame) -> DataFrame:
-        for i, step in enumerate(self.steps):
-            step_name = type(step).__name__
-            if self.verbose:
-                self.logger.info(
-                    f"[{i + 1}/{len(self.steps)}] {step_name} fit-transforming..."
-                )
-            start_time = time.perf_counter()
-            try:
-                data = step.fit_transform(data, **more_data)
-                if i < len(self.steps) - 1:
-                    more_data = {k: step.transform(v) for k, v in more_data.items()}
+        for i, step in enumerate(self._steps):
+            data = step.fit_transform(data, **more_data)
+            if i < len(self._steps) - 1:
+                more_data = {k: step.transform(v) for k, v in more_data.items()}
 
-                elapsed = time.perf_counter() - start_time
-                if self.verbose:
-                    self.logger.info(
-                        f"[{i + 1}/{len(self.steps)}] {step_name} finished in {self._format_time(elapsed)}"
-                    )
-            except Exception as e:
-                if e.args and isinstance(e.args[0], str):
-                    e.args = (f"Step {i} ({step_name}): {e.args[0]}",) + e.args[1:]
-                else:
-                    e.args = (f"Step {i} ({step_name})",) + e.args
-                raise
         return data
 
     def transform(self, data: DataFrame) -> DataFrame:
-        for i, step in enumerate(self.steps):
-            step_name = type(step).__name__
-            if self.verbose:
-                self.logger.info(
-                    f"[{i + 1}/{len(self.steps)}] {step_name} transforming..."
-                )
-            start_time = time.perf_counter()
-            try:
-                data = step.transform(data)
-                elapsed = time.perf_counter() - start_time
-                if self.verbose:
-                    self.logger.info(
-                        f"[{i + 1}/{len(self.steps)}] {step_name} finished in {self._format_time(elapsed)}"
-                    )
-            except Exception as e:
-                if e.args and isinstance(e.args[0], str):
-                    e.args = (f"Step {i} ({step_name}): {e.args[0]}",) + e.args[1:]
-                else:
-                    e.args = (f"Step {i} ({step_name})",) + e.args
-                raise
+        for step in self._steps:
+            data = step.transform(data)
         return data
 
     def get_feature_importance(self) -> DataFrame:
-        if not self.steps:
+        if not self._steps:
             raise ValueError("Pipeline has no steps.")
 
-        last_step = self.steps[-1]
+        last_step = self._steps[-1]
         if isinstance(last_step, HasFeatureImportance):
             return last_step.get_feature_importance()
 

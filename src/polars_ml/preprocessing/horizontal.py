@@ -25,38 +25,38 @@ class HorizontalAgg(Transformer):
         aggs: Iterable[IntoExpr | Iterable[IntoExpr]] | None = None,
         named_aggs: Mapping[str, IntoExpr] | None = None,
     ):
-        self.exprs = expr
-        self.more_exprs = more_expr
-        self.value_name = value_name
-        self.variable_name = variable_name or uuid.uuid4().hex
-        self.is_variable_none = variable_name is None
-        self.maintain_order = maintain_order
-        self.aggs = aggs or []
-        self.named_aggs = named_aggs or {}
-        self.index_name = uuid.uuid4().hex
+        self._exprs = expr
+        self._more_exprs = more_expr
+        self._value_name = value_name
+        self._variable_name = variable_name or uuid.uuid4().hex
+        self._is_variable_none = variable_name is None
+        self._maintain_order = maintain_order
+        self._aggs = aggs or []
+        self._named_aggs = named_aggs or {}
+        self._index_name = uuid.uuid4().hex
 
     def transform(self, data: DataFrame) -> DataFrame:
         return (
-            data.with_row_index(self.index_name)
+            data.with_row_index(self._index_name)
             .join(
-                data.select(self.exprs, *self.more_exprs)
-                .with_row_index(self.index_name)
+                data.select(self._exprs, *self._more_exprs)
+                .with_row_index(self._index_name)
                 .unpivot(
-                    ~cs.by_name(self.index_name),
-                    index=self.index_name,
-                    value_name=self.value_name,
-                    variable_name=self.variable_name,
+                    ~cs.by_name(self._index_name),
+                    index=self._index_name,
+                    value_name=self._value_name,
+                    variable_name=self._variable_name,
                 )
                 .select(
-                    pl.exclude(self.variable_name)
-                    if self.is_variable_none
+                    pl.exclude(self._variable_name)
+                    if self._is_variable_none
                     else pl.all()
                 )
-                .group_by(self.index_name, maintain_order=self.maintain_order)
-                .agg(*self.aggs, **self.named_aggs),
-                on=self.index_name,
+                .group_by(self._index_name, maintain_order=self._maintain_order)
+                .agg(*self._aggs, **self._named_aggs),
+                on=self._index_name,
             )
-            .drop(self.index_name)
+            .drop(self._index_name)
         )
 
 
@@ -258,7 +258,7 @@ class HorizontalArgMax(HorizontalAgg):
             super()
             .transform(data)
             .with_columns(
-                pl.col(self.value_name).list.eval(
+                pl.col(self._value_name).list.eval(
                     pl.element().struct.field(self.variable_name)
                 )
             )
@@ -292,7 +292,7 @@ class HorizontalArgMin(HorizontalAgg):
             super()
             .transform(data)
             .with_columns(
-                pl.col(self.value_name).list.eval(
+                pl.col(self._value_name).list.eval(
                     pl.element().struct.field(self.variable_name)
                 )
             )
@@ -302,8 +302,6 @@ class HorizontalArgMin(HorizontalAgg):
 class HorizontalNameSpace:
     def __init__(self, pipeline: Pipeline):
         self.pipeline = pipeline
-
-    # --- START INSERTION MARKER IN HorizontalNameSpace
 
     def all(
         self,
@@ -465,5 +463,3 @@ class HorizontalNameSpace:
                 expr, *more_expr, value_name=value_name, maintain_order=maintain_order
             )
         )
-
-    # --- END INSERTION MARKER IN HorizontalNameSpace

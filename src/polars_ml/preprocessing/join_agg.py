@@ -18,19 +18,26 @@ class JoinAgg(Transformer):
         how: JoinStrategy = "left",
         suffix: str = "_agg",
     ):
-        self.by_selector = by
-        self.aggs = aggs
-        self.how = how
-        self.suffix = suffix
-        self.agg_df_: DataFrame | None = None
+        self._by_selector = by
+        self._aggs = aggs
+        self._how: JoinStrategy = how
+        self._suffix = suffix
+
+        self._by: list[str] | None = None
+        self._agg_df: DataFrame | None = None
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
-        self.by = data.lazy().select(self.by_selector).collect_schema().names()
-        self.agg_df_ = data.group_by(self.by).agg(self.aggs)
+        self._by = data.lazy().select(self._by_selector).collect_schema().names()
+        self._agg_df = data.group_by(self._by).agg(*self._aggs)
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        if self.agg_df_ is None:
+        if self._agg_df is None:
             raise NotFittedError()
 
-        return data.join(self.agg_df_, on=self.by, how=self.how, suffix=self.suffix)
+        return data.join(
+            self._agg_df,
+            on=self._by,
+            how=self._how,
+            suffix=self._suffix,
+        )

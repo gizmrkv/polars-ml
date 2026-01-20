@@ -13,10 +13,6 @@ from polars_ml.exceptions import NotFittedError
 
 if TYPE_CHECKING:
     import lightgbm as lgb
-    import optuna
-    from optuna import Study
-    from optuna.trial import FrozenTrial
-    from sklearn.model_selection import BaseCrossValidator
 
 
 class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
@@ -24,9 +20,9 @@ class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
-        params: Mapping[str, Any],
-        *,
         features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+        *,
+        params: Mapping[str, Any],
     ):
         self._target_selector = target
         self._prediction = (
@@ -170,13 +166,13 @@ class LightGBM(BaseLightGBM):
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
-        params: Mapping[str, Any],
-        *,
         features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+        *,
+        params: Mapping[str, Any],
         fit_dir: str | Path | None = None,
         **train_params: Any,
     ):
-        super().__init__(target, prediction, params, features=features)
+        super().__init__(target, prediction, features, params=params)
         self._fit_dir = Path(fit_dir) if fit_dir else None
         self._train_params = train_params
 
@@ -212,13 +208,13 @@ class LightGBMTuner(BaseLightGBM):
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
-        params: Mapping[str, Any],
-        *,
         features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+        *,
+        params: Mapping[str, Any],
         fit_dir: str | Path | None = None,
         **tuner_params: Any,
     ):
-        super().__init__(target, prediction, params, features=features)
+        super().__init__(target, prediction, features, params=params)
         self._fit_dir = Path(fit_dir) if fit_dir else None
         self._tuner_params = tuner_params
 
@@ -258,13 +254,13 @@ class LightGBMTunerCV(BaseLightGBM):
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
-        params: Mapping[str, Any],
-        *,
         features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+        *,
+        params: Mapping[str, Any],
         fit_dir: str | Path | None = None,
         **tuner_params: Any,
     ):
-        super().__init__(target, prediction, params, features=features)
+        super().__init__(target, prediction, features, params=params)
         self._fit_dir = Path(fit_dir) if fit_dir else None
         self._tuner_params = tuner_params
 

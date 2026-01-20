@@ -23,10 +23,13 @@ class BaseScale(Transformer, ABC):
         by: str | Sequence[str] | None = None,
         suffix: str = "",
     ):
-        self.column_selectors = columns
-        self.more_column_selectors = more_columns
+        self._selector = columns
+        self._more_selectors = more_columns
         self.by = [by] if isinstance(by, str) else [*by] if by is not None else []
-        self.suffix = suffix
+        self._suffix = suffix
+
+        self.columns: list[str] | None = None
+        self.stats: DataFrame | None = None
 
     @abstractmethod
     def loc_expr(self, column: str) -> Expr: ...
@@ -35,7 +38,7 @@ class BaseScale(Transformer, ABC):
     def scale_expr(self, column: str) -> Expr: ...
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
-        data = data.select(self.column_selectors, *self.more_column_selectors, *self.by)
+        data = data.select(self._selector, *self._more_selectors, *self.by)
         self.columns = [c for c in data.columns if c not in self.by]
         exprs = [
             e
@@ -51,7 +54,7 @@ class BaseScale(Transformer, ABC):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        if not hasattr(self, "stats"):
+        if self.columns is None or self.stats is None:
             raise NotFittedError()
 
         input_columns = data.collect_schema().names()
@@ -82,12 +85,11 @@ class BaseScale(Transformer, ABC):
                 (
                     (pl.col(c) - pl.col(f"{c}_loc_{tmp_suf}"))
                     / pl.col(f"{c}_scale_{tmp_suf}")
-                ).name.suffix(self.suffix)
+                ).name.suffix(self._suffix)
                 for c in scale_columns
             )
             .drop(
-                *[pl.col(f"{c}_loc_{tmp_suf}") for c in scale_columns],
-                *[pl.col(f"{c}_scale_{tmp_suf}") for c in scale_columns],
+                *[f"{c}_{s}_{tmp_suf}" for c in scale_columns for s in ["loc", "scale"]]
             )
         )
 
@@ -136,9 +138,9 @@ class RobustScale(BaseScale):
         suffix: str = "",
     ):
         super().__init__(columns, *more_columns, by=by, suffix=suffix)
-        self.q_lower, self.q_upper = quantile_range
+        self._q_lower, self._q_upper = quantile_range
 
-        if not (0 <= self.q_lower < self.q_upper <= 1):
+        if not (0 <= self._q_lower < self._q_upper <= 1):
             raise ValueError(
                 "quantile_range must be a tuple of (lower, upper) quantiles in [0, 1]"
             )
@@ -147,38 +149,42 @@ class RobustScale(BaseScale):
         return pl.col(column).median()
 
     def scale_expr(self, column: str) -> Expr:
-        return pl.col(column).quantile(self.q_upper) - pl.col(column).quantile(
-            self.q_lower
+        return pl.col(column).quantile(self._q_upper) - pl.col(column).quantile(
+            self._q_lower
         )
 
 
 class ScaleInverse(Transformer):
     def __init__(self, scale: BaseScale, mapping: Mapping[str, str] | None = None):
-        self.scale = scale
+        self._scale = scale
         self._mapping = mapping
 
     @property
     def mapping(self) -> Mapping[str, str]:
         if self._mapping is not None:
             return self._mapping
-        return {col: col for col in self.scale.columns}
+
+        if self._scale.columns is None:
+            raise NotFittedError
+
+        return {col: col for col in self._scale.columns}
 
     def transform(self, data: DataFrame) -> DataFrame:
-        if not hasattr(self.scale, "stats"):
+        if self._scale.columns is None or self._scale.stats is None:
             raise NotFittedError()
 
         input_columns = data.collect_schema().names()
-        sources = set(self.scale.columns) & set(self.mapping.values())
+        sources = set(self._scale.columns) & set(self.mapping.values())
         on_args: dict[str, Any] = (
-            {"on": self.scale.by}
-            if self.scale.by
+            {"on": self._scale.by}
+            if self._scale.by
             else {"left_on": pl.lit(0), "right_on": pl.lit(0)}
         )
         tmp_suf = ShortUUID().random(length=8)
         return (
             data.join(
-                self.scale.stats.select(
-                    *self.scale.by,
+                self._scale.stats.select(
+                    *self._scale.by,
                     *[
                         pl.col(f"{col}_loc").alias(f"{col}_loc_{tmp_suf}")
                         for col in sources
@@ -222,5 +228,5 @@ class ScaleInverseContext:
     def __enter__(self) -> Pipeline:
         return self.pipeline.pipe(self.scale)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any):
         self.pipeline.pipe(ScaleInverse(self.scale, mapping=self.mapping))

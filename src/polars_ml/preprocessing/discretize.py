@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, Self, Sequence
+from typing import Any, Iterable, Self, Sequence
 
 import polars as pl
 from polars import DataFrame
@@ -19,25 +19,27 @@ class Discretize(Transformer):
         labels: Sequence[str] | None = None,
         left_closed: bool = False,
         allow_duplicates: bool = False,
-        suffix: str = "_discretized",
+        suffix: str = "_disc",
     ):
-        self.exprs = exprs
-        self.more_exprs = more_exprs
-        self.quantiles = quantiles
-        self.labels = labels
-        self.left_closed = left_closed
-        self.allow_duplicates = allow_duplicates
-        self.suffix = suffix
+        self._exprs = exprs
+        self._more_exprs = more_exprs
+        self._quantiles = quantiles
+        self._labels = labels
+        self._left_closed = left_closed
+        self._allow_duplicates = allow_duplicates
+        self._suffix = suffix
+
+        self._breakpoints: dict[str, list[Any]] | None = None
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
-        data = data.select(self.exprs, *self.more_exprs)
-        self.breakpoints = {
+        data = data.select(self._exprs, *self._more_exprs)
+        self._breakpoints = {
             col: data.select(
                 pl.col(col)
                 .qcut(
-                    self.quantiles,
-                    left_closed=self.left_closed,
-                    allow_duplicates=self.allow_duplicates,
+                    self._quantiles,
+                    left_closed=self._left_closed,
+                    allow_duplicates=self._allow_duplicates,
                     include_breaks=True,
                 )
                 .struct.field("breakpoint")
@@ -52,24 +54,24 @@ class Discretize(Transformer):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
-        if not hasattr(self, "breakpoints"):
+        if self._breakpoints is None:
             raise NotFittedError()
 
-        discretized = data.select(self.exprs, *self.more_exprs)
+        discretized = data.select(self._exprs, *self._more_exprs)
         breakpoints = {
             c: bs
-            for c, bs in self.breakpoints.items()
+            for c, bs in self._breakpoints.items()
             if c in discretized.collect_schema().names()
         }
         discretized = discretized.select(
             pl.col(c)
             .cut(
                 bs,
-                labels=self.labels,
-                left_closed=self.left_closed,
+                labels=self._labels,
+                left_closed=self._left_closed,
                 include_breaks=False,
             )
-            .alias(c + self.suffix)
+            .alias(c + self._suffix)
             for c, bs in breakpoints.items()
         )
         return pl.concat([data, discretized], how="horizontal")
