@@ -69,6 +69,9 @@ class Pipeline(Transformer, HasFeatureImportance):
             "does not support feature importance."
         )
 
+    def __len__(self) -> int:
+        return len(self._steps)
+
     @property
     def gbdt(self) -> GBDTNameSpace:
         return GBDTNameSpace(self)
