@@ -10,8 +10,27 @@ from polars_ml.feature_engineering import FeatureEngineeringNameSpace
 from polars_ml.gbdt import GBDTNameSpace
 from polars_ml.metrics import MetricsNameSpace
 from polars_ml.optimize import OptimizeNameSpace
-from polars_ml.pipeline.basic import Apply, Concat, Const, Echo, Replay, Side
-from polars_ml.preprocessing.horizontal import HorizontalNameSpace
+
+from .basic import Apply, Const, Echo, Replay, Side
+from .combine import Combine
+from .concat import Concat
+from .discretize import Discretize
+from .horizontal import HorizontalNameSpace
+from .join_agg import JoinAgg
+from .label_encode import LabelEncode, LabelEncodeInverse, LabelEncodeInverseContext
+from .power import (
+    BoxCoxTransform,
+    PowerTransformInverse,
+    PowerTransformInverseContext,
+    YeoJohnsonTransform,
+)
+from .scale import (
+    MinMaxScale,
+    RobustScale,
+    ScaleInverse,
+    ScaleInverseContext,
+    StandardScale,
+)
 
 
 class Pipeline(Transformer, HasFeatureImportance):
@@ -105,3 +124,13 @@ class Pipeline(Transformer, HasFeatureImportance):
 
     def side(self, transformer: Transformer) -> Self:
         return self.pipe(Side(transformer))
+
+    def combine(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        n: int,
+        *,
+        delimiter: str = "_",
+        suffix: str = "_comb",
+    ) -> Self:
+        return self.pipe(Combine(columns, n, delimiter=delimiter, suffix=suffix))
