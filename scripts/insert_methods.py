@@ -132,33 +132,37 @@ def render_pipeline_methods() -> list[str]:
 """
     for object in [DataFrame, pl]:
         for name, obj in inspect.getmembers(object):
-            sig = inspect.signature(obj)
-            if not (
-                callable(obj)
-                and not name.startswith("_")
-                and (
-                    sig.return_annotation in (DataFrame, Self)
-                    or name.startswith("write_")
-                    or name.startswith("read_")
-                )
+            if (
+                not callable(obj)
+                or name.startswith("_")
+                or name in {"map_columns", "write_iceberg"}
+                or (object is pl and not name.startswith("read_"))
             ):
                 continue
+
+            sig = inspect.signature(obj)
+            if sig.return_annotation not in ("DataFrame", "Self") and (
+                not name.startswith("write_")
+            ):
+                continue
+
+            params = [
+                render_param_sig(
+                    p,
+                    "DataFrame | Transformer" if p.annotation == "DataFrame" else None,
+                )
+                for p in inspect.signature(obj).parameters.values()
+            ]
+            if params[0] != "self":
+                params = ["self"] + params
 
             codes.append(
                 template.format(
                     name=name,
-                    params=",".join(
-                        render_param_sig(
-                            p,
-                            "DataFrame | Transformer"
-                            if p.annotation == "DataFrame"
-                            else None,
-                        )
-                        for p in sig.parameters.values()
-                    ),
+                    params=",".join(params),
                     call_args=",".join(
                         [
-                            name,
+                            f'"{name}"',
                             "None" if object is DataFrame else "pl",
                             *render_call_args(obj),
                         ]
@@ -167,19 +171,6 @@ def render_pipeline_methods() -> list[str]:
             )
 
     return codes
-
-
-def insert_pipeline_methods():
-    PROJECT_ROOT = Path(__file__).resolve().parents[1]
-
-    target_file = PROJECT_ROOT / Path("src/polars_ml/pipeline/pipeline.py")
-    codes = render_pipeline_methods()
-    insert_between_markers(
-        target_file,
-        "".join(codes),
-        "\t" + START_INSERTION_MARKER + " IN Pipeline",
-        "\t" + END_INSERTION_MARKER + " IN Pipeline",
-    )
 
 
 def render_group_by_methods(
@@ -191,11 +182,10 @@ def render_group_by_methods(
         return self.pipeline.pipe(GroupByGetAttr(self.attr, "{name}", self.args, self.kwargs, {call_args}))
 """
     for name, obj in inspect.getmembers(group_by_cls):
-        sig = inspect.signature(obj)
         if not (
             callable(obj)
             and not name.startswith("_")
-            and sig.return_annotation == "DataFrame"
+            and inspect.signature(obj).return_annotation == "DataFrame"
         ):
             continue
 
@@ -210,8 +200,17 @@ def render_group_by_methods(
     return codes
 
 
-def insert_group_by_methods():
+if __name__ == "__main__":
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+    target_file = PROJECT_ROOT / Path("src/polars_ml/pipeline/pipeline.py")
+    codes = render_pipeline_methods()
+    insert_between_markers(
+        target_file,
+        "".join(codes),
+        "    " + START_INSERTION_MARKER + " IN Pipeline",
+        "    " + END_INSERTION_MARKER + " IN Pipeline",
+    )
 
     target_file = PROJECT_ROOT / Path("src/polars_ml/pipeline/group_by.py")
     for ns, cls in (
@@ -223,11 +222,6 @@ def insert_group_by_methods():
         insert_between_markers(
             target_file,
             "".join(codes),
-            "\t" + START_INSERTION_MARKER + f" IN {ns.__name__}",
-            "\t" + END_INSERTION_MARKER + f" IN {ns.__name__}",
+            "    " + START_INSERTION_MARKER + " IN " + ns.__name__,
+            "    " + END_INSERTION_MARKER + " IN " + ns.__name__,
         )
-
-
-if __name__ == "__main__":
-    insert_pipeline_methods()
-    insert_group_by_methods()

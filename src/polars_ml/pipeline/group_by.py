@@ -46,6 +46,138 @@ class GroupByNameSpace:
 
     # --- START INSERTION MARKER IN GroupByNameSpace
 
+    def agg(
+        self, *aggs: IntoExpr | Iterable[IntoExpr], **named_aggs: IntoExpr
+    ) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr, "agg", self.args, self.kwargs, *aggs, **named_aggs
+            )
+        )
+
+    def all(self) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr,
+                "all",
+                self.args,
+                self.kwargs,
+            )
+        )
+
+    def count(self) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr,
+                "count",
+                self.args,
+                self.kwargs,
+            )
+        )
+
+    def first(self, ignore_nulls: bool = False) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr, "first", self.args, self.kwargs, ignore_nulls=ignore_nulls
+            )
+        )
+
+    def head(self, n: int = 5) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(self.attr, "head", self.args, self.kwargs, n)
+        )
+
+    def last(self, ignore_nulls: bool = False) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr, "last", self.args, self.kwargs, ignore_nulls=ignore_nulls
+            )
+        )
+
+    def len(self, name: str | None = None) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(self.attr, "len", self.args, self.kwargs, name)
+        )
+
+    def map_groups(self, function: Callable[[DataFrame], DataFrame]) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(self.attr, "map_groups", self.args, self.kwargs, function)
+        )
+
+    def max(self) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr,
+                "max",
+                self.args,
+                self.kwargs,
+            )
+        )
+
+    def mean(self) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr,
+                "mean",
+                self.args,
+                self.kwargs,
+            )
+        )
+
+    def median(self) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr,
+                "median",
+                self.args,
+                self.kwargs,
+            )
+        )
+
+    def min(self) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr,
+                "min",
+                self.args,
+                self.kwargs,
+            )
+        )
+
+    def n_unique(self) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr,
+                "n_unique",
+                self.args,
+                self.kwargs,
+            )
+        )
+
+    def quantile(
+        self, quantile: float, interpolation: QuantileMethod = "nearest"
+    ) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr, "quantile", self.args, self.kwargs, quantile, interpolation
+            )
+        )
+
+    def sum(self) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr,
+                "sum",
+                self.args,
+                self.kwargs,
+            )
+        )
+
+    def tail(self, n: int = 5) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(self.attr, "tail", self.args, self.kwargs, n)
+        )
+
     # --- END INSERTION MARKER IN GroupByNameSpace
 
 
@@ -58,6 +190,24 @@ class DynamicGroupByNameSpace:
 
     # --- START INSERTION MARKER IN DynamicGroupByNameSpace
 
+    def agg(
+        self, *aggs: IntoExpr | Iterable[IntoExpr], **named_aggs: IntoExpr
+    ) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr, "agg", self.args, self.kwargs, *aggs, **named_aggs
+            )
+        )
+
+    def map_groups(
+        self, function: Callable[[DataFrame], DataFrame], schema: SchemaDict | None
+    ) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr, "map_groups", self.args, self.kwargs, function, schema
+            )
+        )
+
     # --- END INSERTION MARKER IN DynamicGroupByNameSpace
 
 
@@ -69,5 +219,23 @@ class RollingGroupByNameSpace:
         self.kwargs = kwargs
 
     # --- START INSERTION MARKER IN RollingGroupByNameSpace
+
+    def agg(
+        self, *aggs: IntoExpr | Iterable[IntoExpr], **named_aggs: IntoExpr
+    ) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr, "agg", self.args, self.kwargs, *aggs, **named_aggs
+            )
+        )
+
+    def map_groups(
+        self, function: Callable[[DataFrame], DataFrame], schema: SchemaDict | None
+    ) -> Pipeline:
+        return self.pipeline.pipe(
+            GroupByGetAttr(
+                self.attr, "map_groups", self.args, self.kwargs, function, schema
+            )
+        )
 
     # --- END INSERTION MARKER IN RollingGroupByNameSpace
