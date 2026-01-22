@@ -15,6 +15,8 @@ from .basic import Apply, Const, Echo, Replay, Side
 from .combine import Combine
 from .concat import Concat
 from .discretize import Discretize
+from .getattr import GetAttr
+from .group_by import DynamicGroupByNameSpace, GroupByNameSpace, RollingGroupByNameSpace
 from .horizontal import HorizontalNameSpace
 from .join_agg import JoinAgg
 from .label_encode import LabelEncode, LabelEncodeInverseContext
@@ -369,3 +371,7 @@ class Pipeline(Transformer, HasFeatureImportance):
             return self.pipe(step)
         else:
             return ScaleInverseContext(self, step, inverse_mapping)
+
+    # --- START INSERTION MARKER IN Pipeline
+
+    # --- END INSERTION MARKER IN Pipeline

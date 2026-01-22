@@ -43,14 +43,13 @@ class GBDTNameSpace:
     def __init__(self, pipeline: Pipeline):
         self.pipeline = pipeline
 
-    # --- START INSERTION MARKER IN GBDTNameSpace
-
     def lightgbm(
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
-        params: Mapping[str, Any],
         features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+        *,
+        params: Mapping[str, Any],
         fit_dir: str | Path | None = None,
         **train_params: Any,
     ) -> Pipeline:
@@ -58,10 +57,52 @@ class GBDTNameSpace:
             LightGBM(
                 target,
                 prediction,
-                params,
-                features=features,
+                features,
+                params=params,
                 fit_dir=fit_dir,
                 **train_params,
+            )
+        )
+
+    def lightgbm_tuner(
+        self,
+        target: ColumnNameOrSelector,
+        prediction: str | Sequence[str],
+        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+        *,
+        params: Mapping[str, Any],
+        fit_dir: str | Path | None = None,
+        **tuner_params: Any,
+    ) -> Pipeline:
+        return self.pipeline.pipe(
+            LightGBMTuner(
+                target,
+                prediction,
+                features,
+                params=params,
+                fit_dir=fit_dir,
+                **tuner_params,
+            )
+        )
+
+    def lightgbm_tuner_cv(
+        self,
+        target: ColumnNameOrSelector,
+        prediction: str | Sequence[str],
+        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+        *,
+        params: Mapping[str, Any],
+        fit_dir: str | Path | None = None,
+        **tuner_params: Any,
+    ) -> Pipeline:
+        return self.pipeline.pipe(
+            LightGBMTunerCV(
+                target,
+                prediction,
+                features,
+                params=params,
+                fit_dir=fit_dir,
+                **tuner_params,
             )
         )
 
@@ -70,6 +111,7 @@ class GBDTNameSpace:
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
         params: Mapping[str, Any],
+        *,
         features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         fit_dir: str | Path | None = None,
         **train_params: Any,
@@ -85,51 +127,12 @@ class GBDTNameSpace:
             )
         )
 
-    def lightgbm_tuner(
-        self,
-        target: ColumnNameOrSelector,
-        prediction: str | Sequence[str],
-        params: Mapping[str, Any],
-        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
-        fit_dir: str | Path | None = None,
-        **tuner_params: Any,
-    ) -> Pipeline:
-        return self.pipeline.pipe(
-            LightGBMTuner(
-                target,
-                prediction,
-                params,
-                features=features,
-                fit_dir=fit_dir,
-                **tuner_params,
-            )
-        )
-
-    def lightgbm_tuner_cv(
-        self,
-        target: ColumnNameOrSelector,
-        prediction: str | Sequence[str],
-        params: Mapping[str, Any],
-        features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
-        fit_dir: str | Path | None = None,
-        **tuner_params: Any,
-    ) -> Pipeline:
-        return self.pipeline.pipe(
-            LightGBMTunerCV(
-                target,
-                prediction,
-                params,
-                features=features,
-                fit_dir=fit_dir,
-                **tuner_params,
-            )
-        )
-
     def catboost(
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
         params: Mapping[str, Any] | None = None,
+        *,
         features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
         fit_dir: str | Path | None = None,
         **fit_params: Any,
