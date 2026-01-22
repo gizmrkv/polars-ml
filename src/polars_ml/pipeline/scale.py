@@ -199,11 +199,11 @@ class ScaleInverse(Transformer):
             )
             .with_columns(
                 (
-                    (pl.col(t) * pl.col(f"{s}_scale_{tmp_suf}"))
+                    (pl.col(s) * pl.col(f"{s}_scale_{tmp_suf}"))
                     + pl.col(f"{s}_loc_{tmp_suf}")
                 ).alias(t)
                 for t, s in self.mapping.items()
-                if t in input_columns
+                if s in input_columns
             )
             .drop(
                 *(

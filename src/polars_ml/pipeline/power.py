@@ -182,9 +182,9 @@ class PowerTransformInverse(Transformer):
             **on_args,
         )
         return data.with_columns(
-            self._power_transform.power_inv_expr(t, f"{s}_maxlog_{tmp_suf}").alias(t)
+            self._power_transform.power_inv_expr(s, f"{s}_maxlog_{tmp_suf}").alias(t)
             for t, s in self.mapping.items()
-            if t in input_columns
+            if s in input_columns
         ).drop(*(f"{s}_maxlog_{tmp_suf}" for s in sources))
 
 
