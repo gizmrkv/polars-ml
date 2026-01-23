@@ -14,11 +14,6 @@ from polars_ml.exceptions import NotFittedError
 if TYPE_CHECKING:
     import lightgbm as lgb
 
-try:
-    import lightgbm as lgb
-except ImportError:
-    pass
-
 
 class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
     def __init__(
