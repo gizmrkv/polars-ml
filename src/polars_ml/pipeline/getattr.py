@@ -37,7 +37,7 @@ class GetAttr(Transformer):
             else val
             for key, val in self.kwargs.items()
         }
-        obj = data if self.obj is not None else self.obj
+        obj = data if self.obj is None else self.obj
         output = getattr(obj, self.attr)(*args, **kwargs)
         return output if isinstance(output, DataFrame) else data
 
@@ -50,6 +50,6 @@ class GetAttr(Transformer):
             key: val.transform(data) if isinstance(val, Transformer) else val
             for key, val in self.kwargs.items()
         }
-        obj = data if self.obj is not None else self.obj
+        obj = data if self.obj is None else self.obj
         output = getattr(obj, self.attr)(*args, **kwargs)
         return output if isinstance(output, DataFrame) else data

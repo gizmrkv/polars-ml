@@ -11,6 +11,7 @@ def main():
     path = Path(kagglehub.dataset_download("uciml/adult-census-income"))
 
     data = pl.read_csv(path / "*.csv")
+    fit_dir = Path("./out")
 
     train_valid_idx, test_idx = train_test_split(data, 0.2, shuffle=True, seed=42)
     train_valid_data = data.select(pl.all().gather(train_valid_idx))
@@ -41,9 +42,10 @@ def main():
             [
                 Pipeline().select(target_column),
                 Pipeline().gbdt.lightgbm(
-                    {"objective": "binary", "metric": "binary_logloss"},
                     target_column,
-                    save_dir="./lightgbm",
+                    "prediction",
+                    params={"objective": "binary", "metric": "binary_logloss"},
+                    fit_dir=fit_dir / "lightgbm",
                 ),
             ],
             how="horizontal",
