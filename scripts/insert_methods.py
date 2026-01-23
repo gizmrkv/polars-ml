@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 from inspect import Parameter
 from pathlib import Path
-from typing import Any, Callable, Mapping, Self
+from typing import Any, Callable, Mapping
 
 import polars as pl
 from polars import DataFrame
