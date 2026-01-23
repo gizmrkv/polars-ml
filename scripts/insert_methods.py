@@ -85,7 +85,6 @@ def insert_between_markers(
     start_index = -1
     end_index = -1
 
-    # Search for marker positions
     for i, line in enumerate(lines):
         if start_marker in line and start_index == -1:
             start_index = i
@@ -95,7 +94,6 @@ def insert_between_markers(
         if start_index != -1 and end_index != -1:
             break
 
-    # Error check
     missing: list[str] = []
     if start_index == -1:
         missing.append(f"Start marker '{start_marker}'")

@@ -46,6 +46,7 @@ if TYPE_CHECKING:
     from polars._typing import (
         AsofJoinStrategy,
         AvroCompression,
+        ClosedInterval,
         ColumnFormatDict,
         ColumnNameOrSelector,
         ColumnTotalsDefinition,
@@ -65,6 +66,7 @@ if TYPE_CHECKING:
         IpcCompression,
         JoinStrategy,
         JoinValidation,
+        Label,
         MaintainOrderJoin,
         OneOrMoreDataTypes,
         ParallelStrategy,
@@ -79,6 +81,7 @@ if TYPE_CHECKING:
         SchemaDict,
         SelectorType,
         SerializationFormat,
+        StartBy,
         UniqueKeepStrategy,
         UnstackDirection,
     )
@@ -157,6 +160,58 @@ class Pipeline(Transformer, HasFeatureImportance):
     @property
     def fe(self) -> FeatureEngineeringNameSpace:
         return FeatureEngineeringNameSpace(self)
+
+    def group_by(
+        self,
+        *by: IntoExpr | Iterable[IntoExpr],
+        maintain_order: bool = False,
+        **named_by: IntoExpr,
+    ) -> GroupByNameSpace:
+        return GroupByNameSpace(self, *by, maintain_order=maintain_order, **named_by)
+
+    def group_by_dynamic(
+        self,
+        index_column: IntoExpr,
+        *,
+        every: str | timedelta,
+        period: str | timedelta | None = None,
+        offset: str | timedelta | None = None,
+        include_boundaries: bool = False,
+        closed: ClosedInterval = "left",
+        label: Label = "left",
+        group_by: IntoExpr | Iterable[IntoExpr] | None = None,
+        start_by: StartBy = "window",
+    ) -> DynamicGroupByNameSpace:
+        return DynamicGroupByNameSpace(
+            self,
+            index_column,
+            every=every,
+            period=period,
+            offset=offset,
+            include_boundaries=include_boundaries,
+            closed=closed,
+            label=label,
+            group_by=group_by,
+            start_by=start_by,
+        )
+
+    def rolling(
+        self,
+        index_column: IntoExpr,
+        *,
+        period: str | timedelta,
+        offset: str | timedelta | None = None,
+        closed: ClosedInterval = "right",
+        group_by: IntoExpr | Iterable[IntoExpr] | None = None,
+    ) -> RollingGroupByNameSpace:
+        return RollingGroupByNameSpace(
+            self,
+            index_column,
+            period=period,
+            offset=offset,
+            closed=closed,
+            group_by=group_by,
+        )
 
     def apply(self, func: Callable[[DataFrame], DataFrame]) -> Self:
         return self.pipe(Apply(func))
