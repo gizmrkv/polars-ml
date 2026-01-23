@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Mapping, Self, Sequence
 
 import polars as pl
+import polars.selectors as cs
 from polars import DataFrame
 from polars._typing import ColumnNameOrSelector
 
@@ -19,9 +20,9 @@ class CatBoost(Transformer, HasFeatureImportance):
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
-        params: Mapping[str, Any] | None = None,
-        *,
         features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+        *,
+        params: Mapping[str, Any] | None = None,
         fit_dir: str | Path | None = None,
         **fit_params: Any,
     ):
@@ -29,7 +30,9 @@ class CatBoost(Transformer, HasFeatureImportance):
         self._prediction = (
             [prediction] if isinstance(prediction, str) else list(prediction)
         )
-        self._features_selector = features
+        self._features_selector = (
+            features if features is not None else cs.exclude(target)
+        )
         self._params = dict(params) if params else {}
         self._fit_dir = Path(fit_dir) if fit_dir else None
         self._fit_params = fit_params
@@ -76,6 +79,8 @@ class CatBoost(Transformer, HasFeatureImportance):
         return {}
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
+        import catboost as cb
+
         self._target = self.init_target(data)
         self._features = self.init_features(data)
         self._pool_params = self.init_pool_params(data)
@@ -98,8 +103,8 @@ class CatBoost(Transformer, HasFeatureImportance):
                 )
             )
 
-        self.model = cb.CatBoost(self._params)
-        self.model.fit(
+        self._booster = cb.CatBoost(self._params)
+        self.booster.fit(
             train_pool,
             eval_set=eval_sets if eval_sets else None,
             **self._fit_params,

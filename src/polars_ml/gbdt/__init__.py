@@ -110,9 +110,9 @@ class GBDTNameSpace:
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
-        params: Mapping[str, Any],
-        *,
         features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+        *,
+        params: Mapping[str, Any],
         fit_dir: str | Path | None = None,
         **train_params: Any,
     ) -> Pipeline:
@@ -120,8 +120,8 @@ class GBDTNameSpace:
             XGBoost(
                 target,
                 prediction,
-                params,
-                features=features,
+                features,
+                params=params,
                 fit_dir=fit_dir,
                 **train_params,
             )
@@ -131,9 +131,9 @@ class GBDTNameSpace:
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
-        params: Mapping[str, Any] | None = None,
-        *,
         features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+        *,
+        params: Mapping[str, Any] | None = None,
         fit_dir: str | Path | None = None,
         **fit_params: Any,
     ) -> Pipeline:
@@ -141,8 +141,8 @@ class GBDTNameSpace:
             CatBoost(
                 target,
                 prediction,
-                params,
-                features=features,
+                features,
+                params=params,
                 fit_dir=fit_dir,
                 **fit_params,
             )

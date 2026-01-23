@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Mapping, Self, Sequence
 
 import polars as pl
+import polars.selectors as cs
 from polars import DataFrame
 from polars._typing import ColumnNameOrSelector
 
@@ -19,9 +20,9 @@ class XGBoost(Transformer, HasFeatureImportance):
         self,
         target: ColumnNameOrSelector,
         prediction: str | Sequence[str],
-        params: Mapping[str, Any],
-        *,
         features: ColumnNameOrSelector | Iterable[ColumnNameOrSelector] | None = None,
+        *,
+        params: Mapping[str, Any],
         fit_dir: str | Path | None = None,
         **train_params: Any,
     ):
@@ -29,8 +30,10 @@ class XGBoost(Transformer, HasFeatureImportance):
         self._prediction = (
             [prediction] if isinstance(prediction, str) else list(prediction)
         )
+        self._features_selector = (
+            features if features is not None else cs.exclude(target)
+        )
         self._params = dict(params)
-        self._features_selector = features
         self._fit_dir = Path(fit_dir) if fit_dir else None
         self._train_params = train_params
 
@@ -78,6 +81,8 @@ class XGBoost(Transformer, HasFeatureImportance):
     def make_train_valid_sets(
         self, data: DataFrame, **more_data: DataFrame
     ) -> tuple[xgb.DMatrix, list[tuple[xgb.DMatrix, str]]]:
+        import xgboost as xgb
+
         dtrain = xgb.DMatrix(
             data.select(*self.features).to_pandas(),
             label=data.select(*self.target).to_pandas(),
@@ -98,6 +103,8 @@ class XGBoost(Transformer, HasFeatureImportance):
         return dtrain, evals
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
+        import xgboost as xgb
+
         self._target = self.init_target(data)
         self._features = self.init_features(data)
         self._dmatrix_params = self.init_dmatrix_params(data)
@@ -114,6 +121,8 @@ class XGBoost(Transformer, HasFeatureImportance):
         return self
 
     def transform(self, data: DataFrame) -> DataFrame:
+        import xgboost as xgb
+
         input_data = xgb.DMatrix(
             data.select(self.features).to_pandas(),
             feature_names=self.features,
@@ -147,6 +156,7 @@ def save_xgboost_booster(booster: xgb.Booster, fit_dir: str | Path):
     import json
 
     import matplotlib.pyplot as plt
+    import xgboost as xgb
 
     fit_dir = Path(fit_dir)
     fit_dir.mkdir(parents=True, exist_ok=True)

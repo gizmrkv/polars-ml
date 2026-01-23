@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Mapping, Self, Sequence
 
 import polars as pl
+import polars.selectors as cs
 from polars import DataFrame
 from polars._typing import ColumnNameOrSelector
 
@@ -28,7 +29,9 @@ class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
         self._prediction = (
             [prediction] if isinstance(prediction, str) else list(prediction)
         )
-        self._features_selector = features
+        self._features_selector = (
+            features if features is not None else cs.exclude(target)
+        )
         self._params = dict(params)
 
         self._target: list[str] | None = None
@@ -72,6 +75,8 @@ class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
     def make_train_valid_sets(
         self, data: DataFrame, **more_data: DataFrame
     ) -> tuple[lgb.Dataset, list[lgb.Dataset], list[str]]:
+        import lightgbm as lgb
+
         train_dataset = lgb.Dataset(
             data.select(*self.features).to_pandas(),
             data.select(*self.target).to_pandas(),
@@ -94,6 +99,8 @@ class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
         return train_dataset, valid_sets, valid_names
 
     def transform(self, data: DataFrame) -> DataFrame:
+        import lightgbm as lgb
+
         input_data = data.select(*self.features).to_numpy()
         if isinstance(self.booster, lgb.Booster):
             pred = self.booster.predict(input_data)
@@ -115,6 +122,8 @@ class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
             )
 
     def save(self, fit_dir: str | Path):
+        import lightgbm as lgb
+
         fit_dir = Path(fit_dir)
 
         if isinstance(self.booster, lgb.Booster):
@@ -124,6 +133,8 @@ class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
                 save_lightgbm_booster(booster, fit_dir / name)
 
     def get_feature_importance(self) -> DataFrame:
+        import lightgbm as lgb
+
         if isinstance(self.booster, lgb.Booster):
             return DataFrame(
                 {
@@ -180,6 +191,8 @@ class LightGBM(BaseLightGBM):
         return self._train_params
 
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
+        import lightgbm as lgb
+
         self._target = self.init_target(data)
         self._features = self.init_features(data)
         self._dataset_params = self.init_dataset_params(data)
@@ -294,6 +307,7 @@ class LightGBMTunerCV(BaseLightGBM):
 def save_lightgbm_booster(booster: lgb.Booster, fit_dir: str | Path):
     import json
 
+    import lightgbm as lgb
     import matplotlib.pyplot as plt
 
     fit_dir = Path(fit_dir)
