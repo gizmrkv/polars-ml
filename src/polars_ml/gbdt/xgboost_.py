@@ -66,12 +66,6 @@ class XGBoost(Transformer, HasFeatureImportance):
             raise NotFittedError()
         return self._booster
 
-    def init_target(self, data: DataFrame) -> list[str]:
-        return data.lazy().select(self._target_selector).collect_schema().names()
-
-    def init_features(self, data: DataFrame) -> list[str]:
-        return data.lazy().select(self._features_selector).collect_schema().names()
-
     def init_train_params(self, data: DataFrame) -> dict[str, Any]:
         return self._train_params
 
@@ -105,8 +99,13 @@ class XGBoost(Transformer, HasFeatureImportance):
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import xgboost as xgb
 
-        self._target = self.init_target(data)
-        self._features = self.init_features(data)
+        self._target = (
+            data.lazy().select(self._target_selector).collect_schema().names()
+        )
+        self._features = (
+            data.lazy().select(self._features_selector).collect_schema().names()
+        )
+
         self._dmatrix_params = self.init_dmatrix_params(data)
         self._train_params = self.init_train_params(data)
 

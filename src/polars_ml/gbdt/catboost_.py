@@ -66,12 +66,6 @@ class CatBoost(Transformer, HasFeatureImportance):
             raise NotFittedError()
         return self._booster
 
-    def init_target(self, data: DataFrame) -> list[str]:
-        return data.lazy().select(self._target_selector).collect_schema().names()
-
-    def init_features(self, data: DataFrame) -> list[str]:
-        return data.lazy().select(self._features_selector).collect_schema().names()
-
     def init_fit_params(self, data: DataFrame) -> dict[str, Any]:
         return self._fit_params
 
@@ -81,8 +75,13 @@ class CatBoost(Transformer, HasFeatureImportance):
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import catboost as cb
 
-        self._target = self.init_target(data)
-        self._features = self.init_features(data)
+        self._target = (
+            data.lazy().select(self._target_selector).collect_schema().names()
+        )
+        self._features = (
+            data.lazy().select(self._features_selector).collect_schema().names()
+        )
+
         self._pool_params = self.init_pool_params(data)
         self._fit_params = self.init_fit_params(data)
 

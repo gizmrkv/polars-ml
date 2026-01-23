@@ -63,12 +63,6 @@ class BaseLightGBM(Transformer, HasFeatureImportance, ABC):
             raise NotFittedError()
         return self._booster
 
-    def init_target(self, data: DataFrame) -> list[str]:
-        return data.lazy().select(self._target_selector).collect_schema().names()
-
-    def init_features(self, data: DataFrame) -> list[str]:
-        return data.lazy().select(self._features_selector).collect_schema().names()
-
     def init_dataset_params(self, data: DataFrame) -> dict[str, Any]:
         return {}
 
@@ -193,8 +187,13 @@ class LightGBM(BaseLightGBM):
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         import lightgbm as lgb
 
-        self._target = self.init_target(data)
-        self._features = self.init_features(data)
+        self._target = (
+            data.lazy().select(self._target_selector).collect_schema().names()
+        )
+        self._features = (
+            data.lazy().select(self._features_selector).collect_schema().names()
+        )
+
         self._dataset_params = self.init_dataset_params(data)
         self._train_params = self.init_train_params(data)
 
@@ -237,8 +236,13 @@ class LightGBMTuner(BaseLightGBM):
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         from optuna_integration.lightgbm import LightGBMTuner
 
-        self._target = self.init_target(data)
-        self._features = self.init_features(data)
+        self._target = (
+            data.lazy().select(self._target_selector).collect_schema().names()
+        )
+        self._features = (
+            data.lazy().select(self._features_selector).collect_schema().names()
+        )
+
         self._dataset_params = self.init_dataset_params(data)
         self._tuner_params = self.init_tuner_params(data)
 
@@ -283,8 +287,13 @@ class LightGBMTunerCV(BaseLightGBM):
     def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
         from optuna_integration.lightgbm import LightGBMTunerCV
 
-        self._target = self.init_target(data)
-        self._features = self.init_features(data)
+        self._target = (
+            data.lazy().select(self._target_selector).collect_schema().names()
+        )
+        self._features = (
+            data.lazy().select(self._features_selector).collect_schema().names()
+        )
+
         self._dataset_params = self.init_dataset_params(data)
         self._tuner_params = self.init_tuner_params(data)
 
