@@ -1,4 +1,3 @@
-import tempfile
 from pathlib import Path
 
 import polars as pl
@@ -7,14 +6,19 @@ from polars import DataFrame
 from polars_ml.pipeline.pipeline import Pipeline
 
 
-def test_catboost_basic():
+def test_catboost_basic(tmp_path: Path):
     df = DataFrame({"x": [1.0, 2.0, 3.0, 4.0], "y": [1.0, 2.0, 3.0, 4.0]})
 
     pipeline = Pipeline().gbdt.catboost(
         target="y",
         prediction="pred",
         features=["x"],
-        params={"loss_function": "RMSE", "verbose": False, "iterations": 10},
+        params={
+            "loss_function": "RMSE",
+            "verbose": False,
+            "iterations": 10,
+            "train_dir": tmp_path,
+        },
     )
 
     result = pipeline.fit_transform(df)
@@ -30,7 +34,12 @@ def test_catboost_save(tmp_path: Path):
         target="y",
         prediction="pred",
         features=["x"],
-        params={"loss_function": "RMSE", "verbose": False, "iterations": 5},
+        params={
+            "loss_function": "RMSE",
+            "verbose": False,
+            "iterations": 5,
+            "train_dir": tmp_path,
+        },
         fit_dir=tmp_path,
     )
 
