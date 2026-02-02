@@ -27,6 +27,7 @@ from polars_ml.gbdt import GBDTNameSpace
 from polars_ml.linear import LinearNameSpace
 from polars_ml.metrics import MetricsNameSpace
 from polars_ml.optimize import OptimizeNameSpace
+from polars_ml.reduction import ReductionNameSpace
 
 from .basic import Apply, Const, Echo, Replay, Side
 from .combine import Combine
@@ -165,6 +166,10 @@ class Pipeline(Transformer, HasFeatureImportance):
     @property
     def fe(self) -> FeatureEngineeringNameSpace:
         return FeatureEngineeringNameSpace(self)
+
+    @property
+    def reduction(self) -> ReductionNameSpace:
+        return ReductionNameSpace(self)
 
     def group_by(
         self,
