@@ -23,11 +23,13 @@ from polars import DataFrame, Expr, LazyFrame, Schema
 from polars_ml import LazyTransformer
 
 from .getattr_lazy import LazyGetAttr
+from .group_by_lazy import LazyGroupByNameSpace
 
 if TYPE_CHECKING:
     from deltalake import DeltaTable
     from polars._typing import (
         AsofJoinStrategy,
+        ClosedInterval,
         ColumnMapping,
         ColumnNameOrSelector,
         CsvEncoding,
@@ -39,6 +41,7 @@ if TYPE_CHECKING:
         IntoExprColumn,
         JoinStrategy,
         JoinValidation,
+        Label,
         MaintainOrderJoin,
         ParallelStrategy,
         PivotAgg,
@@ -48,6 +51,7 @@ if TYPE_CHECKING:
         SchemaDefinition,
         SchemaDict,
         SerializationFormat,
+        StartBy,
         StorageOptionsDict,
         UniqueKeepStrategy,
     )
@@ -91,6 +95,62 @@ class LazyPipeline(LazyTransformer):
         for step in self._steps:
             data = step.transform(data)
         return data
+
+    def group_by(
+        self,
+        *by: IntoExpr | Iterable[IntoExpr],
+        maintain_order: bool = False,
+        **named_by: IntoExpr,
+    ) -> LazyGroupByNameSpace:
+        return LazyGroupByNameSpace(
+            self, "group_by", *by, maintain_order=maintain_order, **named_by
+        )
+
+    def group_by_dynamic(
+        self,
+        index_column: IntoExpr,
+        *,
+        every: str | timedelta,
+        period: str | timedelta | None = None,
+        offset: str | timedelta | None = None,
+        include_boundaries: bool = False,
+        closed: ClosedInterval = "left",
+        label: Label = "left",
+        group_by: IntoExpr | Iterable[IntoExpr] | None = None,
+        start_by: StartBy = "window",
+    ) -> LazyGroupByNameSpace:
+        return LazyGroupByNameSpace(
+            self,
+            "group_by_dynamic",
+            index_column,
+            every=every,
+            period=period,
+            offset=offset,
+            include_boundaries=include_boundaries,
+            closed=closed,
+            label=label,
+            group_by=group_by,
+            start_by=start_by,
+        )
+
+    def rolling(
+        self,
+        index_column: IntoExpr,
+        *,
+        period: str | timedelta,
+        offset: str | timedelta | None = None,
+        closed: ClosedInterval = "right",
+        group_by: IntoExpr | Iterable[IntoExpr] | None = None,
+    ) -> LazyGroupByNameSpace:
+        return LazyGroupByNameSpace(
+            self,
+            "rolling",
+            index_column,
+            period=period,
+            offset=offset,
+            closed=closed,
+            group_by=group_by,
+        )
 
     # --- START INSERTION MARKER IN LazyPipeline
 

@@ -8,6 +8,7 @@ from typing import Any, Callable, Iterable, Mapping
 
 import polars as pl
 from polars.dataframe.group_by import DynamicGroupBy, GroupBy, RollingGroupBy
+from polars.lazyframe.group_by import LazyGroupBy
 
 from polars_ml.pipeline.group_by import (
     DynamicGroupByNameSpace,
@@ -242,7 +243,23 @@ def is_groupby_method(name: str, obj: Any, target: Any) -> bool:
 def extract_groupby_meta(name: str, obj: Any, target: Any) -> MethodMeta:
     params = render_params_sig(obj)
     call_args = render_call_args(obj)
+    return MethodMeta(
+        name=name, params_str=", ".join(params), call_args_str=", ".join(call_args)
+    )
 
+
+# ==========================================
+# LazyGroupBy
+# ==========================================
+def is_lazy_groupby_method(name: str, obj: Any, target: Any) -> bool:
+    if not callable(obj) or name.startswith("_"):
+        return False
+    return inspect.signature(obj).return_annotation == "LazyFrame"
+
+
+def extract_lazy_groupby_meta(name: str, obj: Any, target: Any) -> MethodMeta:
+    params = render_params_sig(obj)
+    call_args = render_call_args(obj)
     return MethodMeta(
         name=name, params_str=", ".join(params), call_args_str=", ".join(call_args)
     )
@@ -293,26 +310,45 @@ if __name__ == "__main__":
     )
 
     # --- GroupBy ---
-    # target_file = PROJECT_ROOT / Path("src/polars_ml/pipeline/group_by.py")
-    # GROUPBY_TEMPLATE = """
-    # def {name}({params}) -> GroupByGetAttr:
-    # return self.pipeline.pipe(GroupByGetAttr(self.attr, "{name}", self.args, self.kwargs, {call_args}))
-    # """
+    target_file = PROJECT_ROOT / Path("src/polars_ml/pipeline/group_by.py")
+    GROUPBY_TEMPLATE = """
+    def {name}({params}) -> Pipeline:
+        return self.pipeline.pipe(GroupByGetAttr(self.attr, "{name}", self.args, self.kwargs, {call_args}))
+    """
 
-    # for ns, cls in (
-    #     (GroupByNameSpace, GroupBy),
-    #     (DynamicGroupByNameSpace, DynamicGroupBy),
-    #     (RollingGroupByNameSpace, RollingGroupBy),
-    # ):
-    #     codes = generate_wrapper_methods(
-    #         targets=[cls],
-    #         predicate=is_groupby_method,
-    #         extractor=extract_groupby_meta,
-    #         template=GROUPBY_TEMPLATE
-    #     )
-    #     insert_between_markers(
-    #         target_file,
-    #         "".join(codes),
-    #         "    " + START_INSERTION_MARKER + " IN " + ns.__name__,
-    #         "    " + END_INSERTION_MARKER + " IN " + ns.__name__,
-    #     )
+    for ns, cls in (
+        (GroupByNameSpace, GroupBy),
+        (DynamicGroupByNameSpace, DynamicGroupBy),
+        (RollingGroupByNameSpace, RollingGroupBy),
+    ):
+        codes = generate_wrapper_methods(
+            targets=[cls],
+            predicate=is_groupby_method,
+            extractor=extract_groupby_meta,
+            template=GROUPBY_TEMPLATE,
+        )
+        insert_between_markers(
+            target_file,
+            "".join(codes),
+            "    " + START_INSERTION_MARKER + " IN " + ns.__name__,
+            "    " + END_INSERTION_MARKER + " IN " + ns.__name__,
+        )
+
+    # --- LazyGroupBy ---
+    target_file = PROJECT_ROOT / Path("src/polars_ml/pipeline/group_by_lazy.py")
+    LAZY_GROUPBY_TEMPLATE = """
+    def {name}({params}) -> LazyPipeline:
+        return self.pipeline.pipe(LazyGroupByGetAttr(self.attr, "{name}", self.args, self.kwargs, {call_args}))
+    """
+    codes = generate_wrapper_methods(
+        targets=[LazyGroupBy],
+        predicate=is_lazy_groupby_method,
+        extractor=extract_lazy_groupby_meta,
+        template=LAZY_GROUPBY_TEMPLATE,
+    )
+    insert_between_markers(
+        target_file,
+        "".join(codes),
+        "    " + START_INSERTION_MARKER + " IN LazyGroupByNameSpace",
+        "    " + END_INSERTION_MARKER + " IN LazyGroupByNameSpace",
+    )
