@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Iterable, Mapping, Self, Sequence, overload
+from typing import Any, Iterable, Mapping, Self, Sequence, overload
 
-import polars as pl
 from polars._typing import ColumnNameOrSelector
 
 from polars_ml import LazyTransformer
 
 from .basic import Echo, Replay
+from .label_encode import LabelEncode, LabelEncodeInverseContext
 from .power import BoxCoxTransform, PowerTransformInverseContext, YeoJohnsonTransform
 from .scale import MinMaxScale, RobustScale, ScaleInverseContext, StandardScale
 
@@ -175,3 +175,41 @@ class PipelineMixin(ABC):
             return self.pipe(step)
         else:
             return PowerTransformInverseContext(self, step, inverse_mapping)
+
+    @overload
+    def label_encode(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        orders: Mapping[str, Sequence[Any]] | None = None,
+        maintain_order: bool = True,
+    ) -> Self: ...
+
+    @overload
+    def label_encode(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        orders: Mapping[str, Sequence[Any]] | None = None,
+        maintain_order: bool = True,
+        inverse_mapping: Mapping[str, str] | None,
+    ) -> LabelEncodeInverseContext: ...
+
+    def label_encode(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        orders: Mapping[str, Sequence[Any]] | None = None,
+        maintain_order: bool = True,
+        inverse_mapping: Mapping[str, str] | None = None,
+    ) -> Self | LabelEncodeInverseContext:
+        step = LabelEncode(
+            columns,
+            *more_columns,
+            orders=orders,
+            maintain_order=maintain_order,
+        )
+        if inverse_mapping is None:
+            return self.pipe(step)
+        else:
+            return LabelEncodeInverseContext(self, step, inverse_mapping)

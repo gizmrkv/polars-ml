@@ -184,9 +184,8 @@ class PowerTransformInverseContext:
         )
         self._mapping = mapping
 
-    def __enter__(self) -> tuple[BasePowerTransform, PowerTransformInverse]:
+    def __enter__(self):
         self._pipeline.pipe(self._power_transform)
-        return self._power_transform, self._power_transform_inverse
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self._pipeline.pipe(self._power_transform_inverse)
