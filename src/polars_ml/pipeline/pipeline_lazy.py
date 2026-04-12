@@ -385,7 +385,7 @@ class LazyPipeline(LazyTransformer, PipelineMixin):
     def join_where(
         self,
         other: pl.LazyFrame | LazyTransformer,
-        *predicates: Expr | Iterable[Expr],
+        *predicates: pl.Expr | Iterable[Expr],
         suffix: str = "_right",
     ) -> Self:
         return self.pipe(

@@ -283,7 +283,7 @@ class Pipeline(Transformer, PipelineMixin):
     def extend(self, other: pl.DataFrame | Transformer) -> Self:
         return self.pipe(GetAttr("extend", None, other))
 
-    def fill_nan(self, value: Expr | int | float | None) -> Self:
+    def fill_nan(self, value: pl.Expr | int | float | None) -> Self:
         return self.pipe(GetAttr("fill_nan", None, value))
 
     def fill_null(
@@ -403,7 +403,7 @@ class Pipeline(Transformer, PipelineMixin):
     def join_where(
         self,
         other: pl.DataFrame | Transformer,
-        *predicates: Expr | Iterable[Expr],
+        *predicates: pl.Expr | Iterable[Expr],
         suffix: str = "_right",
     ) -> Self:
         return self.pipe(GetAttr("join_where", None, other, *predicates, suffix=suffix))
@@ -536,7 +536,7 @@ class Pipeline(Transformer, PipelineMixin):
     ) -> Self:
         return self.pipe(GetAttr("rename", None, mapping, strict=strict))
 
-    def replace_column(self, index: int, column: Series) -> Self:
+    def replace_column(self, index: int, column: pl.Series) -> Self:
         return self.pipe(GetAttr("replace_column", None, index, column))
 
     def reverse(self) -> Self:

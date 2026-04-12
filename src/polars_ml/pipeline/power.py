@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 from typing import Any, Iterable, Mapping, Protocol, Self, Sequence
 
 import polars as pl
-from polars import DataFrame, Expr, Series
 from polars._typing import ColumnNameOrSelector
 from scipy import stats
 
@@ -43,13 +42,13 @@ class BasePowerTransform(LazyTransformer, ABC):
         return self._maxlog
 
     @abstractmethod
-    def calc_maxlog(self, values: Series) -> float: ...
+    def calc_maxlog(self, values: pl.Series) -> float: ...
 
     @abstractmethod
-    def power_expr(self, column: str, maxlog: str) -> Expr: ...
+    def power_expr(self, column: str, maxlog: str) -> pl.Expr: ...
 
     @abstractmethod
-    def power_inv_expr(self, column: str, maxlog: str) -> Expr: ...
+    def power_inv_expr(self, column: str, maxlog: str) -> pl.Expr: ...
 
     def fit(self, data: pl.DataFrame, **more_data: pl.DataFrame) -> Self:
         data = data.select(self._selector, *self._more_selectors, *self._by)
@@ -101,13 +100,13 @@ class BoxCoxTransform(BasePowerTransform):
     ):
         super().__init__(columns, *more_columns, by=by)
 
-    def calc_maxlog(self, values: Series) -> float:
+    def calc_maxlog(self, values: pl.Series) -> float:
         return float(stats.boxcox(values.drop_nulls().to_numpy())[1])
 
-    def power_expr(self, column: str, maxlog: str) -> Expr:
+    def power_expr(self, column: str, maxlog: str) -> pl.Expr:
         return boxcox(pl.col(column), pl.col(maxlog))
 
-    def power_inv_expr(self, column: str, maxlog: str) -> Expr:
+    def power_inv_expr(self, column: str, maxlog: str) -> pl.Expr:
         return boxcox_inv(pl.col(column), pl.col(maxlog))
 
 
@@ -120,13 +119,13 @@ class YeoJohnsonTransform(BasePowerTransform):
     ):
         super().__init__(columns, *more_columns, by=by)
 
-    def calc_maxlog(self, values: Series) -> float:
+    def calc_maxlog(self, values: pl.Series) -> float:
         return float(stats.yeojohnson(values.drop_nulls().to_numpy())[1])  # type: ignore
 
-    def power_expr(self, column: str, maxlog: str) -> Expr:
+    def power_expr(self, column: str, maxlog: str) -> pl.Expr:
         return yeojohnson(pl.col(column), pl.col(maxlog))
 
-    def power_inv_expr(self, column: str, maxlog: str) -> Expr:
+    def power_inv_expr(self, column: str, maxlog: str) -> pl.Expr:
         return yeojohnson_inv(pl.col(column), pl.col(maxlog))
 
 
@@ -192,23 +191,23 @@ class PowerTransformInverseContext:
         self._pipeline.pipe(self._power_transform_inverse)
 
 
-def boxcox_maxlog(x: Series) -> float:
+def boxcox_maxlog(x: pl.Series) -> float:
     return float(stats.boxcox(x.drop_nulls().to_numpy())[1])
 
 
-def boxcox(x: Expr, lmbda: Expr) -> Expr:
+def boxcox(x: pl.Expr, lmbda: pl.Expr) -> pl.Expr:
     return pl.when(lmbda != 0).then((x**lmbda - 1) / lmbda).otherwise(x.log())
 
 
-def boxcox_inv(x: Expr, lmbda: Expr) -> Expr:
+def boxcox_inv(x: pl.Expr, lmbda: pl.Expr) -> pl.Expr:
     return pl.when(lmbda != 0).then((x * lmbda + 1) ** (1 / lmbda)).otherwise(x.exp())
 
 
-def yeojohnson_maxlog(x: Series) -> float:
+def yeojohnson_maxlog(x: pl.Series) -> float:
     return float(stats.yeojohnson(x.drop_nulls().to_numpy())[1])  # type: ignore
 
 
-def yeojohnson(x: Expr, lmbda: Expr) -> Expr:
+def yeojohnson(x: pl.Expr, lmbda: pl.Expr) -> pl.Expr:
     return (
         pl.when((x >= 0) & (lmbda != 0))
         .then(((x + 1) ** lmbda - 1) / lmbda)
@@ -220,7 +219,7 @@ def yeojohnson(x: Expr, lmbda: Expr) -> Expr:
     )
 
 
-def yeojohnson_inv(x: Expr, lmbda: Expr) -> Expr:
+def yeojohnson_inv(x: pl.Expr, lmbda: pl.Expr) -> pl.Expr:
     return (
         pl.when((x >= 0) & (lmbda != 0))
         .then((x * lmbda + 1) ** (1 / lmbda) - 1)
