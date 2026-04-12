@@ -23,7 +23,7 @@ from polars import DataFrame, Expr, LazyFrame, Schema
 from polars_ml import LazyTransformer
 
 from .basic import LazyApply, LazyConst, LazySide
-from .getattr_lazy import LazyGetAttr
+from .getattr import LazyGetAttr
 from .group_by_lazy import LazyGroupByNameSpace
 from .pipeline_mixin import PipelineMixin
 
