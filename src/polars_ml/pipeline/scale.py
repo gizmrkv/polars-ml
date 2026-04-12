@@ -16,12 +16,10 @@ class BaseScale(LazyTransformer, ABC):
         columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
-        suffix: str = "",
     ):
         self._selector = columns
         self._more_selectors = more_columns
         self._by = [by] if isinstance(by, str) else [*by] if by is not None else []
-        self._suffix = suffix
 
         self._columns: list[str] | None = None
         self._stats: pl.DataFrame | None = None
@@ -87,7 +85,7 @@ class BaseScale(LazyTransformer, ABC):
                 **on_args,
             )
             .with_columns(
-                ((pl.col(c) - pl.col(f"{c}_loc")) / pl.col(f"{c}_scale"))
+                (pl.col(c) - pl.col(f"{c}_loc")) / pl.col(f"{c}_scale")
                 for c in scale_columns
             )
             .drop(f"{c}_{s}" for c in scale_columns for s in ["loc", "scale"]),
@@ -101,9 +99,8 @@ class StandardScale(BaseScale):
         columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
-        suffix: str = "",
     ):
-        super().__init__(columns, *more_columns, by=by, suffix=suffix)
+        super().__init__(columns, *more_columns, by=by)
 
     def loc_expr(self, column: str) -> pl.Expr:
         return pl.col(column).mean()
@@ -118,9 +115,8 @@ class MinMaxScale(BaseScale):
         columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
-        suffix: str = "",
     ):
-        super().__init__(columns, *more_columns, by=by, suffix=suffix)
+        super().__init__(columns, *more_columns, by=by)
 
     def loc_expr(self, column: str) -> pl.Expr:
         return pl.col(column).min()
@@ -136,9 +132,8 @@ class RobustScale(BaseScale):
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         quantile_range: tuple[float, float] = (0.25, 0.75),
-        suffix: str = "",
     ):
-        super().__init__(columns, *more_columns, by=by, suffix=suffix)
+        super().__init__(columns, *more_columns, by=by)
         self._q_lower, self._q_upper = quantile_range
 
         if not (0 <= self._q_lower < self._q_upper <= 1):

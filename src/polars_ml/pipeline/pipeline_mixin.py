@@ -9,6 +9,7 @@ from polars._typing import ColumnNameOrSelector
 from polars_ml import LazyTransformer
 
 from .basic import Echo, Replay
+from .power import BoxCoxTransform, PowerTransformInverseContext, YeoJohnsonTransform
 from .scale import MinMaxScale, RobustScale, ScaleInverseContext, StandardScale
 
 
@@ -28,7 +29,6 @@ class PipelineMixin(ABC):
         columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
-        suffix: str = "",
     ) -> Self: ...
 
     @overload
@@ -37,7 +37,6 @@ class PipelineMixin(ABC):
         columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
-        suffix: str = "",
         inverse_mapping: Mapping[str, str] | None,
     ) -> ScaleInverseContext: ...
 
@@ -46,10 +45,9 @@ class PipelineMixin(ABC):
         columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
-        suffix: str = "",
         inverse_mapping: Mapping[str, str] | None = None,
     ) -> Self | ScaleInverseContext:
-        step = MinMaxScale(columns, *more_columns, by=by, suffix=suffix)
+        step = MinMaxScale(columns, *more_columns, by=by)
         if inverse_mapping is None:
             return self.pipe(step)
         else:
@@ -61,7 +59,6 @@ class PipelineMixin(ABC):
         columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
-        suffix: str = "",
     ) -> Self: ...
 
     @overload
@@ -70,7 +67,6 @@ class PipelineMixin(ABC):
         columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
-        suffix: str = "",
         inverse_mapping: Mapping[str, str] | None,
     ) -> ScaleInverseContext: ...
 
@@ -79,10 +75,9 @@ class PipelineMixin(ABC):
         columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
-        suffix: str = "",
         inverse_mapping: Mapping[str, str] | None = None,
     ) -> Self | ScaleInverseContext:
-        step = StandardScale(columns, *more_columns, by=by, suffix=suffix)
+        step = StandardScale(columns, *more_columns, by=by)
         if inverse_mapping is None:
             return self.pipe(step)
         else:
@@ -95,7 +90,6 @@ class PipelineMixin(ABC):
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         quantile_range: tuple[float, float] = (0.25, 0.75),
-        suffix: str = "",
     ) -> Self: ...
 
     @overload
@@ -105,7 +99,6 @@ class PipelineMixin(ABC):
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         quantile_range: tuple[float, float] = (0.25, 0.75),
-        suffix: str = "",
         inverse_mapping: Mapping[str, str] | None,
     ) -> ScaleInverseContext: ...
 
@@ -115,13 +108,70 @@ class PipelineMixin(ABC):
         *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
         by: str | Sequence[str] | None = None,
         quantile_range: tuple[float, float] = (0.25, 0.75),
-        suffix: str = "",
         inverse_mapping: Mapping[str, str] | None = None,
     ) -> Self | ScaleInverseContext:
-        step = RobustScale(
-            columns, *more_columns, by=by, quantile_range=quantile_range, suffix=suffix
-        )
+        step = RobustScale(columns, *more_columns, by=by, quantile_range=quantile_range)
         if inverse_mapping is None:
             return self.pipe(step)
         else:
             return ScaleInverseContext(self, step, inverse_mapping)
+
+    @overload
+    def boxcox(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+    ) -> Self: ...
+
+    @overload
+    def boxcox(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        inverse_mapping: Mapping[str, str] | None,
+    ) -> PowerTransformInverseContext: ...
+
+    def boxcox(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        inverse_mapping: Mapping[str, str] | None = None,
+    ) -> Self | PowerTransformInverseContext:
+        step = BoxCoxTransform(columns, *more_columns, by=by)
+        if inverse_mapping is None:
+            return self.pipe(step)
+        else:
+            return PowerTransformInverseContext(self, step, inverse_mapping)
+
+    @overload
+    def yeojohnson(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+    ) -> Self: ...
+
+    @overload
+    def yeojohnson(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        inverse_mapping: Mapping[str, str] | None,
+    ) -> PowerTransformInverseContext: ...
+
+    def yeojohnson(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *more_columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        by: str | Sequence[str] | None = None,
+        inverse_mapping: Mapping[str, str] | None = None,
+    ) -> Self | PowerTransformInverseContext:
+        step = YeoJohnsonTransform(columns, *more_columns, by=by)
+        if inverse_mapping is None:
+            return self.pipe(step)
+        else:
+            return PowerTransformInverseContext(self, step, inverse_mapping)
