@@ -22,8 +22,10 @@ from polars import DataFrame, Expr, LazyFrame, Schema
 
 from polars_ml import LazyTransformer
 
+from .basic import LazyApply, LazyConst, LazySide
 from .getattr_lazy import LazyGetAttr
 from .group_by_lazy import LazyGroupByNameSpace
+from .pipeline_mixin import PipelineMixin
 
 if TYPE_CHECKING:
     from deltalake import DeltaTable
@@ -59,7 +61,7 @@ if TYPE_CHECKING:
     from polars.io.scan_options import ScanCastOptions
 
 
-class LazyPipeline(LazyTransformer):
+class LazyPipeline(LazyTransformer, PipelineMixin):
     def __init__(self, *steps: LazyTransformer) -> None:
         self._steps = list(steps)
 
@@ -95,6 +97,15 @@ class LazyPipeline(LazyTransformer):
         for step in self._steps:
             data = step.transform(data)
         return data
+
+    def apply(self, func: Callable[[pl.LazyFrame], pl.LazyFrame]) -> Self:
+        return self.pipe(LazyApply(func))
+
+    def const(self, data: pl.LazyFrame) -> Self:
+        return self.pipe(LazyConst(data))
+
+    def side(self, transformer: LazyTransformer) -> Self:
+        return self.pipe(LazySide(transformer))
 
     def group_by(
         self,

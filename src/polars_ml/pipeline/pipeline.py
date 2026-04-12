@@ -20,10 +20,12 @@ import numpy as np
 import polars as pl
 from polars import DataFrame, Expr, Schema, Series
 
-from polars_ml import Transformer
+from polars_ml import LazyTransformer, Transformer
 
+from .basic import Apply, Const, Side
 from .getattr import GetAttr
 from .group_by import DynamicGroupByNameSpace, GroupByNameSpace, RollingGroupByNameSpace
+from .pipeline_mixin import PipelineMixin
 
 if TYPE_CHECKING:
     import deltalake
@@ -78,12 +80,14 @@ if TYPE_CHECKING:
     from xlsxwriter.worksheet import Worksheet
 
 
-class Pipeline(Transformer):
+class Pipeline(Transformer, PipelineMixin):
     def __init__(self, *steps: Transformer) -> None:
         self._steps = list(steps)
 
-    def pipe(self, step: Transformer) -> Self:
-        self._steps.append(step)
+    def pipe(self, step: Transformer | LazyTransformer) -> Self:
+        self._steps.append(
+            step.collect() if isinstance(step, LazyTransformer) else step
+        )
         return self
 
     def fit(self, data: pl.DataFrame, **more_data: pl.DataFrame) -> Self:
@@ -110,6 +114,15 @@ class Pipeline(Transformer):
         for step in self._steps:
             data = step.transform(data)
         return data
+
+    def apply(self, func: Callable[[pl.DataFrame], pl.DataFrame]) -> Self:
+        return self.pipe(Apply(func))
+
+    def const(self, data: pl.DataFrame) -> Self:
+        return self.pipe(Const(data))
+
+    def side(self, transformer: Transformer) -> Self:
+        return self.pipe(Side(transformer))
 
     def group_by(
         self,
