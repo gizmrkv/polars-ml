@@ -14,7 +14,7 @@ class Echo(LazyTransformer):
 
 
 class Replay(LazyTransformer):
-    def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
+    def fit(self, data: pl.DataFrame, **more_data: pl.DataFrame) -> Self:
         self.data = data
         return self
 
@@ -62,11 +62,13 @@ class Side(Transformer, Generic[TransformerType]):
     def __init__(self, transformer: TransformerType) -> None:
         self.transformer = transformer
 
-    def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
+    def fit(self, data: pl.DataFrame, **more_data: pl.DataFrame) -> Self:
         self.transformer.fit(data, **more_data)
         return self
 
-    def fit_transform(self, data: DataFrame, **more_data: DataFrame) -> DataFrame:
+    def fit_transform(
+        self, data: pl.DataFrame, **more_data: pl.DataFrame
+    ) -> pl.DataFrame:
         self.transformer.fit_transform(data, **more_data)
         return data
 
@@ -79,11 +81,13 @@ class LazySide(LazyTransformer, Generic[LazyTransformerType]):
     def __init__(self, transformer: LazyTransformerType) -> None:
         self.transformer = transformer
 
-    def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
+    def fit(self, data: pl.DataFrame, **more_data: pl.DataFrame) -> Self:
         self.transformer.fit(data, **more_data)
         return self
 
-    def fit_transform(self, data: DataFrame, **more_data: DataFrame) -> DataFrame:
+    def fit_transform(
+        self, data: pl.DataFrame, **more_data: pl.DataFrame
+    ) -> pl.DataFrame:
         self.transformer.fit_transform(data, **more_data)
         return data
 

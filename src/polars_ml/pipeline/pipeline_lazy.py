@@ -1009,7 +1009,7 @@ class LazyPipeline(LazyTransformer, PipelineMixin):
         _column_mapping: ColumnMapping | None = None,
         _default_values: DefaultFieldValues | None = None,
         _deletion_files: DeletionFiles | None = None,
-        _table_statistics: DataFrame | None = None,
+        _table_statistics: pl.DataFrame | None = None,
         _row_count: tuple[int, int] | None = None,
     ) -> Self:
         return self.pipe(
