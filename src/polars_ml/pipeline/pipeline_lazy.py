@@ -23,6 +23,7 @@ from polars import DataFrame, Expr, LazyFrame, Schema
 from polars_ml import LazyTransformer
 
 from .basic import LazyApply, LazyConst, LazySide
+from .concat import LazyConcat
 from .getattr import LazyGetAttr
 from .group_by_lazy import LazyGroupByNameSpace
 from .pipeline_mixin import PipelineMixin
@@ -34,6 +35,7 @@ if TYPE_CHECKING:
         ClosedInterval,
         ColumnMapping,
         ColumnNameOrSelector,
+        ConcatMethod,
         CsvEncoding,
         DefaultFieldValues,
         DeletionFiles,
@@ -106,6 +108,21 @@ class LazyPipeline(LazyTransformer, PipelineMixin):
 
     def side(self, transformer: LazyTransformer) -> Self:
         return self.pipe(LazySide(transformer))
+
+    def concat(
+        self,
+        items: Sequence[LazyTransformer],
+        *,
+        how: ConcatMethod = "vertical",
+        rechunk: bool = False,
+        parallel: bool = True,
+        strict: bool = False,
+    ) -> Self:
+        return self.pipe(
+            LazyConcat(
+                items, how=how, rechunk=rechunk, parallel=parallel, strict=strict
+            )
+        )
 
     def group_by(
         self,

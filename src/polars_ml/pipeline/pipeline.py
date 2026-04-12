@@ -23,6 +23,7 @@ from polars import DataFrame, Expr, Schema, Series
 from polars_ml import LazyTransformer, Transformer
 
 from .basic import Apply, Const, Side
+from .concat import Concat
 from .getattr import GetAttr
 from .group_by import DynamicGroupByNameSpace, GroupByNameSpace, RollingGroupByNameSpace
 from .pipeline_mixin import PipelineMixin
@@ -40,6 +41,7 @@ if TYPE_CHECKING:
         ColumnNameOrSelector,
         ColumnTotalsDefinition,
         ColumnWidthsDefinition,
+        ConcatMethod,
         ConditionalFormatDict,
         ConnectionOrCursor,
         CsvEncoding,
@@ -123,6 +125,19 @@ class Pipeline(Transformer, PipelineMixin):
 
     def side(self, transformer: Transformer) -> Self:
         return self.pipe(Side(transformer))
+
+    def concat(
+        self,
+        items: Sequence[Transformer],
+        *,
+        how: ConcatMethod = "vertical",
+        rechunk: bool = False,
+        parallel: bool = True,
+        strict: bool = False,
+    ) -> Self:
+        return self.pipe(
+            Concat(items, how=how, rechunk=rechunk, parallel=parallel, strict=strict)
+        )
 
     def group_by(
         self,
