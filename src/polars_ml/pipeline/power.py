@@ -76,7 +76,7 @@ class BasePowerTransform(LazyTransformer, ABC):
             if self._by
             else {"left_on": pl.lit(0), "right_on": pl.lit(0)}
         )
-        return (
+        return data.update(
             data.select(*power_columns, *self._by)
             .join(
                 self._maxlog.lazy().select(
@@ -87,7 +87,8 @@ class BasePowerTransform(LazyTransformer, ABC):
                 **on_args,
             )
             .with_columns(self.power_expr(c, f"{c}_maxlog") for c in power_columns)
-            .drop(f"{c}_maxlog" for c in power_columns)
+            .drop(f"{c}_maxlog" for c in power_columns),
+            include_nulls=True,
         )
 
 
