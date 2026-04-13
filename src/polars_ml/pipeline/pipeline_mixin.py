@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Iterable, Mapping, Self, Sequence, overload
 
-from polars._typing import ColumnNameOrSelector
+import polars as pl
+import polars.selectors as cs
+from polars._typing import ColumnNameOrSelector, IntoExpr
 
 from polars_ml import LazyTransformer
 
 from .basic import Echo, Replay
+from .horizontal import HorizontalAgg, HorizontalArgMax, HorizontalArgMin
 from .label_encode import LabelEncode, LabelEncodeInverseContext
 from .power import BoxCoxTransform, PowerTransformInverseContext, YeoJohnsonTransform
 from .scale import MinMaxScale, RobustScale, ScaleInverseContext, StandardScale
@@ -213,3 +217,51 @@ class PipelineMixin(ABC):
             return self.pipe(step)
         else:
             return LabelEncodeInverseContext(self, step, inverse_mapping)
+
+    def horizontal_agg(
+        self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_agg",
+        variable_name: str | None = None,
+        maintain_order: bool = True,
+        aggs: Iterable[IntoExpr | Iterable[IntoExpr]] | None = None,
+        named_aggs: Mapping[str, IntoExpr] | None = None,
+    ) -> Self:
+        return self.pipe(
+            HorizontalAgg(
+                expr,
+                *more_expr,
+                value_name=value_name,
+                variable_name=variable_name,
+                maintain_order=maintain_order,
+                aggs=aggs,
+                named_aggs=named_aggs,
+            )
+        )
+
+    def horizontal_argmax(
+        self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_argmax",
+        maintain_order: bool = True,
+    ) -> Self:
+        return self.pipe(
+            HorizontalArgMax(
+                expr, *more_expr, value_name=value_name, maintain_order=maintain_order
+            )
+        )
+
+    def horizontal_argmin(
+        self,
+        expr: IntoExpr | Iterable[IntoExpr],
+        *more_expr: IntoExpr | Iterable[IntoExpr],
+        value_name: str = "horizontal_argmin",
+        maintain_order: bool = True,
+    ) -> Self:
+        return self.pipe(
+            HorizontalArgMin(
+                expr, *more_expr, value_name=value_name, maintain_order=maintain_order
+            )
+        )
