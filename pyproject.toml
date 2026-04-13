@@ -28,6 +28,10 @@ dev = [
     "deltalake>=1.5.0",
     "xlsxwriter>=3.2.9",
     "sqlalchemy>=2.0.49",
+    "xgboost>=3.2.0",
+    "catboost>=1.2.10",
+    "optuna>=4.8.0",
+    "optuna-integration>=4.8.0",
 ]
 
 [tool.ruff]
