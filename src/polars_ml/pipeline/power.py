@@ -86,8 +86,7 @@ class BasePowerTransform(LazyTransformer, ABC):
                 how="left",
                 **on_args,
             )
-            .with_columns(self.power_expr(c, f"{c}_maxlog") for c in power_columns)
-            .drop(f"{c}_maxlog" for c in power_columns),
+            .with_columns(self.power_expr(c, f"{c}_maxlog") for c in power_columns),
             include_nulls=True,
         )
 

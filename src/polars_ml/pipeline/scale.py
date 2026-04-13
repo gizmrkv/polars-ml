@@ -185,8 +185,7 @@ class ScaleInverse(LazyTransformer):
             )
             .with_columns(
                 pl.col(c) * pl.col(f"{c}_scale") + pl.col(f"{c}_loc") for c in sources
-            )
-            .drop(f"{c}_{s}" for c in sources for s in ["loc", "scale"]),
+            ),
             include_nulls=True,
         )
 

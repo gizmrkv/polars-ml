@@ -95,8 +95,9 @@ class LabelEncodeInverse(LazyTransformer):
             if src not in self._label_encode.mappings:
                 raise ValueError(f"Column {src} not found in LabelEncode")
 
-            data = (
-                data.join(
+            data = data.update(
+                data.select(tgt)
+                .join(
                     self._label_encode.mappings[src]
                     .lazy()
                     .rename({src + "_label": src}),
@@ -104,8 +105,8 @@ class LabelEncodeInverse(LazyTransformer):
                     right_on=src,
                     how="left",
                 )
-                .with_columns(pl.col(src).alias(tgt))
-                .drop(src)
+                .with_columns(pl.col(src).alias(tgt)),
+                include_nulls=True,
             )
 
         return data
