@@ -3,13 +3,15 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Iterable, Mapping, Self, Sequence, overload
 
-from polars._typing import ColumnNameOrSelector, IntoExpr
+from polars._typing import ColumnNameOrSelector, IntoExpr, JoinStrategy
 
 from polars_ml import LazyTransformer
 
 from .basic import Echo, Replay
 from .combine import Combine
+from .discretize import Discretize
 from .horizontal import HorizontalAgg, HorizontalArgMax, HorizontalArgMin
+from .join_agg import JoinAgg
 from .label_encode import LabelEncode, LabelEncodeInverseContext
 from .power import BoxCoxTransform, PowerTransformInverseContext, YeoJohnsonTransform
 from .scale import MinMaxScale, RobustScale, ScaleInverseContext, StandardScale
@@ -272,3 +274,34 @@ class PipelineMixin(ABC):
         delimiter: str = "_",
     ) -> Self:
         return self.pipe(Combine(columns, n, delimiter=delimiter))
+
+    def discretize(
+        self,
+        exprs: IntoExpr | Iterable[IntoExpr],
+        *more_exprs: IntoExpr | Iterable[IntoExpr],
+        quantiles: Sequence[float] | int,
+        labels: Sequence[str] | None = None,
+        left_closed: bool = False,
+        allow_duplicates: bool = False,
+        suffix: str = "_disc",
+    ) -> Self:
+        return self.pipe(
+            Discretize(
+                exprs,
+                *more_exprs,
+                quantiles=quantiles,
+                labels=labels,
+                left_closed=left_closed,
+                allow_duplicates=allow_duplicates,
+                suffix=suffix,
+            )
+        )
+
+    def join_agg(
+        self,
+        by: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        *aggs: IntoExpr | Iterable[IntoExpr],
+        how: JoinStrategy = "left",
+        suffix: str = "_agg",
+    ) -> Self:
+        return self.pipe(JoinAgg(by, *aggs, how=how, suffix=suffix))

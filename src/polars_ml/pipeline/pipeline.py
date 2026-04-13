@@ -27,6 +27,7 @@ from .concat import Concat
 from .getattr import GetAttr
 from .group_by import DynamicGroupByNameSpace, GroupByNameSpace, RollingGroupByNameSpace
 from .pipeline_mixin import PipelineMixin
+from .stratify_sample import StratifySample
 
 if TYPE_CHECKING:
     import deltalake
@@ -137,6 +138,27 @@ class Pipeline(Transformer, PipelineMixin):
     ) -> Self:
         return self.pipe(
             Concat(items, how=how, rechunk=rechunk, parallel=parallel, strict=strict)
+        )
+
+    def stratify_sample(
+        self,
+        by: ColumnNameOrSelector | Sequence[ColumnNameOrSelector],
+        fraction: float,
+        *,
+        with_replacement: bool = False,
+        shuffle: bool = False,
+        seed: int | None = None,
+        maintain_order: bool = False,
+    ) -> Self:
+        return self.pipe(
+            StratifySample(
+                by,
+                fraction,
+                with_replacement=with_replacement,
+                shuffle=shuffle,
+                seed=seed,
+                maintain_order=maintain_order,
+            )
         )
 
     def group_by(
