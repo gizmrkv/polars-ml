@@ -9,9 +9,6 @@ from polars._typing import IntoExpr
 
 from polars_ml.base import LazyTransformer
 
-if TYPE_CHECKING:
-    from polars_ml import Pipeline
-
 
 class HorizontalAgg(LazyTransformer):
     def __init__(

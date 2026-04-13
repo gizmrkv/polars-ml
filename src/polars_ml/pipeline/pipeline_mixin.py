@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Iterable, Mapping, Self, Sequence, overload
 
-import polars as pl
-import polars.selectors as cs
 from polars._typing import ColumnNameOrSelector, IntoExpr
 
 from polars_ml import LazyTransformer
 
 from .basic import Echo, Replay
+from .combine import Combine
 from .horizontal import HorizontalAgg, HorizontalArgMax, HorizontalArgMin
 from .label_encode import LabelEncode, LabelEncodeInverseContext
 from .power import BoxCoxTransform, PowerTransformInverseContext, YeoJohnsonTransform
@@ -265,3 +263,12 @@ class PipelineMixin(ABC):
                 expr, *more_expr, value_name=value_name, maintain_order=maintain_order
             )
         )
+
+    def combine(
+        self,
+        columns: ColumnNameOrSelector | Iterable[ColumnNameOrSelector],
+        n: int,
+        *,
+        delimiter: str = "_",
+    ) -> Self:
+        return self.pipe(Combine(columns, n, delimiter=delimiter))
