@@ -60,7 +60,7 @@ class MulticlassClassificationMetrics(Transformer):
             )
             metrics_list.append(metrics)
 
-        return DataFrame(metrics_list)
+        return pl.DataFrame(metrics_list)
 
     def calc_metrics(
         self, y_true: NDArray[Any], y_probs: NDArray[Any]
