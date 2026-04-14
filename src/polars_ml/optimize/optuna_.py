@@ -1,0 +1,255 @@
+from __future__ import annotations
+
+from copy import deepcopy
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, Protocol, Self
+
+import polars as pl
+
+from polars_ml.base import Transformer
+from polars_ml.exceptions import NotFittedError
+
+if TYPE_CHECKING:
+    import optuna
+
+
+class ModelFunction(Protocol):
+    def __call__(
+        self, *args: Any, trial: optuna.Trial | None = None, **kwargs: Any
+    ) -> Transformer: ...
+
+
+class ObjectiveFunction(Protocol):
+    def __call__(
+        self,
+        model: Transformer,
+        data: pl.DataFrame,
+        trial: optuna.Trial | None = None,
+        **more_data: pl.DataFrame,
+    ) -> Any: ...
+
+
+class OptunaOptimizer(Transformer):
+    def __init__(
+        self,
+        model_fn: ModelFunction,
+        objective_fn: ObjectiveFunction,
+        search_space: Mapping[str, Mapping[str, Any]],
+        *,
+        sampler: optuna.samplers.BaseSampler | None = None,
+        pruner: optuna.pruners.BasePruner | None = None,
+        study_name: str | None = None,
+        is_higher_better: bool = False,
+        load_if_exists: bool = False,
+        n_trials: int | None = None,
+        timeout: int | None = None,
+        n_jobs: int = 1,
+        gc_after_trial: bool = False,
+        show_progress_bar: bool = False,
+        storage: str | Path | optuna.storages.BaseStorage = "./journal.log",
+    ):
+        import optuna
+        import optuna.storages.journal
+
+        self._model_fn = model_fn
+        self._objective_fn = objective_fn
+        self._search_space = search_space
+        self._sampler = sampler
+        self._pruner = pruner
+        self._study_name = study_name
+        self._is_higher_better = is_higher_better
+        self._load_if_exists = load_if_exists
+        self._n_trials = n_trials
+        self._timeout = timeout
+        self._n_jobs = n_jobs
+        self._gc_after_trial = gc_after_trial
+        self._show_progress_bar = show_progress_bar
+
+        if isinstance(storage, (str, Path)):
+            file_path = storage if isinstance(storage, str) else storage.as_posix()
+            storage = optuna.storages.journal.JournalStorage(
+                optuna.storages.journal.JournalFileBackend(file_path)
+            )
+
+        self._storage = storage
+
+        self._best_params: dict[str, Any] | None = None
+        self._best_model: Transformer | None = None
+
+    def fit(self, data: pl.DataFrame, **more_data: pl.DataFrame) -> Self:
+        import optuna
+
+        study = optuna.create_study(
+            storage=self._storage,
+            sampler=self._sampler,
+            pruner=self._pruner,
+            study_name=self._study_name,
+            direction="maximize" if self._is_higher_better else "minimize",
+            load_if_exists=self._load_if_exists,
+        )
+
+        def wrap_objective(
+            objective: ObjectiveFunction,
+            search_space: Mapping[str, Mapping[str, Any]],
+        ) -> Callable[[optuna.Trial], Any]:
+            def _objective(trial: optuna.Trial) -> Any:
+                return objective(
+                    self._model_fn(
+                        **self.suggest_params(trial, search_space), trial=trial
+                    ),
+                    deepcopy(data),
+                    trial=trial,
+                    **deepcopy(more_data),
+                )
+
+            return _objective
+
+        study.optimize(
+            wrap_objective(self._objective_fn, self._search_space),
+            n_trials=self._n_trials,
+            timeout=self._timeout,
+            n_jobs=self._n_jobs,
+            gc_after_trial=self._gc_after_trial,
+            show_progress_bar=self._show_progress_bar,
+        )
+
+        self._best_params = self.get_params(study.best_trial, self._search_space)
+        self._best_model = self._model_fn(**self._best_params)
+        self._best_model.fit(data, **more_data)
+
+        return self
+
+    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+        if self._best_model is None:
+            raise NotFittedError()
+
+        return self._best_model.transform(data)
+
+    def is_valid_clause(
+        self,
+        target: Mapping[str, Any],
+        *required: str,
+        optional: Iterable[str] | None = None,
+    ) -> bool:
+        optional_keys = set(optional) if optional is not None else set()
+
+        if not all(key in target for key in required):
+            return False
+
+        target_keys = set(target.keys())
+        valid_keys = set(required) | optional_keys
+        return target_keys.issubset(valid_keys)
+
+    def parse_grid_search_space(
+        self, search_space: Mapping[str, Mapping[str, Any]]
+    ) -> dict[str, list[Any]]:
+        grid_space: dict[str, list[Any]] = {}
+        for var_name, var_space in search_space.items():
+            if self.is_valid_clause(var_space, "values"):
+                values = var_space["values"]
+                if isinstance(values, dict):
+                    grid_space |= {
+                        f"{var_name}_{k}": v
+                        for k, v in self.parse_grid_search_space(values).items()
+                    }
+                elif isinstance(values, (list, tuple)):
+                    grid_space[var_name] = list(values)
+            elif self.is_valid_clause(var_space, "min", "max"):
+                min_v = var_space["min"]
+                max_v = var_space["max"]
+                if isinstance(min_v, int) and isinstance(max_v, int):
+                    grid_space[var_name] = list(range(min_v, max_v + 1))
+                else:
+                    raise ValueError(
+                        f"Invalid configuration for '{var_name}': 'min' and 'max' must be integers."
+                    )
+
+        return grid_space
+
+    def suggest_params(
+        self,
+        trial: optuna.Trial,
+        search_space: Mapping[str, Mapping[str, Any]],
+        prefix: str = "",
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {}
+        for var_name, var_space in search_space.items():
+            if self.is_valid_clause(var_space, "value"):
+                params[var_name] = var_space["value"]
+
+            elif self.is_valid_clause(var_space, "values"):
+                values = var_space["values"]
+
+                if isinstance(values, dict):
+                    params[var_name] = self.suggest_params(
+                        trial, values, prefix=prefix + var_name + "/"
+                    )
+
+                elif isinstance(values, (list, tuple)):
+                    params[var_name] = trial.suggest_categorical(
+                        prefix + var_name, values
+                    )
+
+                else:
+                    raise ValueError(
+                        f"Invalid configuration for '{var_name}': 'values' must be a list or a dictionary. Got {values}"
+                    )
+
+            elif self.is_valid_clause(
+                var_space, "min", "max", optional=["log", "step"]
+            ):
+                min_v = var_space["min"]
+                max_v = var_space["max"]
+
+                if isinstance(min_v, int) and isinstance(max_v, int):
+                    step = var_space.get("step", 1)
+                    params[var_name] = trial.suggest_int(
+                        prefix + var_name, min_v, max_v, step=step
+                    )
+
+                elif isinstance(min_v, float) and isinstance(max_v, float):
+                    log = var_space.get("log", False)
+                    step = var_space.get("step", None)
+                    params[var_name] = trial.suggest_float(
+                        prefix + var_name, min_v, max_v, log=log, step=step
+                    )
+
+                else:
+                    raise ValueError(
+                        f"Invalid configuration for '{var_name}': 'min' and 'max' must be of the same type (both int or both float). Got {min_v} and {max_v}"
+                    )
+
+            else:
+                raise ValueError(
+                    f"Invalid configuration for '{var_name}': must contain 'value', 'values', or 'min' and 'max'. Got {var_space}"
+                )
+
+        return params
+
+    def get_params(
+        self,
+        trial: optuna.trial.FrozenTrial,
+        search_space: Mapping[str, Mapping[str, Any]],
+        prefix: str = "",
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {}
+        for var_name, var_space in search_space.items():
+            if self.is_valid_clause(var_space, "value"):
+                params[var_name] = var_space["value"]
+
+            elif self.is_valid_clause(var_space, "values"):
+                values = var_space["values"]
+
+                if isinstance(values, dict):
+                    params[var_name] = self.get_params(
+                        trial, values, prefix=prefix + var_name + "/"
+                    )
+                else:
+                    params[var_name] = trial.params[prefix + var_name]
+
+            elif self.is_valid_clause(
+                var_space, "min", "max", optional=["log", "step"]
+            ):
+                params[var_name] = trial.params[prefix + var_name]
+
+        return params
