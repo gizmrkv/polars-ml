@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
+import polars as pl
 from numpy.typing import NDArray
-from polars import DataFrame
 from polars._typing import ColumnNameOrSelector
 
 from polars_ml.base import Transformer
@@ -21,7 +21,7 @@ class RegressionMetrics(Transformer):
         self._y_preds = y_preds
         self._by = by
 
-    def transform(self, data: DataFrame) -> DataFrame:
+    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
         if self._y_true not in data.columns:
             raise ValueError(f"y_true column '{self._y_true}' not found in data")
 
@@ -39,7 +39,9 @@ class RegressionMetrics(Transformer):
                         for k, v in metrics.items()
                     ]
                 )
-            metrics_df = DataFrame(metrics_list).select("prediction", "metric", "value")
+            metrics_df = pl.DataFrame(metrics_list).select(
+                "prediction", "metric", "value"
+            )
 
         else:
             for (by,), group in data.partition_by(
@@ -63,7 +65,7 @@ class RegressionMetrics(Transformer):
                         ]
                     )
 
-            metrics_df = DataFrame(metrics_list).select(
+            metrics_df = pl.DataFrame(metrics_list).select(
                 "by", "prediction", "metric", "value"
             )
 

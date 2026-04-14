@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import Any, Self, Sequence
 
 import numpy as np
+import polars as pl
 from numpy.typing import NDArray
-from polars import DataFrame
 from polars._typing import ColumnNameOrSelector
 
 from polars_ml.base import Transformer
@@ -26,7 +26,7 @@ class MulticlassClassificationMetrics(Transformer):
 
         self._train_class_dist: NDArray[Any] | None = None
 
-    def fit(self, data: DataFrame, **more_data: DataFrame) -> Self:
+    def fit(self, data: pl.DataFrame, **more_data: pl.DataFrame) -> Self:
         # Calculate training class distribution for normalized entropy
         counts = data[self._y_true].value_counts()
         n_samples = len(data)
@@ -41,7 +41,7 @@ class MulticlassClassificationMetrics(Transformer):
         self._train_class_dist = dist
         return self
 
-    def transform(self, data: DataFrame) -> DataFrame:
+    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
         metrics_list: list[dict[str, Any]] = []
         if self._by is not None:
             by_columns = data.lazy().select(self._by).collect_schema().names()
