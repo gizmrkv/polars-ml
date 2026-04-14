@@ -100,7 +100,7 @@ class GroupByNameSpace:
             GroupByGetAttr(self.attr, "len", self.args, self.kwargs, name)
         )
 
-    def map_groups(self, function: Callable[[DataFrame], DataFrame]) -> Pipeline:
+    def map_groups(self, function: Callable[[pl.DataFrame], DataFrame]) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(self.attr, "map_groups", self.args, self.kwargs, function)
         )
@@ -201,7 +201,7 @@ class DynamicGroupByNameSpace:
         )
 
     def map_groups(
-        self, function: Callable[[DataFrame], DataFrame], schema: SchemaDict | None
+        self, function: Callable[[pl.DataFrame], DataFrame], schema: SchemaDict | None
     ) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(
@@ -231,7 +231,7 @@ class RollingGroupByNameSpace:
         )
 
     def map_groups(
-        self, function: Callable[[DataFrame], DataFrame], schema: SchemaDict | None
+        self, function: Callable[[pl.DataFrame], DataFrame], schema: SchemaDict | None
     ) -> Pipeline:
         return self.pipeline.pipe(
             GroupByGetAttr(

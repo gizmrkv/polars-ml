@@ -103,7 +103,7 @@ class LazyGroupByNameSpace:
         )
 
     def map_groups(
-        self, function: Callable[[DataFrame], DataFrame], schema: SchemaDict | None
+        self, function: Callable[[pl.DataFrame], DataFrame], schema: SchemaDict | None
     ) -> LazyPipeline:
         return self.pipeline.pipe(
             LazyGroupByGetAttr(

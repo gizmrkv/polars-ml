@@ -403,7 +403,7 @@ class LazyPipeline(LazyTransformer, PipelineMixin):
 
     def map_batches(
         self,
-        function: Callable[[DataFrame], DataFrame],
+        function: Callable[[pl.DataFrame], DataFrame],
         predicate_pushdown: bool = True,
         projection_pushdown: bool = True,
         slice_pushdown: bool = True,
