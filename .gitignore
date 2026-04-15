@@ -209,3 +209,4 @@ __marimo__/
 .agent/
 .claude/
 notebook/
+outputs/
