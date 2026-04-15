@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Self, Sequence
 
+import lightning as L
 import polars as pl
 import polars.selectors as cs
 import torch
@@ -12,9 +13,6 @@ from torch.utils.data import DataLoader, Dataset
 
 from polars_ml.base import Transformer
 from polars_ml.exceptions import NotFittedError
-
-if TYPE_CHECKING:
-    import lightning as L
 
 Batch = tuple[dict[str, torch.Tensor], torch.Tensor] | dict[str, torch.Tensor]
 

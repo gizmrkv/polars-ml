@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, Mapping, Protocol, Self, Sequence
+from typing import Any, Iterable, Self, Sequence
 
 import polars as pl
 from polars._typing import ColumnNameOrSelector
@@ -71,24 +71,23 @@ class BasePowerTransform(LazyTransformer, ABC):
 
         input_columns = data.collect_schema().names()
         power_columns = set(input_columns) & set(self._columns)
-        on_args: dict[str, Any] = (
-            {"on": self._by}
-            if self._by
-            else {"left_on": pl.lit(0), "right_on": pl.lit(0)}
-        )
-        return data.update(
-            data.select(*power_columns, *self._by)
-            .join(
-                self._maxlog.lazy().select(
-                    *self._by,
-                    *[pl.col(f"{c}_maxlog") for c in power_columns],
-                ),
-                how="left",
-                **on_args,
-            )
-            .with_columns(self.power_expr(c, f"{c}_maxlog") for c in power_columns),
-            include_nulls=True,
-        )
+        on_args: dict[str, Any] = {"on": self._by if self._by else pl.lit(0)}
+        return pl.concat(
+            [
+                data.drop(*power_columns),
+                data.select(*power_columns, *self._by)
+                .join(
+                    self._maxlog.lazy().select(
+                        *self._by,
+                        *[pl.col(f"{c}_maxlog") for c in power_columns],
+                    ),
+                    how="left",
+                    **on_args,
+                    suffix="",
+                )
+                .select(self.power_expr(c, f"{c}_maxlog") for c in power_columns),
+            ]
+        ).select(*input_columns)
 
 
 class BoxCoxTransform(BasePowerTransform):
@@ -127,67 +126,6 @@ class YeoJohnsonTransform(BasePowerTransform):
 
     def power_inv_expr(self, column: str, maxlog: str) -> pl.Expr:
         return yeojohnson_inv(pl.col(column), pl.col(maxlog))
-
-
-class PowerTransformInverse(LazyTransformer):
-    def __init__(
-        self,
-        power_transform: BasePowerTransform,
-        mapping: Mapping[str, str] | None = None,
-    ):
-        self._power_transform = power_transform
-        self._mapping = mapping
-
-    @property
-    def mapping(self) -> Mapping[str, str]:
-        if self._mapping is not None:
-            return self._mapping
-        return {col: col for col in self._power_transform.columns}
-
-    def transform(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        input_columns = data.collect_schema().names()
-        sources = set(input_columns) & set(self.mapping.values())
-        on_args: dict[str, Any] = (
-            {"on": self._power_transform.by}
-            if self._power_transform.by
-            else {"left_on": pl.lit(0), "right_on": pl.lit(0)}
-        )
-        data = data.join(
-            self._power_transform.maxlog.lazy().select(
-                *self._power_transform.by,
-                *[pl.col(f"{c}_maxlog").alias(f"{c}_maxlog") for c in sources],
-            ),
-            how="left",
-            **on_args,
-        )
-        return data.with_columns(
-            self._power_transform.power_inv_expr(s, f"{s}_maxlog") for s in sources
-        ).drop(f"{s}_maxlog" for s in sources)
-
-
-class Pipeline(Protocol):
-    def pipe(self, step: LazyTransformer) -> Self: ...
-
-
-class PowerTransformInverseContext:
-    def __init__(
-        self,
-        pipeline: Pipeline,
-        power_transform: BasePowerTransform,
-        mapping: Mapping[str, str] | None = None,
-    ):
-        self._pipeline = pipeline
-        self._power_transform = power_transform
-        self._power_transform_inverse = PowerTransformInverse(
-            self._power_transform, mapping=mapping
-        )
-        self._mapping = mapping
-
-    def __enter__(self):
-        self._pipeline.pipe(self._power_transform)
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        self._pipeline.pipe(self._power_transform_inverse)
 
 
 def boxcox_maxlog(x: pl.Series) -> float:

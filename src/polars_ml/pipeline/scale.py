@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, Mapping, Protocol, Self, Sequence
+from typing import Any, Iterable, Self, Sequence
 
 import polars as pl
 from polars._typing import ColumnNameOrSelector
@@ -68,29 +68,27 @@ class BaseScale(LazyTransformer, ABC):
 
         input_columns = data.collect_schema().names()
         scale_columns = set(input_columns) & set(self._columns)
-        on_args: dict[str, Any] = (
-            {"on": self._by}
-            if self._by
-            else {"left_on": pl.lit(0), "right_on": pl.lit(0)}
-        )
-        return data.update(
-            data.select(*scale_columns, *self._by)
-            .join(
-                self._stats.lazy().select(
-                    *self._by,
-                    *[pl.col(f"{t}_loc") for t in scale_columns],
-                    *[pl.col(f"{t}_scale") for t in scale_columns],
+        on_args: dict[str, Any] = {"on": self._by if self._by else pl.lit(0)}
+        return pl.concat(
+            [
+                data.drop(*scale_columns),
+                data.select(*scale_columns, *self._by)
+                .join(
+                    self._stats.lazy().select(
+                        *self._by,
+                        *[pl.col(f"{t}_loc") for t in scale_columns],
+                        *[pl.col(f"{t}_scale") for t in scale_columns],
+                    ),
+                    how="left",
+                    **on_args,
+                    suffix="",
+                )
+                .select(
+                    (pl.col(c) - pl.col(f"{c}_loc")) / pl.col(f"{c}_scale")
+                    for c in scale_columns
                 ),
-                how="left",
-                **on_args,
-            )
-            .with_columns(
-                (pl.col(c) - pl.col(f"{c}_loc")) / pl.col(f"{c}_scale")
-                for c in scale_columns
-            )
-            .drop(f"{c}_{s}" for c in scale_columns for s in ["loc", "scale"]),
-            include_nulls=True,
-        )
+            ]
+        ).select(*input_columns)
 
 
 class StandardScale(BaseScale):
@@ -148,65 +146,3 @@ class RobustScale(BaseScale):
         return pl.col(column).quantile(self._q_upper) - pl.col(column).quantile(
             self._q_lower
         )
-
-
-class ScaleInverse(LazyTransformer):
-    def __init__(
-        self, scale: BaseScale, mapping: Mapping[str, str] | None = None
-    ) -> None:
-        self._scale = scale
-        self._mapping = mapping
-
-    @property
-    def mapping(self) -> Mapping[str, str]:
-        if self._mapping is not None:
-            return self._mapping
-        return {col: col for col in self._scale.columns}
-
-    def transform(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        input_columns = data.collect_schema().names()
-        sources = set(input_columns) & set(self.mapping.values())
-
-        on_args: dict[str, Any] = (
-            {"on": self._scale.by}
-            if self._scale.by
-            else {"left_on": pl.lit(0), "right_on": pl.lit(0)}
-        )
-        return data.update(
-            data.select(*sources, *self._scale.by)
-            .join(
-                self._scale.stats.lazy().select(
-                    *self._scale.by,
-                    *[pl.col(f"{t}_loc") for t in sources],
-                    *[pl.col(f"{t}_scale") for t in sources],
-                ),
-                how="left",
-                **on_args,
-            )
-            .with_columns(
-                pl.col(c) * pl.col(f"{c}_scale") + pl.col(f"{c}_loc") for c in sources
-            ),
-            include_nulls=True,
-        )
-
-
-class Pipeline(Protocol):
-    def pipe(self, step: LazyTransformer) -> Self: ...
-
-
-class ScaleInverseContext:
-    def __init__(
-        self,
-        pipeline: Pipeline,
-        scale: BaseScale,
-        mapping: Mapping[str, str] | None = None,
-    ):
-        self._pipeline = pipeline
-        self._scale = scale
-        self._mapping = mapping
-
-    def __enter__(self) -> None:
-        self._pipeline.pipe(self._scale)
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        self._pipeline.pipe(ScaleInverse(self._scale, mapping=self._mapping))
