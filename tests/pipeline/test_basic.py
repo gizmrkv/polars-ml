@@ -63,14 +63,12 @@ def test_lazy_apply() -> None:
 
 def test_side() -> None:
     df = pl.DataFrame({"a": [1, 2]})
-    # Side should execute the transformer but return the original data
     mock_transformer = Apply(lambda x: x.with_columns(pl.col("a") * 2))
     side = Side(mock_transformer)
 
     transformed = side.transform(df)
     assert_frame_equal(transformed, df)
 
-    # Check fit_transform
     transformed_ft = side.fit_transform(df)
     assert_frame_equal(transformed_ft, df)
 
@@ -83,7 +81,6 @@ def test_lazy_side() -> None:
     transformed = side.transform(df.lazy()).collect()
     assert_frame_equal(transformed, df)
 
-    # Check fit_transform
     transformed_ft = side.fit_transform(df)
     assert_frame_equal(transformed_ft, df)
 

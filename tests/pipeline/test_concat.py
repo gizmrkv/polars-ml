@@ -8,13 +8,9 @@ from polars_ml.pipeline.concat import Concat, LazyConcat
 def test_concat_horizontal() -> None:
     df = pl.DataFrame({"a": [1, 2]})
 
-    # Two transformers adding different columns
     t1 = Apply(lambda x: x.select(pl.col("a") * 2).rename({"a": "b"}))
     t2 = Apply(lambda x: x.select(pl.col("a") * 3).rename({"a": "c"}))
 
-    # Horizontal concat should join them sideway
-    # Wait, the implementation of Concat.transform/fit_transform calls pl.concat(data_list, **self.params)
-    # where data_list is results of item.transform(data)
 
     concat = Concat([t1, t2], how="horizontal")
     transformed = concat.transform(df)

@@ -13,10 +13,6 @@ def test_standard_scale_basic() -> None:
     scaler.fit(df)
     transformed = scaler.transform(df.lazy()).collect()
 
-    # mean=2, std=1
-    # (1-2)/1 = -1
-    # (2-2)/1 = 0
-    # (3-2)/1 = 1
     expected = pl.DataFrame({"a": [-1.0, 0.0, 1.0]})
     assert_frame_equal(transformed, expected)
 
@@ -28,10 +24,6 @@ def test_min_max_scale_basic() -> None:
     scaler.fit(df)
     transformed = scaler.transform(df.lazy()).collect()
 
-    # min=1, max=5, range=4
-    # (1-1)/4 = 0
-    # (3-1)/4 = 0.5
-    # (5-1)/4 = 1
     expected = pl.DataFrame({"a": [0.0, 0.5, 1.0]})
     assert_frame_equal(transformed, expected)
 
@@ -39,13 +31,10 @@ def test_min_max_scale_basic() -> None:
 def test_robust_scale_basic() -> None:
     df = pl.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0]})
 
-    # median=3
-    # Q1(0.25)=2, Q3(0.75)=4, IQR=2
     scaler = RobustScale("a", quantile_range=(0.25, 0.75))
     scaler.fit(df)
     transformed = scaler.transform(df.lazy()).collect()
 
-    # (x-3)/2
     expected = pl.DataFrame({"a": [-1.0, -0.5, 0.0, 0.5, 1.0]})
     assert_frame_equal(transformed, expected)
 
@@ -57,8 +46,6 @@ def test_scale_by_group() -> None:
     scaler.fit(df)
     transformed = scaler.transform(df.lazy()).collect()
 
-    # For g="a": min=1, max=3 -> [0, 1]
-    # For g="b": min=10, max=30 -> [0, 1]
     expected = pl.DataFrame({"g": ["a", "a", "b", "b"], "v": [0.0, 1.0, 0.0, 1.0]})
     assert_frame_equal(transformed, expected)
 

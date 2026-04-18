@@ -8,14 +8,11 @@ from polars_ml.pipeline.discretize import Discretize
 def test_discretize_basic() -> None:
     df = pl.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]})
 
-    # 2 bins (quantiles=2)
     disc = Discretize("a", quantiles=2)
     disc.fit(df)
     transformed = disc.transform(df.lazy()).collect()
 
     assert "a_disc" in transformed.columns
-    # Check that we have 2 levels (categorical/string depending on labels,
-    # but by default it's from pl.cut)
     assert transformed["a_disc"].n_unique() == 2
 
 

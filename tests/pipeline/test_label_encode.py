@@ -67,7 +67,6 @@ def test_label_encode_missing_column() -> None:
     encoder = LabelEncode("a").fit(df_fit)
 
     df_transform = pl.DataFrame({"b": ["apple", "banana"]})
-    # transform for LazyTransformer takes LazyFrame
     encoded = encoder.transform(df_transform.lazy()).collect()
 
     assert_frame_equal(encoded, df_transform)

@@ -13,12 +13,10 @@ def test_pipeline_flow() -> None:
         Apply(lambda x: x.with_columns(pl.col("a") * 2)),
     )
 
-    # transform
     transformed = pipe.transform(df)
     expected = pl.DataFrame({"a": [4, 6]})
     assert_frame_equal(transformed, expected)
 
-    # fit_transform
     transformed_ft = pipe.fit_transform(df)
     assert_frame_equal(transformed_ft, expected)
 
@@ -26,7 +24,6 @@ def test_pipeline_flow() -> None:
 def test_pipeline_methods_chaining() -> None:
     df = pl.DataFrame({"a": [3, 1, 2], "b": [10, 20, 30]})
 
-    # Test chaining of mixin methods
     pipe = Pipeline().sort("a").with_columns(pl.col("b") * 2)
     transformed = pipe.transform(df)
 
@@ -35,7 +32,6 @@ def test_pipeline_methods_chaining() -> None:
 
 
 def test_pipeline_more_data() -> None:
-    # Test that more_data is handled correctly in fit
     from typing import Callable, Self
 
     df = pl.DataFrame({"a": [1, 2]})
@@ -55,7 +51,6 @@ def test_pipeline_more_data() -> None:
 
     pipe.fit(df, val=val)
 
-    # tracker.fit should receive transformed val
     assert "val" in tracker.fitted_more_data
     expected_val = pl.DataFrame({"a": [13, 14]})
     assert_frame_equal(tracker.fitted_more_data["val"], expected_val)
@@ -64,12 +59,5 @@ def test_pipeline_more_data() -> None:
 def test_pipeline_collect_lazy() -> None:
     from polars_ml.pipeline.basic import Echo
 
-    # Pipeline.pipe converts LazyTransformer to Transformer using .collect()
     pipe = Pipeline().pipe(Echo())
     assert len(pipe._steps) == 1
-    # Check if it was converted (Echo is LazyTransformer, but Pipeline.pipe should've wrapped/converted it)
-    # Actually looking at pipeline.py:92: step.collect() if isinstance(step, LazyTransformer) else step
-    # Wait, does LazyTransformer have .collect()?
-    # Let's check polars_ml.base.LazyTransformer (I'll assume it does or pipe method handles it)
-    # If it fails, it's a bug the user wants to keep.
-    pass

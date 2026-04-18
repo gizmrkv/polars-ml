@@ -8,7 +8,6 @@ from polars_ml.pipeline.group_by_lazy import LazyGroupByGetAttr
 def test_lazy_group_by_get_attr_basic() -> None:
     df = pl.DataFrame({"g": ["a", "a", "b"], "v": [1, 2, 3]})
 
-    # Test LazyGroupByGetAttr directly
     step = LazyGroupByGetAttr("group_by", "agg", ("g",), {}, pl.col("v").sum())
     transformed = step.transform(df.lazy()).collect().sort("g")
 

@@ -13,12 +13,10 @@ def test_lazy_pipeline_flow() -> None:
         LazyApply(lambda x: x.with_columns(pl.col("a") * 2)),
     )
 
-    # transform
     transformed = pipe.transform(df.lazy()).collect()
     expected = pl.DataFrame({"a": [4, 6]})
     assert_frame_equal(transformed, expected)
 
-    # fit_transform
     transformed_ft = pipe.fit_transform(df)
     assert_frame_equal(transformed_ft, expected)
 
@@ -53,7 +51,6 @@ def test_lazy_pipeline_more_data() -> None:
 
     pipe.fit(df, val=val)
 
-    # In LazyPipeline.fit, more_data is transformed via step.collect().transform(v)
     assert "val" in tracker.fitted_more_data
     expected_val = pl.DataFrame({"a": [13, 14]})
     assert_frame_equal(tracker.fitted_more_data["val"], expected_val)

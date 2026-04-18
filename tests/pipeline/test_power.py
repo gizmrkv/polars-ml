@@ -6,7 +6,6 @@ from polars_ml.pipeline.power import BoxCoxTransform, YeoJohnsonTransform
 
 
 def test_boxcox_basic() -> None:
-    # Box-Cox requires positive values
     df = pl.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0]})
 
     transformer = BoxCoxTransform("a")
@@ -15,8 +14,6 @@ def test_boxcox_basic() -> None:
 
     assert transformed["a"].dtype == pl.Float64
     assert transformed["a"].n_unique() == 5
-    # Value at 1.0 should be 0.0 regardless of lambda (if lambda != 0) or log(1)=0
-    # Actually BoxCox(x, l) = (x^l - 1)/l. If x=1, 1^l-1 = 0.
     assert pytest.approx(transformed["a"][0]) == 0.0
 
 
@@ -29,13 +26,11 @@ def test_boxcox_by_group() -> None:
     transformer.fit(df)
     transformer.transform(df.lazy()).collect()
 
-    # Check that maxlog is different for each group
     assert transformer.maxlog.height == 2
     assert "v_maxlog" in transformer.maxlog.columns
 
 
 def test_yeojohnson_basic() -> None:
-    # Yeo-Johnson supports negative values
     df = pl.DataFrame({"a": [-2.0, -1.0, 0.0, 1.0, 2.0]})
 
     transformer = YeoJohnsonTransform("a")

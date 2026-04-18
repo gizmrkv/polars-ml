@@ -9,7 +9,6 @@ from polars_ml.pipeline.join_agg import JoinAgg
 def test_join_agg_basic() -> None:
     df = pl.DataFrame({"g": ["a", "a", "b"], "v": [1, 2, 3]})
 
-    # Calculate mean of v per group g and join back
     step = JoinAgg("g", pl.col("v").mean().alias("v_mean"))
     step.fit(df)
     transformed = step.transform(df.lazy()).collect().sort("g", "v")

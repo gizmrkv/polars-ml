@@ -8,8 +8,6 @@ from polars_ml.pipeline.group_by import GroupByGetAttr
 def test_group_by_get_attr_basic() -> None:
     df = pl.DataFrame({"g": ["a", "a", "b"], "v": [1, 2, 3]})
 
-    # Test GroupByGetAttr directly
-    # Equivalent to df.group_by("g").agg(pl.col("v").sum())
     step = GroupByGetAttr("group_by", "agg", ("g",), {}, pl.col("v").sum())
     transformed = step.transform(df).sort("g")
 
@@ -40,7 +38,6 @@ def test_pipeline_group_by_agg() -> None:
 def test_pipeline_group_by_methods() -> None:
     df = pl.DataFrame({"g": ["a", "a", "b"], "v": [1, 2, 3]})
 
-    # Test a few other methods in GroupByNameSpace
     methods = ["len", "first", "last", "mean", "min", "max"]
     for method in methods:
         pipe = getattr(Pipeline().group_by("g"), method)()
