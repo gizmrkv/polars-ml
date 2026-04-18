@@ -87,7 +87,8 @@ class BaseScale(LazyTransformer, ABC):
                     (pl.col(c) - pl.col(f"{c}_loc")) / pl.col(f"{c}_scale")
                     for c in scale_columns
                 ),
-            ]
+            ],
+            how="horizontal",
         ).select(*input_columns)
 
 

@@ -36,6 +36,7 @@ dev = [
     "umap-learn>=0.5.12",
     "kagglehub>=1.0.0",
     "graphviz>=0.21",
+    "pytest>=9.0.3",
 ]
 
 [tool.ruff]

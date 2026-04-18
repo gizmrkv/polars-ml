@@ -34,7 +34,7 @@ class StratifySample(Transformer):
         ):
             sample_list.append(
                 by_data.sample(
-                    fraction=self._fraction * by_data.height,
+                    fraction=self._fraction,
                     with_replacement=self._with_replacement,
                     shuffle=self._shuffle,
                     seed=self._seed,

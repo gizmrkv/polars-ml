@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, Iterable, Mapping
+from typing import Iterable, Mapping
 
 import polars as pl
 import polars.selectors as cs
@@ -51,6 +51,7 @@ class HorizontalAgg(LazyTransformer):
                 .group_by(self._index_name, maintain_order=self._maintain_order)
                 .agg(*self._aggs, **self._named_aggs),
                 on=self._index_name,
+                how="left",
             )
             .drop(self._index_name)
         )

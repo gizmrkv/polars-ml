@@ -45,6 +45,7 @@ class LabelEncode(LazyTransformer):
                 .unique(maintain_order=self._maintain_order)
                 .drop_nulls()
                 .with_row_index("value")
+                .select("key", "value")
             )
             for col in data.columns
         }

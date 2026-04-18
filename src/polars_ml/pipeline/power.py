@@ -86,7 +86,8 @@ class BasePowerTransform(LazyTransformer, ABC):
                     suffix="",
                 )
                 .select(self.power_expr(c, f"{c}_maxlog") for c in power_columns),
-            ]
+            ],
+            how="horizontal",
         ).select(*input_columns)
 
 
