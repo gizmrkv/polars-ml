@@ -60,4 +60,4 @@ def test_pipeline_collect_lazy() -> None:
     from polars_ml.pipeline.basic import Echo
 
     pipe = Pipeline().pipe(Echo())
-    assert len(pipe._steps) == 1
+    assert len(pipe) == 1

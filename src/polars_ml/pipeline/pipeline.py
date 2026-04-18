@@ -87,6 +87,9 @@ class Pipeline(Transformer, PipelineMixin):
     def __init__(self, *steps: Transformer) -> None:
         self._steps = list(steps)
 
+    def __len__(self) -> int:
+        return len(self._steps)
+
     def pipe(self, step: Transformer | LazyTransformer) -> Self:
         self._steps.append(
             step.collect() if isinstance(step, LazyTransformer) else step

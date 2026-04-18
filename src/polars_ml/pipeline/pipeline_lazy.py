@@ -67,6 +67,9 @@ class LazyPipeline(LazyTransformer, PipelineMixin):
     def __init__(self, *steps: LazyTransformer) -> None:
         self._steps = list(steps)
 
+    def __len__(self) -> int:
+        return len(self._steps)
+
     def pipe(self, step: LazyTransformer) -> Self:
         self._steps.append(step)
         return self
