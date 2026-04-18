@@ -1,5 +1,6 @@
 import polars as pl
 import pytest
+from polars.testing import assert_series_equal
 
 from polars_ml.exceptions import NotFittedError
 from polars_ml.pipeline.discretize import Discretize
@@ -23,7 +24,10 @@ def test_discretize_labels() -> None:
     disc.fit(df)
     transformed = disc.transform(df.lazy()).collect()
 
-    assert transformed["a_disc"].to_list() == ["low"] * 5 + ["high"] * 5
+    assert_series_equal(
+        transformed["a_disc"],
+        pl.Series("a_disc", ["low"] * 5 + ["high"] * 5, pl.Categorical),
+    )
 
 
 def test_discretize_not_fitted() -> None:
@@ -41,8 +45,12 @@ def test_discretize_multiple_columns() -> None:
 
     assert "a_disc" in transformed.columns
     assert "b_disc" in transformed.columns
-    assert transformed["a_disc"].to_list() == ["L", "L", "H", "H"]
-    assert transformed["b_disc"].to_list() == ["L", "L", "H", "H"]
+    assert_series_equal(
+        transformed["a_disc"], pl.Series("a_disc", ["L", "L", "H", "H"], pl.Categorical)
+    )
+    assert_series_equal(
+        transformed["b_disc"], pl.Series("b_disc", ["L", "L", "H", "H"], pl.Categorical)
+    )
 
 
 def test_pipeline_discretize() -> None:
@@ -51,7 +59,10 @@ def test_pipeline_discretize() -> None:
     df = pl.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]})
     pipe = Pipeline().discretize("a", quantiles=2, labels=["low", "high"])
     transformed = pipe.fit_transform(df)
-    assert transformed["a_disc"].to_list() == ["low"] * 5 + ["high"] * 5
+    assert_series_equal(
+        transformed["a_disc"],
+        pl.Series("a_disc", ["low"] * 5 + ["high"] * 5, pl.Categorical),
+    )
 
 
 def test_lazy_pipeline_discretize() -> None:
@@ -60,4 +71,7 @@ def test_lazy_pipeline_discretize() -> None:
     df = pl.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]})
     pipe = LazyPipeline().discretize("a", quantiles=2, labels=["low", "high"])
     transformed = pipe.fit_transform(df)
-    assert transformed["a_disc"].to_list() == ["low"] * 5 + ["high"] * 5
+    assert_series_equal(
+        transformed["a_disc"],
+        pl.Series("a_disc", ["low"] * 5 + ["high"] * 5, pl.Categorical),
+    )

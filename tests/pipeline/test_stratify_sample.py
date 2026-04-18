@@ -1,5 +1,5 @@
 import polars as pl
-from polars.testing import assert_frame_equal
+from polars.testing import assert_frame_equal, assert_series_equal
 
 from polars_ml.pipeline.stratify_sample import StratifySample
 
@@ -31,8 +31,10 @@ def test_stratify_sample_multiple_columns() -> None:
         {"g1": ["x", "x", "y", "y"], "g2": ["a", "b", "a", "b"], "v": [1, 2, 3, 4]}
     )
 
-    sampler = StratifySample(by=["g1", "g2"], fraction=1.0)
+    sampler = StratifySample(
+        by=["g1", "g2"], fraction=1.0, seed=42, maintain_order=True
+    )
     sampled = sampler.transform(df)
 
     assert sampled.height == 4
-    assert sampled.sort("g1", "g2")["v"].to_list() == [1, 2, 3, 4]
+    assert_series_equal(sampled["v"], pl.Series("v", [1, 2, 3, 4]))

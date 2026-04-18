@@ -1,5 +1,5 @@
 import polars as pl
-from polars.testing import assert_frame_equal
+from polars.testing import assert_frame_equal, assert_series_equal
 
 from polars_ml.pipeline.horizontal import (
     HorizontalAgg,
@@ -29,7 +29,9 @@ def test_horizontal_arg_max() -> None:
     step = HorizontalArgMax("a", "b", "c", value_name="best_col")
     transformed = step.transform(df.lazy()).collect()
 
-    assert transformed["best_col"].list.get(0).to_list() == ["b", "c", "b"]
+    assert_series_equal(
+        transformed["best_col"].list.get(0), pl.Series("best_col", ["b", "c", "b"])
+    )
 
 
 def test_horizontal_arg_min() -> None:
@@ -38,7 +40,9 @@ def test_horizontal_arg_min() -> None:
     step = HorizontalArgMin(["a", "b"], value_name="worst_col")
     transformed = step.transform(df.lazy()).collect()
 
-    assert transformed["worst_col"].list.get(0).to_list() == ["a", "b", "a"]
+    assert_series_equal(
+        transformed["worst_col"].list.get(0), pl.Series("worst_col", ["a", "b", "a"])
+    )
 
 
 def test_pipeline_horizontal_agg() -> None:
@@ -59,7 +63,9 @@ def test_pipeline_horizontal_argmax() -> None:
     df = pl.DataFrame({"a": [1, 5, 2], "b": [4, 2, 8], "c": [0, 10, 5]})
     pipe = Pipeline().horizontal_argmax(["a", "b", "c"], value_name="best_col")
     transformed = pipe.fit_transform(df)
-    assert transformed["best_col"].list.get(0).to_list() == ["b", "c", "b"]
+    assert_series_equal(
+        transformed["best_col"].list.get(0), pl.Series("best_col", ["b", "c", "b"])
+    )
 
 
 def test_lazy_pipeline_horizontal_argmin() -> None:
@@ -68,4 +74,6 @@ def test_lazy_pipeline_horizontal_argmin() -> None:
     df = pl.DataFrame({"a": [1, 5, 2], "b": [4, 2, 8]})
     pipe = LazyPipeline().horizontal_argmin(["a", "b"], value_name="worst_col")
     transformed = pipe.fit_transform(df)
-    assert transformed["worst_col"].list.get(0).to_list() == ["a", "b", "a"]
+    assert_series_equal(
+        transformed["worst_col"].list.get(0), pl.Series("worst_col", ["a", "b", "a"])
+    )

@@ -1,6 +1,6 @@
 import polars as pl
 import pytest
-from polars.testing import assert_frame_equal
+from polars.testing import assert_frame_equal, assert_series_equal
 
 from polars_ml.exceptions import NotFittedError
 from polars_ml.pipeline.join_agg import JoinAgg
@@ -35,8 +35,12 @@ def test_join_agg_multiple_aggs() -> None:
 
     assert "min" in transformed.columns
     assert "max" in transformed.columns
-    assert transformed.filter(pl.col("g") == "a")["min"].to_list() == [1, 1]
-    assert transformed.filter(pl.col("g") == "a")["max"].to_list() == [2, 2]
+    assert_series_equal(
+        transformed.filter(pl.col("g") == "a")["min"], pl.Series("min", [1, 1])
+    )
+    assert_series_equal(
+        transformed.filter(pl.col("g") == "a")["max"], pl.Series("max", [2, 2])
+    )
 
 
 def test_pipeline_join_agg() -> None:

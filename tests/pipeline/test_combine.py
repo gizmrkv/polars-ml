@@ -1,5 +1,6 @@
 import polars as pl
 import pytest
+from polars.testing import assert_series_equal
 
 from polars_ml.exceptions import NotFittedError
 from polars_ml.pipeline.combine import Combine
@@ -16,7 +17,7 @@ def test_combine_basic() -> None:
     assert transformed["a_b"].dtype == pl.Struct
 
     expected_structs = pl.Series("a_b", [{"a": 1, "b": "x"}, {"a": 2, "b": "y"}])
-    assert (transformed["a_b"] == expected_structs).all()
+    assert_series_equal(transformed["a_b"], expected_structs)
 
 
 def test_combine_delimiter() -> None:
