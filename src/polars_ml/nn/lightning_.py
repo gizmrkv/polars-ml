@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterable, Self, Sequence
+from typing import Any, Iterable, Self, Sequence
 
 import lightning as L
 import polars as pl

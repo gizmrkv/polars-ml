@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, Mapping, Self, Sequence, overload
+from typing import Any, Iterable, Mapping, Self, Sequence
 
 from polars._typing import ColumnNameOrSelector, IntoExpr, JoinStrategy
 

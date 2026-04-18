@@ -1,7 +1,7 @@
 import uuid
 
 import polars as pl
-from polars import DataFrame, Series
+from polars import Series
 
 
 def train_test_split(

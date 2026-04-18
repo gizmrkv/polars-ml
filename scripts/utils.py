@@ -6,15 +6,7 @@ from inspect import Parameter
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping
 
-import polars as pl
-from polars.dataframe.group_by import DynamicGroupBy, GroupBy, RollingGroupBy
-from polars.lazyframe.group_by import LazyGroupBy
 
-from polars_ml.pipeline.group_by import (
-    DynamicGroupByNameSpace,
-    GroupByNameSpace,
-    RollingGroupByNameSpace,
-)
 
 
 @dataclass

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import uuid
-from typing import Callable, Iterable, Mapping, Self
+from typing import Callable, Iterable, Self
 
 import polars as pl
-from polars import DataFrame, Series
+from polars import Series
 from polars._typing import IntoExpr
 
 from polars_ml.base import Transformer

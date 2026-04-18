@@ -2,7 +2,7 @@ import uuid
 from typing import Iterable, Iterator
 
 import polars as pl
-from polars import DataFrame, Series
+from polars import Series
 from polars._typing import IntoExpr
 
 

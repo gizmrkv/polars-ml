@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Callable, Generic, Self, TypeVar
 
 import polars as pl
-from polars import DataFrame
 
 from polars_ml import LazyTransformer, Transformer
 
